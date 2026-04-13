@@ -1,0 +1,8 @@
+import {
+  "username/mvm" @lib,
+  "moonbitlang/core/env" @env,
+}
+
+options(
+  "is-main": true,
+)
