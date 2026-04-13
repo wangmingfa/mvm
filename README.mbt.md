@@ -48,3 +48,11 @@ mvm list bun
 mvm uninstall node@18.17.0
 mvm uninstall zig@0.12.0
 ```
+
+## 开发
+
+1. 程序入口
+```bash
+# 等同生产：mvm install node@20
+moon run cmd/main/main.mbt install node@20
+```
