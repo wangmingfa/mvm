@@ -63,6 +63,13 @@ async fn get_proper_nodejs_version(version : String) -> String {
   guard nodeJsInfos.length() > 0 else {
     raise fail("Node.js版本信息格式为空")
   }
+  // 按date倒序排序
+  nodeJsInfos.sort_by((a, b) => {
+    if a.date >= b.date {
+      return 0
+    }
+    return 1
+  })
   match version {
     "lts" => {
       guard nodeJsInfos.search_by(fn(v) {
@@ -76,12 +83,9 @@ async fn get_proper_nodejs_version(version : String) -> String {
       }
       nodeJsInfos[idx].version
     }
-    "latest" => {
-      // 按date排序，取最后一个
-      nodeJsInfos.sort_by_key(v => v.date)
-      guard nodeJsInfos.last() is Some(nodeJsInfo)
-      nodeJsInfo.version
-    }
+    "latest" =>
+      // 按date排序，取第一个
+      nodeJsInfos[0].version
     _ =>
       match version_count {
         1..=3 => {
