@@ -4,7 +4,7 @@ async fn ensure_dir(dir : String) -> Unit {
   if @fs.exists(dir) {
     return
   }
-  @fs.mkdir(dir.to_string_view(), permission=7, recursive=true) catch {
+  @fs.mkdir(dir.to_string_view(), permission=0o750, recursive=true) catch {
     e => raise fail("创建文件夹 \{dir} 失败，原因：\{e}")
   }
 }
@@ -128,7 +128,7 @@ fn get_nodejs_download_url(os_info : @lib.OsInfo, version : String) -> String {
     Linux => ("linux", "tar.gz")
     MacOS => ("darwin", "tar.gz")
   }
-  "\{NODE_RELEASE_URL}/v\{version}/node-v\{version}-\{os}-\{arch}.\{ext}"
+  "\{NODE_RELEASE_URL}/\{version}/node-\{version}-\{os}-\{arch}.\{ext}"
 }
 
 ///|
@@ -196,7 +196,7 @@ async fn download_file(
 ///|
 /// 解压文件
 async fn extract_file(file : String, dest : String) -> Bool {
-  println("正在解压...")
+  println("正在解压到 \{dest} ...")
   let (code, data) = match file {
     f if f.has_suffix(".tar.gz") =>
       @process.collect_output_merged("tar", ["-xzf", f, "-C", dest])
