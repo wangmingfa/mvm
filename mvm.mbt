@@ -298,7 +298,7 @@ fn OsInfo::new(name : StringView, arch : StringView) -> Self raise {
   }
   let arch = match arch.to_lower() {
     "arm64" => Arm64
-    "x64" => X64
+    "x64" | "x86_64" => X64
     "x86" => X86
     _ => raise fail("不支持的架构：\{arch}")
   }
