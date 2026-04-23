@@ -1,8 +1,5 @@
 import {
   "moonbitlang/core/env" @env,
-  "moonbitlang/async" @async,
   "moonbitlang/async/fs" @fs,
-  "moonbitlang/async/io" @io,
-  "moonbitlang/async/process" @process,
   "moonbitlang/core/json" @json,
 }

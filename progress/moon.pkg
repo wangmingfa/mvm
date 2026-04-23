@@ -1,0 +1,8 @@
+import {
+  "moonbitlang/async" @async,
+  "moonbitlang/core/encoding/utf8",
+}
+
+options(
+  "native-stub": [ "progress.c" ],
+)
