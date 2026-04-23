@@ -1,10 +1,13 @@
 ///|
 #borrow(suffix)
-extern "c" fn c_progress_bar(
+extern "C" fn c_progress_bar(
   progress : Int64,
   total : Int64,
   suffix : Bytes,
 ) -> Unit = "progress_bar"
+
+///|
+pub extern "C" fn clear_progress() -> Unit = "clear_progress"
 
 ///|
 /// 一个辅助函数，将 MoonBit String 转换为 C 期望的 null-terminated byte array

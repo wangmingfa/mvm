@@ -2,9 +2,13 @@
 using @fs_ext {ensure_dir}
 
 ///|
-async fn get_target_version(tool : @lib.Tool, version : String) -> String {
+async fn get_target_version(
+  os : @os.OsInfo,
+  tool : @lib.Tool,
+  version : String,
+) -> String {
   match tool {
-    Node => get_proper_nodejs_version(version)
+    Node => get_proper_nodejs_version(os, version)
     _ => raise fail("暂不支持改工具：\{tool}")
   }
 }
@@ -83,7 +87,8 @@ async fn extract_file(file : String, dest : String) -> Bool {
 ///|
 /// 执行安装命令
 pub async fn run_install(tool : @lib.Tool, version : @lib.Version) -> Unit {
-  let version = get_target_version(tool, version.value())
+  let os_info = @os.get_os_info()
+  let version = get_target_version(os_info, tool, version.value())
 
   // 检查是否已安装
   if @lib.is_installed(tool, version) {
@@ -100,7 +105,6 @@ pub async fn run_install(tool : @lib.Tool, version : @lib.Version) -> Unit {
   // 确保目录存在
   ensure_dir(@lib.tool_dir(tool))
 
-  let os_info = @os.get_os_info()
   // 获取下载 URL
   let (url, root_path_depth) = get_download_url(os_info, tool, version)
   if url.is_blank() {

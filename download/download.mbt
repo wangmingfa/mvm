@@ -37,9 +37,8 @@ pub async fn download(
     file_path,
     mode=@fs.Mode::WriteOnly,
     append=is_append,
-    create=@fs_ext.PERMISSION_FILE,
+    create_mode=if is_append { OpenOrCreate } else { CreateOrTruncate },
     sync=Data,
-    truncate=!is_append,
   )
   defer file.close()
   let start_time = @async.now()
@@ -73,6 +72,7 @@ pub async fn download(
     },
   ])
   @progress.progress_bar(size, size)
+  @progress.clear_progress()
   println(
     "\n文件已保存：\{file_path} 耗时：\{@utils.get_readable_time(@async.now() - start_time)}",
   )

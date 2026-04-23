@@ -1,14 +1,15 @@
 import {
   "username/mvm" @lib,
-  "moonbitlang/core/env" @env,
-  "moonbitlang/core/json" @json,
+  "moonbitlang/core/env",
+  "moonbitlang/core/json",
   "moonbitlang/async",
-  "moonbitlang/async/fs" @fs,
-  "moonbitlang/async/http" @http,
-  "moonbitlang/async/process" @process,
+  "moonbitlang/async/fs",
+  "moonbitlang/async/http",
+  "moonbitlang/async/process",
   "username/mvm/os",
   "username/mvm/download",
-  "username/mvm/fs_ext" @fs_ext,
+  "username/mvm/fs_ext",
+  "username/mvm/utils",
 }
 
 options(

@@ -1,7 +1,8 @@
 ///|
 /// 执行卸载命令
 pub async fn run_uninstall(tool : @lib.Tool, version : @lib.Version) -> Unit {
-  let version = get_target_version(tool, version.value())
+  let os = @os.get_os_info()
+  let version = get_target_version(os, tool, version.value())
 
   // 检查是否已安装
   if !@lib.is_installed(tool, version) {

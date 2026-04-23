@@ -42,3 +42,7 @@ void progress_bar(int64_t progress, int64_t total, const char* suffix) {
     format_size(total, total_str, sizeof(total_str));
     fprintf(stderr, "] %s / %s  (%" PRId64 "%%)  %s", progress_str, total_str, (progress * 100) / total, suffix ? suffix : "");
 }
+
+void clear_progress() {
+    fprintf(stderr, "\r\033[K");
+}

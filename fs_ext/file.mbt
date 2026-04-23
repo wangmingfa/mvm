@@ -32,7 +32,7 @@ pub async fn mv(
 async fn copy_file(src : String, dest : String) -> Unit {
   let src_file = @fs.open(src, mode=ReadOnly)
   defer src_file.close()
-  let dest_file = @fs.open(dest, mode=WriteOnly, create=PERMISSION_FILE)
+  let dest_file = @fs.open(dest, mode=WriteOnly, create_mode=CreateOrTruncate)
   defer dest_file.close()
   dest_file.write_reader(src_file)
 }
@@ -132,7 +132,7 @@ async fn generate_tmp_dir_and_files() -> (String, Array[String]) {
   @fs.write_file(
     src_root_file_path,
     "\{file_content}\nroot",
-    create=PERMISSION_FILE,
+    create_mode=CreateOrTruncate,
   )
   dir_or_files.push(src_root_dir)
   dir_or_files.push(src_root_file_path)
@@ -144,7 +144,11 @@ async fn generate_tmp_dir_and_files() -> (String, Array[String]) {
     // 写入内容
     let tmp_file_in_src_root_dir = "\{tmp_dir_in_src_root_dir}/\{i}.txt"
     let content = "\{file_content}\n\{i}"
-    @fs.write_file(tmp_file_in_src_root_dir, content, create=PERMISSION_FILE)
+    @fs.write_file(
+      tmp_file_in_src_root_dir,
+      content,
+      create_mode=CreateOrTruncate,
+    )
     dir_or_files.push(tmp_file_in_src_root_dir)
   }
   dir_or_files.sort()
@@ -176,7 +180,7 @@ async test "move file" {
   let src_random_name = @env.now()
   let src_file_path = "\{temp_dir}/mv_\{src_random_name}.txt"
   let file_name = get_path_name(src_file_path)
-  @fs.write_file(src_file_path, file_content, create=PERMISSION_FILE)
+  @fs.write_file(src_file_path, file_content, create_mode=CreateOrTruncate)
   let dest_path = "\{temp_dir}/\{src_random_name}"
   // 移动
   mv(src_file_path, dest_path)

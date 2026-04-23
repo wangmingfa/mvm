@@ -4,12 +4,13 @@ const NODE_RELEASE_URL = "https://mirrors.aliyun.com/nodejs-release"
 ///|
 struct NodeJsInfo {
   version : String
-  date : String
+  // date : String
   lts : Json
+  files : Array[String]
 } derive(@json.FromJson)
 
 ///|
-async fn get_proper_nodejs_version(version : String) -> String {
+async fn get_proper_nodejs_version(os : @os.OsInfo, version : String) -> String {
   // version支持这些格式：
   // lts：下载lts版本
   // latest：下载最新版本
@@ -54,11 +55,13 @@ async fn get_proper_nodejs_version(version : String) -> String {
   }
   // 按date倒序排序
   nodeJsInfos.sort_by((a, b) => {
-    if a.date >= b.date {
-      return 0
+    @utils.compare_version(b.version, a.version) catch {
+      _ => 0
     }
-    return 1
   })
+  // for item in nodeJsInfos {
+  //   println("\{item.version} \{item.lts} \{item.date}")
+  // }
   match version {
     "lts" => {
       guard nodeJsInfos.search_by(fn(v) {
@@ -70,11 +73,15 @@ async fn get_proper_nodejs_version(version : String) -> String {
         is Some(idx) else {
         raise fail("找不到lts版本")
       }
-      nodeJsInfos[idx].version
+      check_os_compatiable(
+        os,
+        nodeJsInfos[idx],
+        error_msg_tpl="当前LTS版本 {version} 不支持 {os.name} 操作系统下的 {os.arch} 架构",
+      )
     }
     "latest" =>
       // 按date排序，取第一个
-      nodeJsInfos[0].version
+      check_os_compatiable(os, nodeJsInfos[0])
     _ =>
       match version_count {
         1..=3 => {
@@ -93,11 +100,48 @@ async fn get_proper_nodejs_version(version : String) -> String {
             is Some(idx) else {
             raise fail("找不到版本：\{version}")
           }
-          nodeJsInfos[idx].version
+          check_os_compatiable(os, nodeJsInfos[idx])
         }
         _ => raise fail("无效的版本号：\{version}")
       }
   }
+}
+
+///|
+fn check_os_compatiable(
+  os : @os.OsInfo,
+  nodeJsInfo : NodeJsInfo,
+  error_msg_tpl? : String = "版本 {version} 不支持 {os.name} 操作系统下的 {os.arch} 架构",
+) -> String raise {
+  // 判断当前操作系统、架构的文件是否支持
+  let file_prefix = [
+    match os.name {
+      Windows => "win"
+      MacOS => "osx"
+      Linux => "linux"
+      name => raise fail("不支持的操作系统：\{name}")
+    },
+    match os.arch {
+      Aarch64 => "arm64"
+      X86 => "x86"
+      X86_64 => "x64"
+      arch => raise fail("不支持的架构：\{arch}")
+    },
+  ].join("-")
+  let { version, files, .. } = nodeJsInfo
+  if files.all(v => !v.has_prefix(file_prefix)) {
+    let variables = {
+      "version": () => version,
+      "os.name": () => os.name.to_string(),
+      "os.arch": () => os.arch.to_string(),
+    }
+    let mut msg = error_msg_tpl
+    for key, value in variables {
+      msg = msg.replace_all(old="{\{key}}", new=@utils.yellow(value()))
+    }
+    raise fail(msg)
+  }
+  version
 }
 
 ///|
