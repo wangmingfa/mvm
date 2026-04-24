@@ -42,10 +42,10 @@ fn format_duration(ms : Int64, use_hour_format : Bool) -> String {
 }
 
 ///|
-/// 获取当前耗时，以及预估总时间。
+/// 获取当前耗时、剩余时间，以及预估总时间。
 /// 返回格式：
-///   分钟：00:12 / 01:30
-///   小时：01:10:12 / 02:01:30
+///   分钟：00:12 + 00:18 / 01:30
+///   小时：01:10:12 + 01:11:18 / 02:21:30
 pub fn get_duration_and_total_time(
   current_size~ : Int64,
   file_size~ : Int64,
@@ -56,7 +56,7 @@ pub fn get_duration_and_total_time(
   let duration_ms = current_time - start_time_ms
   if file_size <= 0L {
     let duration_str = format_duration(duration_ms, false)
-    return "\{duration_str} / --:--"
+    return "\{duration_str} + --:-- / --:--"
   }
   let remaining_size = file_size - current_size
   let total_ms = if current_speed > 0L {
@@ -70,12 +70,14 @@ pub fn get_duration_and_total_time(
   } else {
     // 无法计算
     let duration_str = format_duration(duration_ms, false)
-    return "\{duration_str} / --:--"
+    return "\{duration_str} + --:-- / --:--"
   }
+  let remaining_ms = total_ms - duration_ms
   let use_hour_format = total_ms >= 3_600_000L
   let duration_str = format_duration(duration_ms, use_hour_format)
+  let remaining_str = format_duration(remaining_ms, use_hour_format)
   let total_str = format_duration(total_ms, use_hour_format)
-  "\{duration_str} / \{total_str}"
+  "\{duration_str} + \{green(remaining_str)} / \{total_str}"
 }
 
 ///|
@@ -84,13 +86,13 @@ test "get_duration_and_total_time" {
   // 预估总时间 = 0 + 1000000*1000/10000 = 100000ms = 1m40s
   inspect(
     get_duration_and_total_time(
-      current_size=100000,
+      current_size=230_000,
       file_size=1000 * 1000,
-      start_time_ms=@async.now(),
+      start_time_ms=@async.now() - 23_000,
       current_speed=10000,
     ),
     content=(
-      #|00:00 / 01:30
+      #|00:23 + [32m01:17[0m / 01:40
     ),
   )
 }
@@ -105,7 +107,7 @@ test "get_duration_and_total_time no info" {
       current_speed=0,
     ),
     content=(
-      #|00:00 / --:--
+      #|00:00 + --:-- / --:--
     ),
   )
 }

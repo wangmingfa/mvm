@@ -41,40 +41,21 @@ pub async fn download(
     sync=Data,
   )
   defer file.close()
-  let start_time = @async.now()
-  let mut prev_time = start_time
-  let mut prev_size : Int64 = 0
+  let progress_bar = @progress.ProgressBar::new(size)
   @async.any([
     () => file.write_reader(client),
     () => {
       while true {
-        let now = @async.now()
         let current_size = file.size()
-        let (speed_str, current_speed) = @utils.get_speed_with_readable_unit(
-          current_size - prev_size,
-          now - prev_time,
-        )
-        let duration = @utils.get_duration_and_total_time(
-          current_size~,
-          file_size=size,
-          start_time_ms=start_time,
-          current_speed~,
-        )
-        @progress.progress_bar(
-          current_size,
-          size,
-          suffix="|  \{speed_str}  |  \{duration}",
-        )
-        prev_time = now
-        prev_size = current_size
+        progress_bar.set_completed(current_size)
         @async.sleep(1000)
       }
     },
   ])
-  @progress.progress_bar(size, size)
+  progress_bar.set_complete()
   @progress.clear_progress()
   println(
-    "\n文件已保存：\{file_path} 耗时：\{@utils.get_readable_time(@async.now() - start_time)}",
+    "\n文件已保存：\{file_path} 耗时：\{@utils.get_readable_time(progress_bar.duration())}",
   )
 }
 

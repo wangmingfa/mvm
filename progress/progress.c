@@ -15,14 +15,14 @@ static void format_size(int64_t bytes, char* buf, size_t buf_size) {
     }
 }
 
-void progress_bar(int64_t progress, int64_t total, const char* suffix) {
-    if (progress > total) {
-        progress = total;
+void progress_bar(int64_t completed, int64_t total, const char* suffix) {
+    if (completed > total) {
+        completed = total;
     }
     if (total <= 0) return;
 
     int bar_width = 50;
-    int pos = (int)((progress * bar_width) / total);
+    int pos = (int)((completed * bar_width) / total);
 
     // 刷新 stdout，确保 MoonBit 的 println 等输出先于进度条显示
     fflush(stdout);
@@ -38,11 +38,11 @@ void progress_bar(int64_t progress, int64_t total, const char* suffix) {
     }
 
     char progress_str[32], total_str[32];
-    format_size(progress, progress_str, sizeof(progress_str));
+    format_size(completed, progress_str, sizeof(progress_str));
     format_size(total, total_str, sizeof(total_str));
-    fprintf(stderr, "] %s / %s  (%" PRId64 "%%)  %s", progress_str, total_str, (progress * 100) / total, suffix ? suffix : "");
+    fprintf(stderr, "] %s / %s  (%" PRId64 "%%)  %s", progress_str, total_str, (completed * 100) / total, suffix ? suffix : "");
 }
 
 void clear_progress() {
-    fprintf(stderr, "\r\033[K");
+    fprintf(stderr, "\r\033[K\033[A");
 }
