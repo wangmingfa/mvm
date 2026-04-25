@@ -1,10 +1,10 @@
 ///|
 /// 执行查看版本命令
-pub async fn run_list(tool_opt : @lib.Tool?) -> Unit {
+pub async fn run_list(tool_opt : @tools.Tool?) -> Unit {
   match tool_opt {
     Some(tool) => {
       println("已安装的 \{tool} 版本：")
-      let versions = @lib.installed_versions(tool)
+      let versions = @tools.installed_versions(tool)
       if versions.length() == 0 {
         println("  (暂无)")
       } else {
@@ -16,7 +16,7 @@ pub async fn run_list(tool_opt : @lib.Tool?) -> Unit {
     None => {
       println("已安装的所有版本：")
       println("\nNode:")
-      let node_versions = @lib.installed_versions(@lib.Node)
+      let node_versions = @tools.installed_versions(@tools.Node)
       if node_versions.length() == 0 {
         println("  (暂无)")
       } else {
@@ -25,7 +25,7 @@ pub async fn run_list(tool_opt : @lib.Tool?) -> Unit {
         }
       }
       // println("\nBun:")
-      // let bun_versions = @lib.installed_versions(@lib.Bun)
+      // let bun_versions = @tools.installed_versions(@tools.Bun)
       // if bun_versions.length() == 0 {
       //   println("  (暂无)")
       // } else {
@@ -34,7 +34,7 @@ pub async fn run_list(tool_opt : @lib.Tool?) -> Unit {
       //   }
       // }
       println("\nZig:")
-      let zig_versions = @lib.installed_versions(@lib.Zig)
+      let zig_versions = @tools.installed_versions(@tools.Zig)
       if zig_versions.length() == 0 {
         println("  (暂无)")
       } else {

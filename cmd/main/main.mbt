@@ -6,7 +6,7 @@ async fn main {
   guard @env.current_dir() is Some(dir)
   println("当前目录：\{dir}")
   try {
-    let command = @lib.get_command(@env.args()[1:]) catch {
+    let command = get_command(@env.args()[1:]) catch {
       e => {
         println(e)
         return

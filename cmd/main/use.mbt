@@ -1,11 +1,11 @@
 ///|
 /// 执行临时切换命令
-pub async fn run_use(tool : @lib.Tool, version : @lib.Version) -> Unit {
+pub async fn run_use(tool : @tools.Tool, version : Version) -> Unit {
   let os = @os.get_os_info()
-  let version = get_target_version(os, tool, version.value())
+  let version = @tools.get_target_version(os, tool, version.value())
 
   // 检查版本是否已安装
-  if !@lib.is_installed(tool, version) {
+  if !@tools.is_installed(tool, version) {
     println(
       "\{tool}@\{version} 未安装，请先运行: mvm install \{tool}@\{version}",
     )

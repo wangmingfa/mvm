@@ -10,7 +10,7 @@ struct NodeJsInfo {
 } derive(@json.FromJson)
 
 ///|
-async fn get_proper_nodejs_version(os : @os.OsInfo, version : String) -> String {
+async fn get_target_nodejs_version(os : @os.OsInfo, version : String) -> String {
   // version支持这些格式：
   // lts：下载lts版本
   // latest：下载最新版本
@@ -157,4 +157,14 @@ fn get_nodejs_download_url(
     name => raise fail("不支持的操作系统：\{name}")
   }
   "\{NODE_RELEASE_URL}/\{version}/node-\{version}-\{os}-\{arch}.\{ext}"
+}
+
+///|
+fn get_nodejs_exe_path() -> String {
+  // TODO
+  let os = @os.get_os_name()
+  let suffix = if os is Windows { ".exe" } else { "" }
+  [version_dir(Tool::Node, "v25.9.0"), "bin", "node", suffix]
+  .filter(v => !v.is_blank())
+  .join("/")
 }

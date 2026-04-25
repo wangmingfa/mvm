@@ -1,5 +1,0 @@
-import {
-  "moonbitlang/core/env" @env,
-  "moonbitlang/async/fs" @fs,
-  "moonbitlang/core/json" @json,
-}
