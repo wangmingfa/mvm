@@ -3,8 +3,10 @@ import {
   "username/mvm/fs_ext",
   "username/mvm/utils",
   "username/mvm/cmd/tools",
+  "username/mvm/cmd/command",
   "moonbitlang/async",
   "moonbitlang/async/process",
+  "moonbitlang/async/fs",
 }
 
 options(

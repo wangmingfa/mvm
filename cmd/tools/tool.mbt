@@ -5,6 +5,9 @@
 ///|
 /// MVM 主目录
 pub fn mvm_home() -> String {
+  if @env.get_env_var("MVM_HOME") is Some(home) {
+    return home
+  }
   guard @env.get_env_var("HOME") is Some(home)
   "\{home}/.mvm"
 }
@@ -56,9 +59,9 @@ pub(all) enum Tool {
 pub impl Show for Tool with to_string(s) {
   match s {
     // Bun => "Bun"
-    Npm => "Npm"
-    Node => "Node"
-    Zig => "Zig"
+    Npm => "npm"
+    Node => "node"
+    Zig => "zig"
   }
 }
 
@@ -93,11 +96,17 @@ pub fn project_config_file() -> String {
 const CONFIG_FILE = "mvm.json"
 
 ///|
+pub async fn get_config(tool? : Tool) -> (String, Config)? {
+  if tool is Some(t) {
+    get_config_inner(Some(t))
+  } else {
+    get_config_inner(None)
+  }
+}
+
+///|
 /// 检查项目配置文件是否存在
-pub async fn get_project_config_file_path(
-  tool? : Tool,
-  dir? : String,
-) -> String? {
+async fn get_config_inner(tool : Tool?, dir? : String) -> (String, Config)? {
   let dir = if dir is Some(dir) {
     dir
   } else {
@@ -105,37 +114,108 @@ pub async fn get_project_config_file_path(
     dir
   }
   let path = @fs_ext.join_path(dir, CONFIG_FILE)
+  // println("tool: \{tool}, path: \{path}")
   if @fs.exists(path) {
-    guard tool is Some(tool) else { return Some(path) }
-    let config = @fs.read_file(path).json()
-    guard config is Object(map) && map.get(tool.to_string()) is Some(_) else {
-      // 往上一级
-      guard @fs_ext.get_parent_dir(path) is Some(parent) else { return None }
-      return get_project_config_file_path(tool~, dir=parent)
+    let json = @fs.read_file(path).json() catch {
+      _ => {
+        println("文件 \{@utils.red(path)} 的内容不是有效的json格式")
+        return None
+      }
     }
-    // 检查是否当前工具的版本
-    return Some(path)
+    let config : Config = @json.from_json(json) catch {
+      _ => {
+        println("文件 \{@utils.red(path)} 的内容有效")
+        return None
+      }
+    }
+    // println("json: \{json}")
+    // println("config: \{config}")
+    if tool is Some(tool) {
+      // 指定了tool
+      if json is Object(map) && map.get(tool.to_string()) is Some(String(_)) {
+        // 有版本
+        // println("\{tool.to_string()} 版本 \{version}")
+        return Some((path, config))
+      }
+    } else {
+      // 没有指定tool
+      return Some((path, config))
+    }
   }
-  None
+  if dir == mvm_home() {
+    return None
+  }
+  // 往上一级
+  guard @fs_ext.get_parent_dir(path) is Some(parent) else {
+    // 没有上一级，则从mvm_home找
+    return get_config_inner(tool, dir=mvm_home())
+  }
+  return get_config_inner(tool, dir=parent)
 }
 
 ///|
-struct Config {
+pub struct Config {
   node : String?
   npm : String?
   bun : String?
   zig : String?
-} derive(FromJson, ToJson)
+} derive(FromJson, ToJson, Show)
 
 ///|
-/// 读取项目配置
-pub async fn read_project_config(tool? : Tool) -> Config? {
-  if get_project_config_file_path(tool~) is Some(path) {
-    let config = @fs.read_file(project_config_file()).json() catch {
-      e => raise fail("文件\{project_config_file()}格式不对：\{e}")
-    }
-    Some(@json.from_json(config))
-  } else {
-    None
+// impl Show for Config with output(s, logger) {
+//   logger.write_string(s.to_string())
+// }
+
+///|
+// impl Show for Config with to_string(s) {
+//   (
+//     $|{node: \{s.node}, npm: \{s.npm}, bun: \{s.bun}, zig: \{s.zig}}
+//   )
+// }
+
+///|
+pub fn Config::get_value(self : Self, tool : Tool) -> String? {
+  match tool {
+    Npm => self.npm
+    Node => self.node
+    Zig => self.zig
   }
+}
+
+///|
+test "Config from_json" {
+  let json : Json = { "node": "v20.1.1" }
+  let config : Config = @json.from_json(json)
+  inspect(
+    config,
+    content=(
+      #|{node: Some("v20.1.1"), npm: None, bun: None, zig: None}
+    ),
+  )
+}
+
+///|
+fn get_project_config_path() -> String {
+  guard @env.current_dir() is Some(cwd)
+  return @fs_ext.join_path(cwd, CONFIG_FILE)
+}
+
+///|
+/// 写入项目配置
+pub async fn write_project_config(tool : Tool, version : String) -> String {
+  let config_file_path = get_project_config_path()
+  let json = if @fs.exists(config_file_path) {
+    @fs.read_file(config_file_path).json()
+  } else {
+    {}
+  }
+  guard json is Object(map) else {
+    raise fail("文件 \{config_file_path} 的内容不是有效的json格式")
+  }
+  let key = tool.to_string()
+  let value = version
+  map.set(key, Json::string(value))
+  let content = Json::object(map).stringify(indent=2)
+  @fs.write_file(project_config_file(), content, create_mode=CreateOrTruncate)
+  config_file_path
 }

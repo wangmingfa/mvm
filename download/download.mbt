@@ -123,3 +123,65 @@ async test "download" {
   let time = end - start
   println("耗时：\{@utils.get_readable_time(time)}")
 }
+
+///|
+pub async fn download_by_native_command(url : String, dest : String) -> Unit {
+  guard @command.get_best_downloader() is Some(downloader) else {
+    raise fail("没有找到合适的下载器，请安装curl或者wget")
+  }
+  let args = match downloader {
+    "curl" | "curl.exe" => {
+      // curl 命令
+      let args = [
+        "-L", // 跟随重定向
+         "--max-time", "300", // 5分钟超时
+         "--retry", "3", // 重试3次
+         "--retry-delay", "5", // 重试间隔5秒
+         "--show-error", // 显示错误信息
+         "-o", dest, // 输出文件
+         url,
+      ]
+
+      args
+    }
+    "wget" => {
+      // wget 命令
+      let args = [
+        "--tries=3", // 重试3次
+         "--timeout=300", // 5分钟超时
+         "--waitretry=5", // 重试间隔5秒
+         "-O", dest, // 输出文件
+         url,
+      ]
+
+      args
+    }
+    "powershell" => {
+      // PowerShell 命令 (Windows 备用方案)
+      let ps_script = "Invoke-WebRequest -Uri '" +
+        url +
+        "' -OutFile '" +
+        dest +
+        "' -UserAgent 'Mozilla/5.0' -MaximumRedirection 5 -TimeoutSec 300"
+
+      let args = ["-Command", ps_script]
+
+      args
+    }
+    _ => raise fail("不支持的下载方式")
+  }
+  match @process.run(downloader, args) {
+    0 => ()
+    _ => raise fail("下载失败")
+  }
+}
+
+///|
+async test "download_by_native_command" {
+  let url = "https://mirrors.aliyun.com/nodejs-release/v21.7.3/node-v21.7.3-linux-x64.tar.gz"
+  let name = @fs_ext.get_path_name(url)
+  let dest_dir = ".temp/\{@async.now()}"
+  ensure_dir(dest_dir)
+  let dest = @fs_ext.join_path(dest_dir, name)
+  download_by_native_command(url, dest)
+}

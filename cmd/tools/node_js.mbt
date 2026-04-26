@@ -160,11 +160,11 @@ fn get_nodejs_download_url(
 }
 
 ///|
-fn get_nodejs_exe_path() -> String {
+fn get_nodejs_exe_path(version : String) -> String {
   // TODO
   let os = @os.get_os_name()
   let suffix = if os is Windows { ".exe" } else { "" }
-  [version_dir(Tool::Node, "v25.9.0"), "bin", "node", suffix]
+  [version_dir(Tool::Node, version), "bin", "node", suffix]
   .filter(v => !v.is_blank())
   .join("/")
 }

@@ -10,12 +10,20 @@ async fn main {
   let tool = @tools.Tool::from_string(tool_name.to_string())
   let exe_args = args[2:]
   let args_str = exe_args.join(" ")
-  let tool_exe_path = @tools.get_tool_exe_path(tool)
+  let result = @tools.get_tool_exe_path(tool)
 
-  // TODO 有可能没有安装
-  if tool_exe_path.is_blank() {
-    println(@utils.red("请先安装\{exe_name}"))
+  guard result is Some((tool_exe_path, version)) else {
+    let use_command = @utils.yellow("use")
+    let pin = @utils.yellow("pin")
+    println("config: \{@tools.get_config(tool~)}")
+    println(
+      "没有指定 \{@utils.yellow(tool_name)} 的版本，请先使用 \{use_command} 或 \{pin} 指定版本",
+    )
     return
+  }
+  if !@fs.exists(tool_exe_path) {
+    // 没有安装，提示用户安装或指定版本
+    @command.run_install(tool, @command.Version::new(version))
   }
 
   let cmd = "\{tool_exe_path} \{args_str}"

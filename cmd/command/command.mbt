@@ -5,6 +5,11 @@ using @tools {type Tool}
 pub struct Version(String)
 
 ///|
+pub fn Version::new(version : String) -> Self {
+  Version(version)
+}
+
+///|
 /// 获取版本号字符串
 pub fn Version::value(self : Version) -> String {
   self.0

@@ -4,6 +4,7 @@ import {
   "username/mvm/fs_ext",
   "moonbitlang/async/http",
   "moonbitlang/async/fs",
+  "moonbitlang/async/process",
   "moonbitlang/core/json",
   "moonbitlang/core/env",
 }

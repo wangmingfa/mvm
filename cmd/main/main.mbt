@@ -1,7 +1,7 @@
 ///|
-/// Entry point for the CLI or runnable program in this template.
-/// Keep main focused; move logic into the library package.
-/// Run with `moon run cmd/main` from the project root.
+using @command {get_command, run}
+
+///|
 async fn main {
   guard @env.current_dir() is Some(dir)
   println("当前目录：\{dir}")

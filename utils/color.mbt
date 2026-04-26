@@ -14,22 +14,22 @@ const BLUE = "\u{001B}[34m"
 const RESET = "\u{001B}[0m"
 
 ///|
-pub fn red(msg : String) -> String {
+pub fn[T : Show] red(msg : T) -> String {
   "\{RED}\{msg}\{RESET}"
 }
 
 ///|
-pub fn green(msg : String) -> String {
+pub fn[T : Show] green(msg : T) -> String {
   "\{GREEN}\{msg}\{RESET}"
 }
 
 ///|
-pub fn yellow(msg : String) -> String {
+pub fn[T : Show] yellow(msg : T) -> String {
   "\{YELLOW}\{msg}\{RESET}"
 }
 
 ///|
-pub fn blue(msg : String) -> String {
+pub fn[T : Show] blue(msg : T) -> String {
   "\{BLUE}\{msg}\{RESET}"
 }
 

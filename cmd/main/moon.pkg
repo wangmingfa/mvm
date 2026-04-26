@@ -1,13 +1,7 @@
 import {
-  "moonbitlang/core/env",
-  "moonbitlang/core/json",
+  "username/mvm/cmd/command",
   "moonbitlang/async",
-  "moonbitlang/async/fs",
-  "moonbitlang/async/process",
-  "username/mvm/os",
-  "username/mvm/download",
-  "username/mvm/fs_ext",
-  "username/mvm/cmd/tools",
+  "moonbitlang/core/env",
 }
 
 options(

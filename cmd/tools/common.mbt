@@ -41,27 +41,31 @@ pub fn get_download_url(
 }
 
 ///|
-pub fn get_tool_exe_path(tool : Tool) -> String raise {
-  match tool {
-    Node => get_nodejs_exe_path()
+pub async fn get_tool_exe_path(tool : Tool) -> (String, String)? {
+  guard get_config(tool~) is Some((_, config)) &&
+    config.get_value(Node) is Some(version) else {
+    return None
+  }
+  let path = match tool {
+    Node => get_nodejs_exe_path(version)
     _ => raise fail("不支持的工具：\{tool}")
   }
+  Some((path, version))
 }
 
 ///|
-/// 写入项目配置
-pub async fn write_project_config(tool : Tool, version : String) -> Unit {
-  let config = read_project_config()
-  let config = if config is Some(config) {
-    let json = config.to_json()
-    guard json is Object(map) else { {} }
-    map
-  } else {
-    {}
+pub async fn post_install(tool : Tool, target_dir : String) -> Unit {
+  let os = @os.get_os_name()
+  if os is Linux || os is MacOS {
+    // 增加可执行权限
+    let exe_files = match tool {
+      Node =>
+        ["node", "npm", "npx"].map(name => {
+          @fs_ext.join_path(target_dir, "bin/\{name}")
+        })
+      _ => []
+    }
+    exe_files.insert(0, "+x")
+    let _ = @process.run("chmod", exe_files)
   }
-  let key = tool.to_string()
-  let value = version
-  config.set(key, Json::string(value))
-  let content = Json::object(config).stringify(indent=2)
-  @fs.write_file(project_config_file(), content)
 }

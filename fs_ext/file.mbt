@@ -5,27 +5,38 @@ pub async fn mv(
   include_root? : Bool = true,
 ) -> Unit {
   guard @fs.exists(src) else { raise fail("路径不存在 \{src}") }
-  let kind = @fs.kind(src)
-  let is_dir = match kind {
-    Regular => {
-      // 文件
-      ensure_dir(dest)
-      let name = get_path_name(src)
-      let dest_file_path = get_dest_path(dest, name)
-      copy_file(src, dest_file_path)
-      false
-    }
-    Directory => {
-      copy_dir(src, dest, include_root~)
-      true
-    }
-    _ => raise fail("不支持的类型 \{@debug.to_string(kind)}")
-  }
-  if is_dir {
-    @fs.rmdir(src[0:], recursive=true)
+  if include_root {
+    @fs.rename(src, dest)
   } else {
-    @fs.remove(src[0:])
+    // 不包含根目录
+    for entry in @fs.readdir(src) {
+      let src = join_path(src, entry)
+      let dest = join_path(dest, entry)
+      mv(src, dest)
+    }
   }
+
+  // let kind = @fs.kind(src)
+  // let is_dir = match kind {
+  //   Regular => {
+  //     // 文件
+  //     ensure_dir(dest)
+  //     let name = get_path_name(src)
+  //     let dest_file_path = get_dest_path(dest, name)
+  //     copy_file(src, dest_file_path)
+  //     false
+  //   }
+  //   Directory => {
+  //     copy_dir(src, dest, include_root~)
+  //     true
+  //   }
+  //   _ => raise fail("不支持的类型 \{@debug.to_string(kind)}")
+  // }
+  // if is_dir {
+  //   @fs.rmdir(src[0:], recursive=true)
+  // } else {
+  //   @fs.remove(src[0:])
+  // }
 }
 
 ///|

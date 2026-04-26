@@ -19,6 +19,8 @@ pub async fn run_install(tool : @tools.Tool, version : Version) -> Unit {
     return
   }
 
+  println("安装 \{@utils.yellow(tool)} \{@utils.yellow(version)}")
+
   // 确保目录存在
   ensure_dir(@tools.tool_dir(tool))
 
@@ -73,6 +75,9 @@ pub async fn run_install(tool : @tools.Tool, version : Version) -> Unit {
   // 清理临时文件
   @fs.rmdir(tmp_dir, recursive=true)
 
+  // 安装之后的操作，比如增加可执行权限
+  @tools.post_install(tool, final_dir)
+
   println("\{tool}@\{version} 安装成功")
 }
 
@@ -81,7 +86,7 @@ pub async fn run_install(tool : @tools.Tool, version : Version) -> Unit {
 pub async fn download_file(url : String, dest : String) -> Bool {
   println("正在下载: \{url}")
   println("保存到：\{dest}")
-  @download.download(url, dest, dest_is_file=true) catch {
+  @download.download_by_native_command(url, dest) catch {
     e => {
       println("下载失败，原因：")
       println(e)

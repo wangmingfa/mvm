@@ -1,11 +1,13 @@
 import {
-  "moonbitlang/core/env" @env,
-  "moonbitlang/core/string" @string,
+  "moonbitlang/core/env",
+  "moonbitlang/core/string",
   "moonbitlang/async",
-  "moonbitlang/async/http" @http,
-  "moonbitlang/async/fs" @fs,
+  "moonbitlang/async/http",
+  "moonbitlang/async/fs",
+  "moonbitlang/async/process",
   "moonbitlang/regexp",
   "username/mvm/progress",
   "username/mvm/utils",
-  "username/mvm/fs_ext" @fs_ext,
+  "username/mvm/fs_ext",
+  "username/mvm/command",
 }
