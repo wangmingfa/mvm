@@ -113,37 +113,36 @@ pub fn Tool::from_string(tool : String) -> Tool raise {
 }
 
 ///|
-/// 项目配置文件名
-pub fn project_config_file() -> String {
-  /// 格式：
-  /// {
-  /// "node": "20.0.1",
-  /// "zig": "0.15.1"
-  /// }
-  "mvm.json"
-}
-
-///|
 const CONFIG_FILE = "mvm.json"
 
 ///|
-pub async fn get_config(tool? : Tool) -> (String, Config)? {
-  if tool is Some(t) {
-    get_config_inner(Some(t))
-  } else {
-    get_config_inner(None)
-  }
-}
-
-///|
-/// 检查项目配置文件是否存在
-async fn get_config_inner(tool : Tool?, dir? : String) -> (String, Config)? {
+pub async fn get_config(
+  tool? : Tool,
+  dir? : String,
+  search_upwards? : Bool = true,
+  fallback_to_global_config? : Bool = true,
+) -> (String, Config)? {
   let dir = if dir is Some(dir) {
     dir
   } else {
     guard @env.current_dir() is Some(dir)
     dir
   }
+  if tool is Some(t) {
+    get_config_inner(Some(t), dir, search_upwards, fallback_to_global_config)
+  } else {
+    get_config_inner(None, dir, search_upwards, fallback_to_global_config)
+  }
+}
+
+///|
+/// 检查项目配置文件是否存在
+async fn get_config_inner(
+  tool : Tool?,
+  dir : String,
+  search_upwards : Bool,
+  fallback_to_global_config : Bool,
+) -> (String, Config)? {
   let path = @fs_ext.join_path(dir, CONFIG_FILE)
   @log.debug("在 \{dir} 查找 \{tool} 的版本号")
   if @fs.exists(path) {
@@ -179,12 +178,26 @@ async fn get_config_inner(tool : Tool?, dir? : String) -> (String, Config)? {
   }
   // 往上一级
   guard @fs_ext.get_parent_dir(dir) is Some(parent) else {
-    @log.debug("从 MVM_HOME 查找")
-    // 没有上一级，则从mvm_home找
-    return get_config_inner(tool, dir=mvm_home())
+    return if fallback_to_global_config {
+      @log.debug("从 MVM_HOME 查找")
+      // 没有上一级，则从mvm_home找
+      get_config_inner(
+        tool,
+        mvm_home(),
+        search_upwards,
+        fallback_to_global_config,
+      )
+    } else {
+      None
+    }
   }
-  @log.debug("从父目录查找")
-  return get_config_inner(tool, dir=parent)
+  if search_upwards {
+    @log.debug("从父目录查找")
+    return get_config_inner(
+      tool, parent, search_upwards, fallback_to_global_config,
+    )
+  }
+  None
 }
 
 ///|
