@@ -134,6 +134,7 @@ pub async fn download_by_native_command(url : String, dest : String) -> Unit {
       // curl 命令
       let args = [
         "-L", // 跟随重定向
+         "-C", "-", // 断点续传
          "--max-time", "300", // 5分钟超时
          "--retry", "3", // 重试3次
          "--retry-delay", "5", // 重试间隔5秒
@@ -147,7 +148,8 @@ pub async fn download_by_native_command(url : String, dest : String) -> Unit {
     "wget" => {
       // wget 命令
       let args = [
-        "--tries=3", // 重试3次
+        "-c", //断点续传
+         "--tries=3", // 重试3次
          "--timeout=300", // 5分钟超时
          "--waitretry=5", // 重试间隔5秒
          "-O", dest, // 输出文件

@@ -15,7 +15,7 @@ async fn main {
   guard result is Some((tool_exe_path, version)) else {
     let use_command = @utils.yellow("use")
     let pin = @utils.yellow("pin")
-    println("config: \{@tools.get_config(tool~)}")
+    // println("config: \{@tools.get_config(tool~)}")
     println(
       "没有指定 \{@utils.yellow(tool_name)} 的版本，请先使用 \{use_command} 或 \{pin} 指定版本",
     )
@@ -27,6 +27,6 @@ async fn main {
   }
 
   let cmd = "\{tool_exe_path} \{args_str}"
-  println("运行：\{cmd}")
+  @log.info("运行：\{cmd}")
   let _ = @process.run(tool_exe_path, exe_args)
 }

@@ -2,12 +2,47 @@
 const NODE_RELEASE_URL = "https://mirrors.aliyun.com/nodejs-release"
 
 ///|
+const NODE_INDEX_URL = "https://nodejs.org/dist/index.json"
+
+///|
+const NODE_INDEX_CACHE_FILE = "nodejs_index.json"
+
+///|
 struct NodeJsInfo {
   version : String
   // date : String
   lts : Json
   files : Array[String]
 } derive(@json.FromJson)
+
+///|
+async fn get_version(
+  os : @os.OsInfo,
+  version : String,
+  version_count : Int,
+) -> String {
+  if version_count == 3 {
+    // 从缓存中获取
+    let cache_file_content = read_cache_file_content(NODE_INDEX_CACHE_FILE)
+    if cache_file_content is Some(content) {
+      let json = @json.parse(content)
+      let target_version = get_nodejs_version(os, version, version_count, json) catch {
+        _ => ""
+      }
+      if !target_version.is_blank() {
+        return target_version
+      }
+    }
+  }
+  // 从https://nodejs.org/dist/index.json中解析，将version转换为为具体的x.y.z版本号
+  let (res, data) = @http.get(NODE_INDEX_URL)
+  guard res.code is (200..<300) else {
+    raise fail("无法获取到Node.js版本信息：\{res.reason}")
+  }
+  let json = data.json()
+  write_cache_file_content(NODE_INDEX_CACHE_FILE, json.stringify(indent=2))
+  get_nodejs_version(os, version, version_count, json)
+}
 
 ///|
 async fn get_target_nodejs_version(os : @os.OsInfo, version : String) -> String {
@@ -32,12 +67,16 @@ async fn get_target_nodejs_version(os : @os.OsInfo, version : String) -> String 
       }
   }
 
-  // 从https://nodejs.org/dist/index.json中解析，将version转换为为具体的x.y.z版本号
-  let (res, data) = @http.get("https://nodejs.org/dist/index.json")
-  guard res.code is (200..<300) else {
-    raise fail("无法获取到Node.js版本信息：\{res.reason}")
-  }
-  let json = data.json()
+  get_version(os, version, version_count)
+}
+
+///|
+fn get_nodejs_version(
+  os : @os.OsInfo,
+  version : String,
+  version_count : Int,
+  json : Json,
+) -> String raise {
   guard json is Array(arr) else {
     raise fail("Node.js版本信息格式不对")
   }

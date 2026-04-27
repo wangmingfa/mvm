@@ -1,20 +1,7 @@
 ///|
-pub async fn mv(
-  src : String,
-  dest : String,
-  include_root? : Bool = true,
-) -> Unit {
+pub async fn mv(src : String, dest : String) -> Unit {
   guard @fs.exists(src) else { raise fail("路径不存在 \{src}") }
-  if include_root {
-    @fs.rename(src, dest)
-  } else {
-    // 不包含根目录
-    for entry in @fs.readdir(src) {
-      let src = join_path(src, entry)
-      let dest = join_path(dest, entry)
-      mv(src, dest)
-    }
-  }
+  @fs.rename(src, dest)
 
   // let kind = @fs.kind(src)
   // let is_dir = match kind {
@@ -49,7 +36,7 @@ async fn copy_file(src : String, dest : String) -> Unit {
 }
 
 ///|
-async fn copy_dir(
+pub async fn copy_dir(
   from : String,
   to : String,
   include_root? : Bool = true,
@@ -217,12 +204,10 @@ async test "move dir" {
   mv(src_root_dir, dest_path)
   let dest_dir_and_files = get_all_sub_dir_or_file_path(
     dest_path,
-    include_root=false,
+    include_root=true,
   )
-  // 将路径中的前缀目录去掉，进行比较
-  guard get_parent_dir(src_root_dir) is Some(src_root_parent_dir)
   inspect(
-    src_dir_and_files.remove_prefix(src_root_parent_dir),
+    src_dir_and_files.remove_prefix(src_root_dir),
     content=dest_dir_and_files.remove_prefix(dest_path).to_string(),
   )
   // 删除临时文件

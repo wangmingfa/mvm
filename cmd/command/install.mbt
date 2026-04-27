@@ -58,6 +58,7 @@ pub async fn run_install(tool : @tools.Tool, version : Version) -> Unit {
   let mut src_dir = extract_dir
   let mut find_sub_dir_count : UInt = 0
   while find_sub_dir_count < root_path_depth {
+    // TODO 支持超过1层的处理
     let entries = @fs.readdir(src_dir)
     if entries.is_empty() {
       raise fail(
@@ -70,7 +71,7 @@ pub async fn run_install(tool : @tools.Tool, version : Version) -> Unit {
   // 移动到最终目录
   let final_dir = @tools.version_dir(tool, version)
   println("目录 \{src_dir} 移动到 \{final_dir}")
-  @fs_ext.mv(src_dir, final_dir, include_root=false)
+  @fs_ext.mv(src_dir, final_dir)
 
   // 清理临时文件
   @fs.rmdir(tmp_dir, recursive=true)
@@ -78,7 +79,10 @@ pub async fn run_install(tool : @tools.Tool, version : Version) -> Unit {
   // 安装之后的操作，比如增加可执行权限
   @tools.post_install(tool, final_dir)
 
-  println("\{tool}@\{version} 安装成功")
+  // 记录安装成功的工具
+  add_installed(tool, version)
+
+  @log.success("\{tool}@\{version} 安装成功")
 }
 
 ///|
@@ -120,4 +124,46 @@ pub async fn extract_file(file : String, dest : String) -> Bool {
       false
     }
   }
+}
+
+///|
+const INSTALLED_FILE = "installed.json"
+
+///|
+async fn add_installed(tool : Tool, version : String) -> Unit {
+  let mvm_home = @tools.mvm_home()
+  let installed_file_path = @fs_ext.join_path(mvm_home, INSTALLED_FILE)
+  let json = if @fs.exists(installed_file_path) {
+    @fs.read_file(installed_file_path).json() catch {
+      e => {
+        println(
+          "文件 \{@utils.yellow(installed_file_path)} 不是有效的json格式",
+        )
+        raise e
+      }
+    }
+  } else {
+    {}
+  }
+  guard json is Object(map) else {
+    // TODO 如何自动修复格式
+    raise fail("文件 \{@utils.yellow(installed_file_path)} 格式不对")
+  }
+  let key = tool.to_string()
+  if map.contains(key) {
+    let versions = if map.get(tool.to_string()) is Some(v) &&
+      v is Array(versions) {
+      versions
+    } else {
+      []
+    }
+    let version_json_str = Json::string(version)
+    if !versions.contains(version_json_str) {
+      versions.push(Json::string(version))
+    }
+  } else {
+    map.set(key, [version])
+  }
+  let content = Json::object(map).stringify(indent=2)
+  @fs.write_file(installed_file_path, content, create_mode=CreateOrTruncate)
 }

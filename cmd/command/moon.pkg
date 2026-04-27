@@ -8,4 +8,5 @@ import {
   "username/mvm/fs_ext",
   "username/mvm/cmd/tools",
   "username/mvm/utils",
+  "username/mvm/log",
 }

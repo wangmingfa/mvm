@@ -9,7 +9,33 @@ pub fn mvm_home() -> String {
     return home
   }
   guard @env.get_env_var("HOME") is Some(home)
-  "\{home}/.mvm"
+  @fs_ext.join_path(home, ".mvm")
+}
+
+///|
+pub fn cache_dir() -> String {
+  @fs_ext.join_path(mvm_home(), ".cache")
+}
+
+///|
+pub async fn read_cache_file_content(cache_file_path : String) -> String? {
+  let file_path = @fs_ext.join_path(cache_dir(), cache_file_path)
+  if @fs.exists(file_path) {
+    return Some(@fs.read_file(file_path).text())
+  }
+  return None
+}
+
+///|
+pub async fn write_cache_file_content(
+  cache_file_path : String,
+  content : String,
+) -> Unit {
+  let file_path = @fs_ext.join_path(cache_dir(), cache_file_path)
+  let parent_dir = @fs_ext.get_parent_dir(file_path)
+  guard parent_dir is Some(parent_dir)
+  @fs_ext.ensure_dir(parent_dir)
+  @fs.write_file(file_path, content, create_mode=CreateOrTruncate)
 }
 
 ///|
@@ -118,13 +144,13 @@ async fn get_config_inner(tool : Tool?, dir? : String) -> (String, Config)? {
   if @fs.exists(path) {
     let json = @fs.read_file(path).json() catch {
       _ => {
-        println("文件 \{@utils.red(path)} 的内容不是有效的json格式")
+        println("文件 \{@utils.red(path)} 不是有效的json格式")
         return None
       }
     }
     let config : Config = @json.from_json(json) catch {
       _ => {
-        println("文件 \{@utils.red(path)} 的内容有效")
+        println("文件 \{@utils.red(path)} 有效")
         return None
       }
     }
@@ -159,19 +185,19 @@ pub struct Config {
   npm : String?
   bun : String?
   zig : String?
-} derive(FromJson, ToJson, Show)
+} derive(FromJson, ToJson)
 
 ///|
-// impl Show for Config with output(s, logger) {
-//   logger.write_string(s.to_string())
-// }
+impl Show for Config with output(s, logger) {
+  logger.write_string(s.to_string())
+}
 
 ///|
-// impl Show for Config with to_string(s) {
-//   (
-//     $|{node: \{s.node}, npm: \{s.npm}, bun: \{s.bun}, zig: \{s.zig}}
-//   )
-// }
+impl Show for Config with to_string(s) {
+  (
+    $|{node: \{s.node}, npm: \{s.npm}, bun: \{s.bun}, zig: \{s.zig}}
+  )
+}
 
 ///|
 pub fn Config::get_value(self : Self, tool : Tool) -> String? {
@@ -210,7 +236,7 @@ pub async fn write_project_config(tool : Tool, version : String) -> String {
     {}
   }
   guard json is Object(map) else {
-    raise fail("文件 \{config_file_path} 的内容不是有效的json格式")
+    raise fail("文件 \{config_file_path} 不是有效的json格式")
   }
   let key = tool.to_string()
   let value = version
