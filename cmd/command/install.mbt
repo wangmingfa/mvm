@@ -9,7 +9,7 @@ pub async fn run_install(tool : @tools.Tool, version : Version) -> Unit {
 
   // 检查是否已安装
   if @tools.is_installed(tool, version) {
-    println("\{tool}@\{version} 已安装")
+    @log.warn("\{tool}@\{version} 已安装")
     return
   }
 
@@ -19,7 +19,7 @@ pub async fn run_install(tool : @tools.Tool, version : Version) -> Unit {
     return
   }
 
-  println("安装 \{@utils.yellow(tool)} \{@utils.yellow(version)}")
+  @log.info("安装 \{@utils.yellow(tool)} \{@utils.yellow(version)}")
 
   // 确保目录存在
   ensure_dir(@tools.tool_dir(tool))
@@ -27,7 +27,7 @@ pub async fn run_install(tool : @tools.Tool, version : Version) -> Unit {
   // 获取下载 URL
   let (url, root_path_depth) = @tools.get_download_url(os_info, tool, version)
   if url.is_blank() {
-    println("无法获取下载地址")
+    @log.error("无法获取下载地址")
     return
   }
 
@@ -70,7 +70,7 @@ pub async fn run_install(tool : @tools.Tool, version : Version) -> Unit {
   }
   // 移动到最终目录
   let final_dir = @tools.version_dir(tool, version)
-  println("目录 \{src_dir} 移动到 \{final_dir}")
+  // println("目录 \{src_dir} 移动到 \{final_dir}")
   @fs_ext.mv(src_dir, final_dir)
 
   // 清理临时文件
@@ -88,12 +88,12 @@ pub async fn run_install(tool : @tools.Tool, version : Version) -> Unit {
 ///|
 /// 下载文件
 pub async fn download_file(url : String, dest : String) -> Bool {
-  println("正在下载: \{url}")
-  println("保存到：\{dest}")
+  @log.debug("正在下载: \{url}")
+  @log.debug("保存到：\{dest}")
   @download.download_by_native_command(url, dest) catch {
     e => {
-      println("下载失败，原因：")
-      println(e)
+      @log.error("下载失败，原因：")
+      @log.error(e)
       return false
     }
   }
@@ -103,7 +103,7 @@ pub async fn download_file(url : String, dest : String) -> Bool {
 ///|
 /// 解压文件
 pub async fn extract_file(file : String, dest : String) -> Bool {
-  println("正在解压到 \{dest} ...")
+  @log.debug("正在解压到 \{dest} ...")
   let (code, data) = match file {
     f if f.has_suffix(".tar.gz") =>
       @process.collect_output_merged("tar", ["-xzf", f, "-C", dest])
@@ -112,58 +112,16 @@ pub async fn extract_file(file : String, dest : String) -> Bool {
     f if f.has_suffix(".zip") =>
       @process.collect_output_merged("unzip", ["-q", "-o", f, "-d", dest])
     _ => {
-      println("未知的压缩格式")
+      @log.error("未知的压缩格式")
       return false
     }
   }
   match code {
     0 => true
     _ => {
-      println("解压失败，原因：")
-      println(data.text())
+      @log.error("解压失败，原因：")
+      @log.error(data.text())
       false
     }
   }
-}
-
-///|
-const INSTALLED_FILE = "installed.json"
-
-///|
-async fn add_installed(tool : Tool, version : String) -> Unit {
-  let mvm_home = @tools.mvm_home()
-  let installed_file_path = @fs_ext.join_path(mvm_home, INSTALLED_FILE)
-  let json = if @fs.exists(installed_file_path) {
-    @fs.read_file(installed_file_path).json() catch {
-      e => {
-        println(
-          "文件 \{@utils.yellow(installed_file_path)} 不是有效的json格式",
-        )
-        raise e
-      }
-    }
-  } else {
-    {}
-  }
-  guard json is Object(map) else {
-    // TODO 如何自动修复格式
-    raise fail("文件 \{@utils.yellow(installed_file_path)} 格式不对")
-  }
-  let key = tool.to_string()
-  if map.contains(key) {
-    let versions = if map.get(tool.to_string()) is Some(v) &&
-      v is Array(versions) {
-      versions
-    } else {
-      []
-    }
-    let version_json_str = Json::string(version)
-    if !versions.contains(version_json_str) {
-      versions.push(Json::string(version))
-    }
-  } else {
-    map.set(key, [version])
-  }
-  let content = Json::object(map).stringify(indent=2)
-  @fs.write_file(installed_file_path, content, create_mode=CreateOrTruncate)
 }

@@ -18,22 +18,30 @@ pub fn[T : Show] success(msg : T) -> Unit {
 
 ///|
 pub fn[T : Show] error(msg : T) -> Unit {
-  log("ERROR", red(msg))
+  if match_log_level(Error) {
+    log("ERROR", red(msg))
+  }
 }
 
 ///|
 pub fn[T : Show] warn(msg : T) -> Unit {
-  log("WARN", yellow(msg))
+  if match_log_level(Warn) {
+    log("WARN", yellow(msg))
+  }
 }
 
 ///|
 pub fn[T : Show] info(msg : T) -> Unit {
-  log("INFO", msg)
+  if match_log_level(Info) {
+    log("INFO", msg)
+  }
 }
 
 ///|
 pub fn[T : Show] debug(msg : T) -> Unit {
-  log("DEBUG", msg)
+  if match_log_level(Debug) {
+    log("DEBUG", msg)
+  }
 }
 
 ///|

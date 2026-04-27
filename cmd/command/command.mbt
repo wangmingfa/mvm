@@ -86,12 +86,14 @@ fn parse_with_version(command_type : String, options : String) -> Command raise 
 ///|
 pub fn get_command(argv : ArrayView[String]) -> Command raise {
   match argv {
-    ["install", options] => parse_with_version("install", options)
+    ["install", options] | ["i", options] =>
+      parse_with_version("install", options)
     ["pin", options] => parse_with_version("pin", options)
     ["use", options] => parse_with_version("use", options)
-    ["uninstall", options] => parse_with_version("uninstall", options)
-    ["list"] => List(None)
-    ["list", tool] => List(Some(Tool::from_string(tool)))
+    ["uninstall", options] | ["un", options] =>
+      parse_with_version("uninstall", options)
+    ["list"] | ["ls"] => List(None)
+    ["list", tool] | ["ls", tool] => List(Some(Tool::from_string(tool)))
     [cmd] => raise fail("命令 '\{cmd}' 缺少参数")
     [] => raise fail("请提供命令参数。示例：mvm install node@22")
     _ => {
@@ -99,4 +101,62 @@ pub fn get_command(argv : ArrayView[String]) -> Command raise {
       raise fail("无效的命令：\{msg}")
     }
   }
+}
+
+///|
+fn[T : Show] get_arg_value_from_args(
+  args : Array[T],
+  key : String,
+  default? : String,
+) -> String? {
+  let find_arg_key = "--\{key}"
+  let find_arg_key_with_equal = "\{find_arg_key}="
+  for idx, arg in args {
+    let arg_str = arg.to_string()
+    if arg_str == find_arg_key {
+      return args.get(idx + 1).map(v => v.to_string())
+    }
+    if arg_str.has_prefix(find_arg_key_with_equal) {
+      return Some(arg_str[find_arg_key_with_equal.length():].to_string())
+    }
+  }
+  if default is Some(default) {
+    return Some(default)
+  }
+  None
+}
+
+///|
+pub fn get_arg_value(key : String, default? : String) -> String? {
+  let args = @env.args()[1:].to_array()
+  if default is Some(default) {
+    return get_arg_value_from_args(args, key, default~)
+  }
+  get_arg_value_from_args(args, key)
+}
+
+///|
+test "get_arg_value" {
+  let args = [
+    "--log-level=debug", // key=value
+     "--node", "24", // key value
+  ]
+  inspect(
+    get_arg_value_from_args(args, "log-level"),
+    content=(
+      #|Some("debug")
+    ),
+  )
+  inspect(
+    get_arg_value_from_args(args, "node"),
+    content=(
+      #|Some("24")
+    ),
+  )
+  inspect(
+    get_arg_value_from_args(args, "zig", default="v0.15.1"),
+    content=(
+      #|Some("v0.15.1")
+    ),
+  )
 }

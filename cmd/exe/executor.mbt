@@ -2,7 +2,7 @@
 async fn main {
   let args = @env.args()
   guard args.get(1) is Some(exe_name) else {
-    println("命令不合法")
+    @log.error("命令不合法")
     return
   }
   let exe_name = @fs_ext.get_path_name(exe_name)
@@ -16,7 +16,7 @@ async fn main {
     let use_command = @utils.yellow("use")
     let pin = @utils.yellow("pin")
     // println("config: \{@tools.get_config(tool~)}")
-    println(
+    @log.error(
       "没有指定 \{@utils.yellow(tool_name)} 的版本，请先使用 \{use_command} 或 \{pin} 指定版本",
     )
     return

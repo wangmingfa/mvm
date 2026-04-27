@@ -11,6 +11,81 @@ pub async fn get_target_version(
 }
 
 ///|
+pub fn match_version(
+  tool : Tool,
+  version : String,
+  target_version : String,
+) -> Bool {
+  match tool {
+    Node => {
+      let handle_version = if version.has_prefix("v") {
+        version
+      } else {
+        "v\{version}"
+      }
+      if handle_version == target_version {
+        return true
+      }
+      if target_version.has_prefix(handle_version) {
+        let len = handle_version.length()
+        let next_s = target_version[len:len + 1]
+        let _ = @string.parse_int(next_s) catch { _ => return true }
+        // 如果下一位是数字，则匹配不通过
+        return false
+      }
+      false
+    }
+    _ => false
+  }
+}
+
+///|
+test "match_version" {
+  inspect(
+    match_version(Node, "18", "v18.20.8"),
+    content=(
+      #|true
+    ),
+  )
+  inspect(
+    match_version(Node, "v18", "v18.20.8"),
+    content=(
+      #|true
+    ),
+  )
+  inspect(
+    match_version(Node, "1", "v18.20.8"),
+    content=(
+      #|false
+    ),
+  )
+  inspect(
+    match_version(Node, "v1", "v18.20.8"),
+    content=(
+      #|false
+    ),
+  )
+  inspect(
+    match_version(Node, "18.20", "v18.20.8"),
+    content=(
+      #|true
+    ),
+  )
+  inspect(
+    match_version(Node, "v18.20", "v18.20.8"),
+    content=(
+      #|true
+    ),
+  )
+  inspect(
+    match_version(Node, "18.2", "v18.20.8"),
+    content=(
+      #|false
+    ),
+  )
+}
+
+///|
 /// 获取下载 URL
 pub fn get_download_url(
   os_info : @os.OsInfo,

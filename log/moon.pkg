@@ -1,3 +1,4 @@
 import {
   "username/mvm/utils",
+  "moonbitlang/core/env",
 }

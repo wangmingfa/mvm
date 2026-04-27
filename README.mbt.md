@@ -54,5 +54,7 @@ mvm uninstall zig@0.12.0
 1. 程序入口
 ```bash
 # 等同生产：mvm install node@20
-moon run cmd/main/main.mbt install node@20
+moon run cmd/main install node@20
+# 调试模式运行
+MVM_LOG_LEVEL=debug moon run cmd/exe -- node -v
 ```
