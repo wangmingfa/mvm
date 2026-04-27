@@ -26,7 +26,13 @@ mvm install bun@1.1.0
 mvm install zig@0.13.0
 ```
 
-2. `mvm pin`--项目级版本锁定（强烈推荐）
+2. `mvm use`--设置全局版本
+```bash
+mvm use node@20
+mvm use node@20.18.0
+```
+
+3. `mvm pin`--项目级版本锁定（强烈推荐）
 ```bash
 # 进入项目目录
 cd my-project
@@ -35,7 +41,7 @@ mvm pin bun@1.2.3
 mvm pin zig@0.15.2
 ```
 
-3.`mvm list`—— 查看版本
+4. `mvm list`—— 查看版本
 ```bash
 # 查看所有
 mvm list
@@ -45,7 +51,7 @@ mvm list node
 mvm list bun
 ```
 
-4.`mvm uninstall`—— 卸载版本
+5. `mvm uninstall`—— 卸载版本
 ```bash
 mvm uninstall node@18.17.0
 mvm uninstall zig@0.12.0
@@ -57,6 +63,6 @@ mvm uninstall zig@0.12.0
 ```bash
 # 等同生产：mvm install node@20
 moon run cmd/main install node@20
-# 调试模式运行
+# 调试模式运行，等同生产：node -v
 MVM_LOG_LEVEL=debug moon run cmd/exe -- node -v
 ```

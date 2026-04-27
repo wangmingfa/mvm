@@ -121,6 +121,7 @@ pub async fn get_tool_exe_path(tool : Tool) -> (String, String)? {
     config.get_value(Node) is Some(version) else {
     return None
   }
+  @log.debug("使用 \{tool} 的 \{version} 版本运行命令")
   let path = match tool {
     Node => get_nodejs_exe_path(version)
     _ => raise fail("不支持的工具：\{tool}")

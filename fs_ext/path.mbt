@@ -225,4 +225,10 @@ test "get_parent_dir" {
       #|Some("home/peter")
     ),
   )
+  inspect(
+    get_parent_dir("home/peter/code/a.txt"),
+    content=(
+      #|Some("home/peter/code")
+    ),
+  )
 }

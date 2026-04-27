@@ -1,5 +1,8 @@
 ///|
 async fn main {
+  guard @env.current_dir() is Some(cwd)
+  @log.debug("当前目录：\{cwd}")
+
   let args = @env.args()
   guard args.get(1) is Some(exe_name) else {
     @log.error("命令不合法")
@@ -11,6 +14,8 @@ async fn main {
   let exe_args = args[2:]
   let args_str = exe_args.join(" ")
   let result = @tools.get_tool_exe_path(tool)
+
+  @log.debug("运行：\{tool} \{args_str}")
 
   guard result is Some((tool_exe_path, version)) else {
     let use_command = @utils.yellow("use")

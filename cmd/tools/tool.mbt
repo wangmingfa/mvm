@@ -145,7 +145,7 @@ async fn get_config_inner(tool : Tool?, dir? : String) -> (String, Config)? {
     dir
   }
   let path = @fs_ext.join_path(dir, CONFIG_FILE)
-  // println("tool: \{tool}, path: \{path}")
+  @log.debug("在 \{dir} 查找 \{tool} 的版本号")
   if @fs.exists(path) {
     let json = @fs.read_file(path).json() catch {
       _ => {
@@ -163,9 +163,10 @@ async fn get_config_inner(tool : Tool?, dir? : String) -> (String, Config)? {
     // println("config: \{config}")
     if tool is Some(tool) {
       // 指定了tool
-      if json is Object(map) && map.get(tool.to_string()) is Some(String(_)) {
+      if json is Object(map) &&
+        map.get(tool.to_string()) is Some(String(version)) {
         // 有版本
-        // println("\{tool.to_string()} 版本 \{version}")
+        @log.debug("在 \{path} 找到 \{tool} 版本 \{version}")
         return Some((path, config))
       }
     } else {
@@ -177,10 +178,12 @@ async fn get_config_inner(tool : Tool?, dir? : String) -> (String, Config)? {
     return None
   }
   // 往上一级
-  guard @fs_ext.get_parent_dir(path) is Some(parent) else {
+  guard @fs_ext.get_parent_dir(dir) is Some(parent) else {
+    @log.debug("从 MVM_HOME 查找")
     // 没有上一级，则从mvm_home找
     return get_config_inner(tool, dir=mvm_home())
   }
+  @log.debug("从父目录查找")
   return get_config_inner(tool, dir=parent)
 }
 
@@ -232,9 +235,16 @@ fn get_project_config_path() -> String {
 }
 
 ///|
-/// 写入项目配置
-pub async fn write_project_config(tool : Tool, version : String) -> String {
-  let config_file_path = get_project_config_path()
+fn get_global_config_path() -> String {
+  @fs_ext.join_path(mvm_home(), CONFIG_FILE)
+}
+
+///|
+async fn write_config(
+  config_file_path : String,
+  tool : Tool,
+  version : String,
+) -> String {
   let json = if @fs.exists(config_file_path) {
     @fs.read_file(config_file_path).json()
   } else {
@@ -247,6 +257,19 @@ pub async fn write_project_config(tool : Tool, version : String) -> String {
   let value = version
   map.set(key, Json::string(value))
   let content = Json::object(map).stringify(indent=2)
-  @fs.write_file(project_config_file(), content, create_mode=CreateOrTruncate)
+  @fs.write_file(config_file_path, content, create_mode=CreateOrTruncate)
   config_file_path
+}
+
+///|
+/// 写入项目配置
+pub async fn write_project_config(tool : Tool, version : String) -> String {
+  let config_file_path = get_project_config_path()
+  write_config(config_file_path, tool, version)
+}
+
+///|
+pub async fn write_global_config(tool : Tool, version : String) -> String {
+  let config_file_path = get_global_config_path()
+  write_config(config_file_path, tool, version)
 }

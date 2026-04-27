@@ -2,6 +2,7 @@ import {
   "username/mvm/os",
   "username/mvm/utils",
   "username/mvm/fs_ext",
+  "username/mvm/log",
   "moonbitlang/async/http",
   "moonbitlang/async/fs",
   "moonbitlang/async/process",

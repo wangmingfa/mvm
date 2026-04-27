@@ -6,6 +6,7 @@ pub async fn run_pin(tool : @tools.Tool, version : String) -> Unit {
 
   // 写入项目配置
   let config_file_path = @tools.write_project_config(tool, version)
-  println("已将项目的 \{tool} 版本锁定为 \{version}")
-  println("配置文件: \{config_file_path}")
+  @log.success(
+    "已将目录 \{config_file_path} 下的 \{tool} 版本锁定为 \{version}",
+  )
 }
