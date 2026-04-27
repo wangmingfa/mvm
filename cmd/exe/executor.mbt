@@ -23,7 +23,7 @@ async fn main {
   }
   if !@fs.exists(tool_exe_path) {
     // 没有安装，提示用户安装或指定版本
-    @command.run_install(tool, @command.Version::new(version))
+    @command.run_install(tool, Some(version))
   }
 
   let cmd = "\{tool_exe_path} \{args_str}"

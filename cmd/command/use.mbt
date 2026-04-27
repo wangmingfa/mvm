@@ -1,8 +1,8 @@
 ///|
 /// 执行临时切换命令
-pub async fn run_use(tool : @tools.Tool, version : Version) -> Unit {
+pub async fn run_use(tool : @tools.Tool, version : String) -> Unit {
   let os = @os.get_os_info()
-  let version = @tools.get_target_version(os, tool, version.value())
+  let version = @tools.get_target_version(os, tool, version)
 
   // 检查版本是否已安装
   if !@tools.is_installed(tool, version) {

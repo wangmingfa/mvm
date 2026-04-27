@@ -82,6 +82,11 @@ pub(all) enum Tool {
 }
 
 ///|
+pub fn Tool::all() -> Array[Tool] {
+  [Node, Npm, Zig]
+}
+
+///|
 pub impl Show for Tool with to_string(s) {
   match s {
     // Bun => "Bun"

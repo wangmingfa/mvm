@@ -1,7 +1,12 @@
 ///|
 /// 执行查看版本命令
-pub async fn run_list(tool_opt : @tools.Tool?) -> Unit {
-  match tool_opt {
+pub async fn run_list(tool : @tools.Tool?) -> Unit {
+  for tool in @tools.Tool::all() {
+    let versions = get_installed(tool)
+    println(versions)
+  }
+
+  match tool {
     Some(tool) => {
       println("已安装的 \{tool} 版本：")
       let versions = @tools.installed_versions(tool)

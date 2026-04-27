@@ -3,9 +3,11 @@ using @fs_ext {ensure_dir}
 
 ///|
 /// 执行安装命令
-pub async fn run_install(tool : @tools.Tool, version : Version) -> Unit {
+pub async fn run_install(tool : @tools.Tool, version : String?) -> Unit {
+  // 如果version为空，则默认为lts
+  let version = if version is Some(version) { version } else { "lts" }
   let os_info = @os.get_os_info()
-  let version = @tools.get_target_version(os_info, tool, version.value())
+  let version = @tools.get_target_version(os_info, tool, version)
 
   // 检查是否已安装
   if @tools.is_installed(tool, version) {
@@ -82,7 +84,7 @@ pub async fn run_install(tool : @tools.Tool, version : Version) -> Unit {
   // 记录安装成功的工具
   add_installed(tool, version)
 
-  @log.success("\{tool}@\{version} 安装成功")
+  @log.success("\{tool} \{version} 安装成功")
 }
 
 ///|

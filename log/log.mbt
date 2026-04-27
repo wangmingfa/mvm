@@ -5,6 +5,9 @@ using @utils {red, green, yellow}
 fn[T : Show] log(prefix : String, msg : T) -> Unit {
   let time = @utils.get_date_str() catch { _ => "" }
   let prefix = if prefix.is_blank() { prefix } else { "[\{prefix}]" }
+  // 右边补齐空格，确保日志内容左侧对齐
+  let pad_right = " ".repeat(7 - prefix.length())
+  let prefix = "\{prefix}\{pad_right}"
   let text = [time, prefix, msg.to_string()]
     .filter(v => !v.is_blank())
     .join(" ")
@@ -13,7 +16,7 @@ fn[T : Show] log(prefix : String, msg : T) -> Unit {
 
 ///|
 pub fn[T : Show] success(msg : T) -> Unit {
-  log("SUCCESS", green(msg))
+  log("INFO", green(msg))
 }
 
 ///|

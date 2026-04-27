@@ -2,36 +2,12 @@
 using @tools {type Tool}
 
 ///|
-pub struct Version(String)
-
-///|
-pub fn Version::new(version : String) -> Self {
-  Version(version)
-}
-
-///|
-/// 获取版本号字符串
-pub fn Version::value(self : Version) -> String {
-  self.0
-}
-
-///|
-impl Show for Version with output(s, logger) {
-  logger.write_string(s.to_string())
-}
-
-///|
-impl Show for Version with to_string(s) {
-  "Version(\"\{s.0}\")"
-}
-
-///|
 pub enum Command {
-  Install(Tool, Version)
-  Pin(Tool, Version)
-  Use(Tool, Version)
+  Install(Tool, String?)
+  Pin(Tool, String)
+  Use(Tool, String)
   List(Tool?)
-  Uninstall(Tool, Version)
+  Uninstall(Tool, String?)
 }
 
 ///|
@@ -57,15 +33,24 @@ pub impl Show for Command with output(s, logger) {
 fn Command::new_with_version(
   command_type : String,
   tool : String,
-  version : String,
+  version? : String,
 ) -> Command raise {
   let t = Tool::from_string(tool)
-  let v = Version(version)
   match command_type {
-    "install" => Install(t, v)
-    "pin" => Pin(t, v)
-    "use" => Use(t, v)
-    "uninstall" => Uninstall(t, v)
+    "install" => Install(t, version)
+    "pin" => {
+      guard version is Some(version) else {
+        raise fail("pin参数无效。示例：mvm pin node@20")
+      }
+      Pin(t, version)
+    }
+    "use" => {
+      guard version is Some(version) else {
+        raise fail("use参数无效。示例：mvm use node@20")
+      }
+      Use(t, version)
+    }
+    "uninstall" => Uninstall(t, version)
     _ => raise fail("无效的命令类型：\{command_type}")
   }
 }
@@ -77,9 +62,9 @@ fn parse_with_version(command_type : String, options : String) -> Command raise 
       Command::new_with_version(
         command_type,
         before.to_string(),
-        after.to_string(),
+        version=after.to_string(),
       )
-    _ => raise fail("无效的参数：\{options}，格式应为 tool@version")
+    tool => Command::new_with_version(command_type, tool.to_string())
   }
 }
 

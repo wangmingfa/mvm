@@ -1,7 +1,6 @@
 ///|
 /// 执行卸载命令
-pub async fn run_uninstall(tool : @tools.Tool, version : Version) -> Unit {
-  let version = version.0
+pub async fn run_uninstall(tool : @tools.Tool, version : String?) -> Unit {
   let versions = get_installed(tool)
 
   if versions.is_empty() {
@@ -12,7 +11,8 @@ pub async fn run_uninstall(tool : @tools.Tool, version : Version) -> Unit {
   let remove_versions = []
 
   for v in versions {
-    if !@tools.match_version(tool, version, v) {
+    // 如果version为空，则卸载所有版本
+    if version is Some(version) && !@tools.match_version(tool, version, v) {
       continue
     }
     remove_versions.push(v)

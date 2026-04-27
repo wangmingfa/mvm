@@ -19,6 +19,8 @@ mvm install zig
 
 # 安装指定版本
 mvm install node@20
+mvm install node@lts
+mvm install node@latest
 mvm install node@20.18.0
 mvm install bun@1.1.0
 mvm install zig@0.13.0

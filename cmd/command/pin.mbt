@@ -1,8 +1,8 @@
 ///|
 /// 执行项目锁定命令
-pub async fn run_pin(tool : @tools.Tool, version : Version) -> Unit {
+pub async fn run_pin(tool : @tools.Tool, version : String) -> Unit {
   let os = @os.get_os_info()
-  let version = @tools.get_target_version(os, tool, version.value())
+  let version = @tools.get_target_version(os, tool, version)
 
   // 写入项目配置
   let config_file_path = @tools.write_project_config(tool, version)
