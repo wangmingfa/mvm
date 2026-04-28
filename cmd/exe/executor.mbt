@@ -40,12 +40,14 @@ async fn run() -> Unit {
   guard result is Some((tool_exe_path, version)) else {
     let use_command = @utils.yellow("use")
     let pin = @utils.yellow("pin")
-    // println("config: \{@tools.get_config(tool~)}")
     @log.error(
       "没有指定 \{@utils.yellow(tool_name)} 的版本，请先使用 \{use_command} 或 \{pin} 指定版本",
     )
     return
   }
+
+  @log.debug("使用 \{tool} 的 \{version} 版本运行命令")
+
   if !@fs.exists(tool_exe_path) {
     // 没有安装，提示用户安装或指定版本
     @command.run_install(tool, Some(version))

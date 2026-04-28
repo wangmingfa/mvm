@@ -11,6 +11,12 @@ const ZIG_INDEX_CACHE_FILE = "zig_index.json"
 pub struct Zig {}
 
 ///|
+test "Zig" {
+  // 去除 Warning (struct_never_constructed) 警告
+  let _ = Zig::{  }
+}
+
+///|
 pub async fn Zig::get_target_version(
   os : @os.OsInfo,
   version : String,

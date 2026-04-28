@@ -11,6 +11,12 @@ const NODE_INDEX_CACHE_FILE = "nodejs_index.json"
 struct Node {}
 
 ///|
+test "Node" {
+  // 去除 Warning (struct_never_constructed) 警告
+  let _ = Node::{  }
+}
+
+///|
 struct NodeJsInfo {
   version : String
   // date : String
@@ -185,4 +191,49 @@ pub fn Node::get_exe_path(version : String) -> String {
   [version_dir(Tool::Node, version), "bin", "node", suffix]
   .filter(v => !v.is_blank())
   .join("/")
+}
+
+///|
+pub async fn Node::get_node_builtin_tool_path_and_version(
+  tool : Tool,
+  node_exe_path : String,
+) -> (String, String)? {
+  // 处理node内置工具
+
+  guard @fs_ext.get_parent_dir(node_exe_path) is Some(node_bin_dir) else {
+    @log.error("无法获取到 node 的 bin 目录")
+    return None
+  }
+
+  // 路径：直接替换node为npm
+  let name = @fs_ext.get_path_name(node_exe_path)
+  let tool_path = @fs_ext.join_path(
+    node_bin_dir,
+    name.replace(old="node", new=tool.to_string()),
+  )
+
+  let node_dir = "\{node_bin_dir}/../"
+  // npm和npx共用一个package.json
+  let node_tool_name = if tool is Corepack {
+    tool.to_string()
+  } else {
+    Npm.to_string()
+  }
+  let npm_package_json_file_path = "\{node_dir}/lib/node_modules/\{node_tool_name}/package.json"
+  if @fs.exists(npm_package_json_file_path) {
+    let json = @fs.read_file(npm_package_json_file_path).json()
+    guard json is Object(map) else {
+      @log.error("\{node_tool_name} 的 package.json 文件格式不对")
+      return None
+    }
+    guard map.get("version") is Some(String(node_tool_version)) else {
+      @log.error(
+        "\{node_tool_name} 的 package.json 中的 version 格式不对",
+      )
+      return None
+    }
+    return Some((tool_path, node_tool_version))
+  }
+  @log.error("无法从 \{npm_package_json_file_path} 获取到 npm 的版本")
+  None
 }

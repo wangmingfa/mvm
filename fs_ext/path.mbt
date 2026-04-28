@@ -13,7 +13,7 @@ fn Path::to_string(self : Self) -> String {
 }
 
 ///|
-pub fn join_path(current : String, path_to_join : String) -> String {
+pub fn[T : Show] join_path(current : T, path_to_join : T) -> String {
   let mut path = "\{current}/\{path_to_join}"
   while true {
     let mut continue_loop = false

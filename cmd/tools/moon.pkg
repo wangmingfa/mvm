@@ -1,7 +1,6 @@
 import {
   "username/mvm/os",
   "username/mvm/fs_ext",
-  "username/mvm/log",
   "moonbitlang/async/process",
   "moonbitlang/core/json",
   "moonbitlang/core/env",

@@ -157,25 +157,37 @@ pub fn get_download_url(
     // Bun =>
     //   "https://github.com/oven-sh/bun/releases/download/bun-v\{version}/bun-\{os}-\{arch}.zip"
     Zig => (Zig::get_download_url(os_info, version), 1)
-    Npm =>
-      // npm 随 node 安装，不单独下载
-      raise fail("暂不支持npm")
+    _ => raise fail("无法获取 \{tool} 的下载链接")
   }
 }
 
 ///|
-pub async fn get_tool_exe_path(tool : Tool) -> (String, String)? {
+/// 获取工具的运行路径，返回路径和版本
+pub async fn _get_tool_exe_path(tool : Tool) -> (String, String)? {
   guard get_config(tool~) is Some((_, config)) &&
     config.get_value(tool) is Some(version) else {
     return None
   }
-  @log.debug("使用 \{tool} 的 \{version} 版本运行命令")
   let path = match tool {
     Node => Node::get_exe_path(version)
     Zig => Zig::get_exe_path(version)
     _ => raise fail("不支持的工具：\{tool}")
   }
   Some((path, version))
+}
+
+///|
+pub async fn get_tool_exe_path(tool : Tool) -> (String, String)? {
+  let is_node_builtin_tools = @tool_def.Tool::is_node_builtin_tools(tool)
+  // 如果是查找npm，实际上是去找Node
+  let real_tool = if is_node_builtin_tools { @tool_def.Node } else { tool }
+  let res = _get_tool_exe_path(real_tool)
+
+  if is_node_builtin_tools {
+    guard res is Some((path, _)) else { return None }
+    return @tool_def.Node::get_node_builtin_tool_path_and_version(tool, path)
+  }
+  res
 }
 
 ///|

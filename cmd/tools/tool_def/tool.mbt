@@ -77,7 +77,9 @@ pub async fn installed_versions(tool : Tool) -> Array[String] {
 pub(all) enum Tool {
   Node
   Npm
-  // Bun
+  Npx
+  Corepack
+  Bun
   Zig
 }
 
@@ -89,9 +91,11 @@ pub fn Tool::all() -> Array[Tool] {
 ///|
 pub impl Show for Tool with to_string(s) {
   match s {
-    // Bun => "Bun"
-    Npm => "npm"
     Node => "node"
+    Npm => "npm"
+    Npx => "npx"
+    Corepack => "corepack"
+    Bun => "bun"
     Zig => "zig"
   }
 }
@@ -106,10 +110,29 @@ pub fn Tool::from_string(tool : String) -> Tool raise {
   match tool.to_lower() {
     "node" => Node
     "npm" => Npm
-    // "bun" => Bun
+    "npx" => Npx
+    "corepack" => Corepack
+    "bun" => Bun
     "zig" => Zig
     _ => raise fail("不支持的工具：\{tool}")
   }
+}
+
+///|
+impl Eq for Tool with equal(a, b) {
+  match a {
+    Node => b is Node
+    Npm => b is Npm
+    Npx => b is Npx
+    Corepack => b is Corepack
+    Bun => b is Bun
+    Zig => b is Zig
+  }
+}
+
+///|
+pub fn Tool::is_node_builtin_tools(tool : Tool) -> Bool {
+  [Npm, Npx, Corepack].contains(tool)
 }
 
 ///|
@@ -203,7 +226,6 @@ async fn get_config_inner(
 ///|
 pub struct Config {
   node : String?
-  npm : String?
   bun : String?
   zig : String?
 } derive(FromJson, ToJson)
@@ -216,16 +238,16 @@ impl Show for Config with output(s, logger) {
 ///|
 impl Show for Config with to_string(s) {
   (
-    $|{node: \{s.node}, npm: \{s.npm}, bun: \{s.bun}, zig: \{s.zig}}
+    $|{node: \{s.node}, bun: \{s.bun}, zig: \{s.zig}}
   )
 }
 
 ///|
-pub fn Config::get_value(self : Self, tool : Tool) -> String? {
+pub fn Config::get_value(self : Self, tool : Tool) -> String? raise {
   match tool {
-    Npm => self.npm
     Node => self.node
     Zig => self.zig
+    _ => raise fail("不支持获取 \{tool} 的值")
   }
 }
 

@@ -21,11 +21,14 @@ cp "${BUILD_DIR}/main/main.exe" "${BIN_DIR}/mvm"
 cp "${BUILD_DIR}/exe/exe.exe" "${BIN_DIR}/mvm-exe"
 
 # 支持的工具列表
-TOOLS=("fnode" "fnpm" "fzig")
+TOOLS=("node" "npm" "npx" "corepack" "zig")
+
+# 本机测试时，增加f前缀，用于与系统已经安装好的node区分开，避免重名
+PREFIX="f"
 
 # 创建工具软连接
 for tool in "${TOOLS[@]}"; do
-  ln -sf "${BIN_DIR}/mvm-exe" "${BIN_DIR}/${tool}"
+  ln -sf "${BIN_DIR}/mvm-exe" "${BIN_DIR}/${PREFIX}${tool}"
 done
 
 echo "构建完成！可执行文件已安装到 ${BIN_DIR}"

@@ -22,8 +22,10 @@ pub async fn run_list(tool : @tools.Tool?) -> Unit {
     } else {
       None
     }
+
     @log.debug("\{tool} 当前目录版本 \{cwd_tool_version}")
     @log.debug("\{tool} 全局版本 \{global_tool_version}")
+
     println("\{tool}:")
     if versions.is_empty() {
       println("  (暂无)")

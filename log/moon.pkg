@@ -2,3 +2,7 @@ import {
   "username/mvm/utils",
   "moonbitlang/core/env",
 }
+
+options(
+  targets: { "debug.mbt": [ "debug" ], "release.mbt": [ "release" ] },
+)
