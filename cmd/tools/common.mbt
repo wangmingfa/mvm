@@ -1,11 +1,56 @@
 ///|
+using @tool_def {type Node, type Zig}
+
+///|
+pub using @tool_def {
+  type Tool,
+  write_global_config,
+  write_project_config,
+  mvm_home,
+  is_installed,
+  tool_dir,
+  version_dir,
+  get_config,
+}
+
+///|
+using @os {type OsInfo}
+
+///|
+fn parse_version(version : String) -> (String, Int) raise {
+  // version支持这些格式：
+  // lts：下载lts版本
+  // latest：下载最新版本
+  // 20：指定主版本，下载20版本下的最新版本
+  // 20.1：指定主版本和次版本，下载20.1版本下的最新版本
+  // 24.1.0：指定完整的版本
+
+  let version_count = lexmatch version {
+    // x.y.z
+    "v?[[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+" => 3
+    // x.y
+    "v?[[:digit:]]+\.[[:digit:]]+" => 2
+    // x
+    "v?[[:digit:]]+" => 1
+    _ =>
+      match version {
+        "lts" | "latest" => 0
+        _ => raise fail("无效的版本：\{version}")
+      }
+  }
+  return (version, version_count)
+}
+
+///|
 pub async fn get_target_version(
-  os : @os.OsInfo,
+  os : OsInfo,
   tool : Tool,
   version : String,
 ) -> String {
+  let (version, version_count) = parse_version(version)
   match tool {
-    Node => get_target_nodejs_version(os, version)
+    Node => Node::get_target_version(os, version, version_count)
+    Zig => Zig::get_target_version(os, version, version_count)
     _ => raise fail("暂不支持改工具：\{tool}")
   }
 }
@@ -88,27 +133,15 @@ test "match_version" {
 ///|
 /// 获取下载 URL
 pub fn get_download_url(
-  os_info : @os.OsInfo,
+  os_info : OsInfo,
   tool : Tool,
   version : String,
 ) -> (String, UInt) raise {
   match tool {
-    Node => (get_nodejs_download_url(os_info, version), 1)
+    Node => (Node::get_download_url(os_info, version), 1)
     // Bun =>
     //   "https://github.com/oven-sh/bun/releases/download/bun-v\{version}/bun-\{os}-\{arch}.zip"
-    Zig => {
-      let arch = if os_info.arch is Aarch64 { "aarch64" } else { "x86_64" }
-      let (os, ext) = match os_info.name {
-        Windows => ("windows", "zip")
-        Linux => ("linux", "tar.gz")
-        MacOS => ("darwin", "tar.gz")
-        name => raise fail("不支持的操作系统：\{name}")
-      }
-      (
-        "https://ziglang.org/download/\{version}/zig-\{os}-\{arch}-\{version}.\{ext}",
-        0,
-      )
-    }
+    Zig => (Zig::get_download_url(os_info, version), 1)
     Npm =>
       // npm 随 node 安装，不单独下载
       raise fail("暂不支持npm")
@@ -123,7 +156,7 @@ pub async fn get_tool_exe_path(tool : Tool) -> (String, String)? {
   }
   @log.debug("使用 \{tool} 的 \{version} 版本运行命令")
   let path = match tool {
-    Node => get_nodejs_exe_path(version)
+    Node => Node::get_exe_path(version)
     _ => raise fail("不支持的工具：\{tool}")
   }
   Some((path, version))

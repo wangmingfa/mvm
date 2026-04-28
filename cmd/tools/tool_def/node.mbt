@@ -8,6 +8,9 @@ const NODE_INDEX_URL = "https://nodejs.org/dist/index.json"
 const NODE_INDEX_CACHE_FILE = "nodejs_index.json"
 
 ///|
+struct Node {}
+
+///|
 struct NodeJsInfo {
   version : String
   // date : String
@@ -16,7 +19,7 @@ struct NodeJsInfo {
 } derive(@json.FromJson)
 
 ///|
-async fn get_version(
+pub async fn Node::get_target_version(
   os : @os.OsInfo,
   version : String,
   version_count : Int,
@@ -26,7 +29,9 @@ async fn get_version(
     let cache_file_content = read_cache_file_content(NODE_INDEX_CACHE_FILE)
     if cache_file_content is Some(content) {
       let json = @json.parse(content)
-      let target_version = get_nodejs_version(os, version, version_count, json) catch {
+      let target_version = Node::_get_proper_version(
+        os, version, version_count, json,
+      ) catch {
         _ => ""
       }
       if !target_version.is_blank() {
@@ -41,37 +46,11 @@ async fn get_version(
   }
   let json = data.json()
   write_cache_file_content(NODE_INDEX_CACHE_FILE, json.stringify(indent=2))
-  get_nodejs_version(os, version, version_count, json)
+  Node::_get_proper_version(os, version, version_count, json)
 }
 
 ///|
-async fn get_target_nodejs_version(os : @os.OsInfo, version : String) -> String {
-  // version支持这些格式：
-  // lts：下载lts版本
-  // latest：下载最新版本
-  // 20：指定主版本，下载20版本下的最新版本
-  // 20.1：指定主版本和次版本，下载20.1版本下的最新版本
-  // 24.1.0：指定完整的版本
-
-  let version_count = lexmatch version {
-    // x.y.z
-    "v?[[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+" => 3
-    // x.y
-    "v?[[:digit:]]+\.[[:digit:]]+" => 2
-    // x
-    "v?[[:digit:]]+" => 1
-    _ =>
-      match version {
-        "lts" | "latest" => 0
-        _ => raise fail("无效的版本：\{version}")
-      }
-  }
-
-  get_version(os, version, version_count)
-}
-
-///|
-fn get_nodejs_version(
+fn Node::_get_proper_version(
   os : @os.OsInfo,
   version : String,
   version_count : Int,
@@ -112,7 +91,7 @@ fn get_nodejs_version(
         is Some(idx) else {
         raise fail("找不到lts版本")
       }
-      check_os_compatiable(
+      Node::_check_os_compatiable(
         os,
         nodeJsInfos[idx],
         error_msg_tpl="当前LTS版本 {version} 不支持 {os.name} 操作系统下的 {os.arch} 架构",
@@ -120,7 +99,7 @@ fn get_nodejs_version(
     }
     "latest" =>
       // 按date排序，取第一个
-      check_os_compatiable(os, nodeJsInfos[0])
+      Node::_check_os_compatiable(os, nodeJsInfos[0])
     _ =>
       match version_count {
         1..=3 => {
@@ -139,7 +118,7 @@ fn get_nodejs_version(
             is Some(idx) else {
             raise fail("找不到版本：\{version}")
           }
-          check_os_compatiable(os, nodeJsInfos[idx])
+          Node::_check_os_compatiable(os, nodeJsInfos[idx])
         }
         _ => raise fail("无效的版本号：\{version}")
       }
@@ -147,7 +126,7 @@ fn get_nodejs_version(
 }
 
 ///|
-fn check_os_compatiable(
+fn Node::_check_os_compatiable(
   os : @os.OsInfo,
   nodeJsInfo : NodeJsInfo,
   error_msg_tpl? : String = "版本 {version} 不支持 {os.name} 操作系统下的 {os.arch} 架构",
@@ -184,7 +163,7 @@ fn check_os_compatiable(
 }
 
 ///|
-fn get_nodejs_download_url(
+pub fn Node::get_download_url(
   os_info : @os.OsInfo,
   version : String,
 ) -> String raise {
@@ -199,7 +178,7 @@ fn get_nodejs_download_url(
 }
 
 ///|
-fn get_nodejs_exe_path(version : String) -> String {
+pub fn Node::get_exe_path(version : String) -> String {
   // TODO
   let os = @os.get_os_name()
   let suffix = if os is Windows { ".exe" } else { "" }

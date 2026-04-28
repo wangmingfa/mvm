@@ -16,7 +16,7 @@ pub async fn run_install(tool : @tools.Tool, version : String?) -> Unit {
   }
 
   // npm 随 node 安装
-  if tool is @tools.Npm {
+  if tool is @tools.Tool::Npm {
     println("npm 会随 node 自动安装，请先安装 node")
     return
   }
