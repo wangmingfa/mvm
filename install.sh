@@ -8,19 +8,20 @@ GITHUB_REPO="username/mvm"
 # 解析参数
 ONLINE=false
 PREFIX=""
+PREFIX_SET=false
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --online) ONLINE=true; shift ;;
-    --prefix) PREFIX="$2"; shift 2 ;;
-    --prefix=*) PREFIX="${1#*=}"; shift ;;
-    -p) PREFIX="$2"; shift 2 ;;
-    -p=*) PREFIX="${1#*=}"; shift ;;
+    --prefix) PREFIX="$2"; PREFIX_SET=true; shift 2 ;;
+    --prefix=*) PREFIX="${1#*=}"; PREFIX_SET=true; shift ;;
+    -p) PREFIX="$2"; PREFIX_SET=true; shift 2 ;;
+    -p=*) PREFIX="${1#*=}"; PREFIX_SET=true; shift ;;
     *) echo "未知参数：$1"; exit 1 ;;
   esac
 done
 
-# 默认 PREFIX 为 f
-if [ -z "$PREFIX" ]; then
+# 未传 --prefix/-p 时，默认 PREFIX 为 f
+if [ "$PREFIX_SET" = false ]; then
   PREFIX="f"
 fi
 
