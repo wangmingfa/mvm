@@ -8,6 +8,12 @@ mvm 是一款现代化的多语言版本管理工具，支持 Node.js、Npm、Bu
 
 简单、统一、极快 —— 这就是 mvm。
 
+## 安装
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/<username>/mvm/main/install.sh | bash -s -- --online
+```
+
 ## 命令详解
 
 1. `mvm install`--安装版本
