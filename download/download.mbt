@@ -148,7 +148,9 @@ pub async fn download_by_native_command(url : String, dest : String) -> Unit {
     "wget" => {
       // wget 命令
       let args = [
-        "-c", //断点续传
+        "-c", // 断点续传
+         "--show-progress", // 限时进度条
+         "-q", // quiet 关闭大部分日志
          "--tries=3", // 重试3次
          "--timeout=300", // 5分钟超时
          "--waitretry=5", // 重试间隔5秒

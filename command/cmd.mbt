@@ -37,7 +37,7 @@ pub async fn get_best_downloader() -> String? {
     }
     Linux | MacOS => {
       // Linux/macOS: 优先用 curl，其次用 wget
-      let cmds = ["curl", "wget"]
+      let cmds = ["wget", "curl"]
       for cmd in cmds {
         if command_exists(cmd) {
           return Some(cmd)
