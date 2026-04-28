@@ -12,9 +12,21 @@ PREFIX_SET=false
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --online) ONLINE=true; shift ;;
-    --prefix) PREFIX="$2"; PREFIX_SET=true; shift 2 ;;
+    --prefix)
+      if [[ $# -gt 1 ]] && [[ ! "$2" =~ ^- ]]; then
+        PREFIX="$2"; shift
+      else
+        PREFIX=""
+      fi
+      PREFIX_SET=true; shift ;;
     --prefix=*) PREFIX="${1#*=}"; PREFIX_SET=true; shift ;;
-    -p) PREFIX="$2"; PREFIX_SET=true; shift 2 ;;
+    -p)
+      if [[ $# -gt 1 ]] && [[ ! "$2" =~ ^- ]]; then
+        PREFIX="$2"; shift
+      else
+        PREFIX=""
+      fi
+      PREFIX_SET=true; shift ;;
     -p=*) PREFIX="${1#*=}"; PREFIX_SET=true; shift ;;
     *) echo "未知参数：$1"; exit 1 ;;
   esac
