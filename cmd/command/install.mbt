@@ -5,7 +5,7 @@ using @fs_ext {ensure_dir}
 /// 执行安装命令
 pub async fn run_install(tool : @tools.Tool, version : String?) -> Unit {
   // 如果version为空，则默认为lts
-  let version = if version is Some(version) { version } else { "lts" }
+  let version = if version is Some(version) { version } else { "" }
   let os_info = @os.get_os_info()
   let version = @tools.get_target_version(os_info, tool, version)
 

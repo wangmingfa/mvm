@@ -87,7 +87,7 @@ fn Node::_get_proper_version(
   //   println("\{item.version} \{item.lts} \{item.date}")
   // }
   match version {
-    "lts" => {
+    "" | "lts" => {
       guard nodeJsInfos.search_by(fn(v) {
           if v.lts is String(_) {
             return true

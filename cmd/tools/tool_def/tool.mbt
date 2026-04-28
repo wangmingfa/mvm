@@ -84,8 +84,8 @@ pub(all) enum Tool {
 }
 
 ///|
-pub fn Tool::all() -> Array[Tool] {
-  [Node, Npm, Zig]
+pub fn Tool::installable_tools() -> Array[Tool] {
+  [Node, Npm, Bun, Zig]
 }
 
 ///|
@@ -246,6 +246,7 @@ impl Show for Config with to_string(s) {
 pub fn Config::get_value(self : Self, tool : Tool) -> String? raise {
   match tool {
     Node => self.node
+    Bun => self.bun
     Zig => self.zig
     _ => raise fail("不支持获取 \{tool} 的值")
   }

@@ -66,7 +66,7 @@ fn Zig::_get_proper_version(
   versions.sort_by((a, b) => @utils.compare_version(b.0, a.0) catch { _ => 0 })
   guard versions.length() > 0 else { raise fail("Zig版本信息为空") }
   match version {
-    "latest" =>
+    "" | "latest" =>
       Zig::_check_os_compatiable(
         os,
         versions[0].0,
