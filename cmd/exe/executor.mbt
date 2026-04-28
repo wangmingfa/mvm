@@ -22,8 +22,16 @@ async fn run() -> Unit {
   }
   let exe_name = @fs_ext.get_path_name(exe_name)
   guard exe_name.split(".").next() is Some(tool_name)
+  let tool_name = if tool_name.has_prefix("f") {
+    tool_name[1:]
+  } else {
+    tool_name
+  }
+
+  @log.debug("工具名称 \{tool_name}")
+
   let tool = @tools.Tool::from_string(tool_name.to_string())
-  let exe_args = args[2:]
+  let exe_args = args[arg_start_index + 1:]
   let args_str = exe_args.join(" ")
   let result = @tools.get_tool_exe_path(tool)
 
@@ -44,6 +52,6 @@ async fn run() -> Unit {
   }
 
   let cmd = "\{tool_exe_path} \{args_str}"
-  @log.info("运行：\{cmd}")
+  @log.debug("运行：\{cmd}")
   let _ = @process.run(tool_exe_path, exe_args)
 }

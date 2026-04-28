@@ -80,6 +80,18 @@ pub fn match_version(
       }
       false
     }
+    Zig => {
+      if version == target_version {
+        return true
+      }
+      if target_version.has_prefix(version) {
+        let len = version.length()
+        let next_s = target_version[len:len + 1]
+        let _ = @string.parse_int(next_s) catch { _ => return true }
+        return false
+      }
+      false
+    }
     _ => false
   }
 }
@@ -132,6 +144,9 @@ test "match_version" {
 
 ///|
 /// 获取下载 URL
+/// 返回值说明：(String, UInt)
+///   String 为下载地址
+///   UInt 为压缩包解压出来之后，需要进入多少层级才能到达实际工具根目录。一般的压缩包会有1层目录，某些压缩包没有包装一层根目录，返回0即可。
 pub fn get_download_url(
   os_info : OsInfo,
   tool : Tool,
@@ -151,12 +166,13 @@ pub fn get_download_url(
 ///|
 pub async fn get_tool_exe_path(tool : Tool) -> (String, String)? {
   guard get_config(tool~) is Some((_, config)) &&
-    config.get_value(Node) is Some(version) else {
+    config.get_value(tool) is Some(version) else {
     return None
   }
   @log.debug("使用 \{tool} 的 \{version} 版本运行命令")
   let path = match tool {
     Node => Node::get_exe_path(version)
+    Zig => Zig::get_exe_path(version)
     _ => raise fail("不支持的工具：\{tool}")
   }
   Some((path, version))
@@ -172,6 +188,7 @@ pub async fn post_install(tool : Tool, target_dir : String) -> Unit {
         ["node", "npm", "npx"].map(name => {
           @fs_ext.join_path(target_dir, "bin/\{name}")
         })
+      Zig => [@fs_ext.join_path(target_dir, "zig")]
       _ => []
     }
     exe_files.insert(0, "+x")

@@ -90,7 +90,7 @@ pub async fn run_install(tool : @tools.Tool, version : String?) -> Unit {
 ///|
 /// 下载文件
 pub async fn download_file(url : String, dest : String) -> Bool {
-  @log.debug("正在下载: \{url}")
+  @log.debug("正在下载: \{@utils.blue(url)}")
   @log.debug("保存到：\{dest}")
   @download.download_by_native_command(url, dest) catch {
     e => {
