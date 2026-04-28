@@ -1,10 +1,22 @@
 ///|
 async fn main {
+  @log.debug("参数: \{@env.args()}")
   guard @env.current_dir() is Some(cwd)
   @log.debug("当前目录：\{cwd}")
 
+  run() catch {
+    e => @log.println_error(e)
+  }
+}
+
+///|
+async fn run() -> Unit {
   let args = @env.args()
-  guard args.get(1) is Some(exe_name) else {
+  // 兼容开发环境和生产环境
+  // 开发环境：从下标1开始，因为需要传入具体的工具名称
+  // 生产环境：从下标0开始，工具名称已在软连接的名称上面
+  let arg_start_index = if args[0].contains("/cmd/exe") { 1 } else { 0 }
+  guard args.get(arg_start_index) is Some(exe_name) else {
     @log.error("命令不合法")
     return
   }

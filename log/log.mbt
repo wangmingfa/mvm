@@ -15,6 +15,22 @@ fn[T : Show] log(prefix : String, msg : T) -> Unit {
 }
 
 ///|
+pub fn println_error(e : Error) -> Unit {
+  let msg = match e {
+    Failure::Failure(msg) => {
+      let start_index = if msg.find("FAILED:") is Some(start_index) {
+        start_index + 1
+      } else {
+        0
+      }
+      msg[start_index:].to_string()
+    }
+    _ => e.to_string()
+  }
+  error(msg)
+}
+
+///|
 pub fn[T : Show] success(msg : T) -> Unit {
   log("INFO", green(msg))
 }

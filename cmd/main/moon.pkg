@@ -2,6 +2,7 @@ import {
   "username/mvm/cmd/command",
   "moonbitlang/async",
   "moonbitlang/core/env",
+  "username/mvm/log"
 }
 
 options(
