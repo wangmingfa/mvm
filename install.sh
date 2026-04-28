@@ -20,18 +20,24 @@ BUILD_DIR="_build/native/release/build/cmd"
 cp "${BUILD_DIR}/main/main.exe" "${BIN_DIR}/mvm"
 cp "${BUILD_DIR}/exe/exe.exe" "${BIN_DIR}/mvm-exe"
 
-# 支持的工具列表
-TOOLS=("node" "npm" "npx" "corepack" "zig")
-
 # 本机测试时，增加f前缀，用于与系统已经安装好的node区分开，避免重名
 PREFIX="f"
 
-# 创建工具软连接
+# 支持的工具列表
+TOOLS=("node" "npm" "npx" "corepack" "zig")
+
+# 构建显示用的工具名列表
+DISPLAY_TOOLS=()
 for tool in "${TOOLS[@]}"; do
-  ln -sf "${BIN_DIR}/mvm-exe" "${BIN_DIR}/${PREFIX}${tool}"
+  DISPLAY_TOOLS+=("${PREFIX}${tool}")
+done
+
+# 创建工具软连接（动态拼接 PREFIX）
+for tool in "${DISPLAY_TOOLS[@]}"; do
+  ln -sf "${BIN_DIR}/mvm-exe" "${BIN_DIR}/${tool}"
 done
 
 echo "构建完成！可执行文件已安装到 ${BIN_DIR}"
 echo "  - mvm     (主命令)"
 echo "  - mvm-exe (工具执行器)"
-echo "  工具软连接：${TOOLS[*]}"
+echo "  工具软连接：${DISPLAY_TOOLS[*]}"
