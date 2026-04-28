@@ -59,20 +59,43 @@ pub async fn run_install(tool : @tools.Tool, version : String?) -> Unit {
 
   let mut src_dir = extract_dir
   let mut find_sub_dir_count : UInt = 0
+  let ignore_dirs = ["__MACOSX"]
+
+  @log.debug("解压目录: \{extract_dir}, 目录深度: \{root_path_depth}")
+
   while find_sub_dir_count < root_path_depth {
-    // TODO 支持超过1层的处理
     let entries = @fs.readdir(src_dir)
     if entries.is_empty() {
       raise fail(
         "无法从 \{extract_dir} 找到深度为 \{root_path_depth} 的目录",
       )
     }
-    src_dir = @fs_ext.join_path(src_dir, entries[0])
+
+    let dir_name = for entry in entries {
+      let path = @fs_ext.join_path(src_dir, entry)
+      // 跳过忽略的文件夹
+      if ignore_dirs.contains(entry) {
+        continue
+      }
+      // 跳过非文件夹
+      if @fs.kind(path) is Directory {
+        break entry
+      }
+    } nobreak {
+      ""
+    }
+    if dir_name.is_blank() {
+      raise fail("无法解析压缩包 \{src_dir} 的内容")
+    }
+    src_dir = @fs_ext.join_path(src_dir, dir_name)
     find_sub_dir_count += 1
   }
   // 移动到最终目录
   let final_dir = @tools.version_dir(tool, version)
-  // println("目录 \{src_dir} 移动到 \{final_dir}")
+  @log.debug(
+    "目录 \{@utils.yellow(src_dir)} 移动到 \{@utils.yellow(final_dir)}",
+  )
+
   @fs_ext.mv(src_dir, final_dir)
 
   // 清理临时文件

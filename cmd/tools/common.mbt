@@ -58,8 +58,11 @@ pub fn match_version(
   version : String,
   target_version : String,
 ) -> Bool {
+  @log.debug(
+    "tool: \{tool}, version: \{version}, target_version: \{target_version}",
+  )
   match tool {
-    Node => {
+    Node | Zig | Bun => {
       let handle_version = if version.has_prefix("v") {
         version
       } else {
@@ -73,30 +76,6 @@ pub fn match_version(
         let next_s = target_version[len:len + 1]
         let _ = @string.parse_int(next_s) catch { _ => return true }
         // 如果下一位是数字，则匹配不通过
-        return false
-      }
-      false
-    }
-    Zig => {
-      if version == target_version {
-        return true
-      }
-      if target_version.has_prefix(version) {
-        let len = version.length()
-        let next_s = target_version[len:len + 1]
-        let _ = @string.parse_int(next_s) catch { _ => return true }
-        return false
-      }
-      false
-    }
-    Bun => {
-      if version == target_version {
-        return true
-      }
-      if target_version.has_prefix(version) {
-        let len = version.length()
-        let next_s = target_version[len:len + 1]
-        let _ = @string.parse_int(next_s) catch { _ => return true }
         return false
       }
       false
@@ -147,6 +126,12 @@ test "match_version" {
     match_version(Node, "18.2", "v18.20.8"),
     content=(
       #|false
+    ),
+  )
+  inspect(
+    match_version(Bun, "1.3.12", "v1.3.12"),
+    content=(
+      #|true
     ),
   )
 }

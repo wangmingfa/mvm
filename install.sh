@@ -30,7 +30,7 @@ if [ "$ONLINE" != true ]; then
 fi
 
 # 支持的工具列表
-TOOLS=("node" "npm" "npx" "corepack" "zig")
+TOOLS=("node" "npm" "npx" "corepack" "zig" "bun")
 
 # 构建显示用的工具名列表
 DISPLAY_TOOLS=()

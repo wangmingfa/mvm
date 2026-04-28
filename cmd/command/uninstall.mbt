@@ -19,11 +19,12 @@ pub async fn run_uninstall(tool : @tools.Tool, version : String?) -> Unit {
     @log.info("卸载 \{tool} \{v}")
     // 删除目录
     let dir = @tools.version_dir(tool, v)
-    @fs.rmdir(dir, recursive=true)
+    @fs_ext.remove_dir(dir)
   }
 
   if remove_versions.is_empty() {
-    @log.warn("未安装 \{tool}@\{version}，无需卸载")
+    let version_msg = if version is Some(v) { "@\{v}" } else { "" }
+    @log.warn("未安装 \{tool}\{version_msg}，无需卸载")
     return
   }
 

@@ -174,6 +174,10 @@ pub async fn download_by_native_command(url : String, dest : String) -> Unit {
     }
     _ => raise fail("不支持的下载方式")
   }
+  let args_str = args.join(" ")
+  let cmd = "\{downloader} \{args_str}"
+  @log.debug("下载命令: \{cmd}")
+
   match @process.run(downloader, args) {
     0 => ()
     _ => raise fail("下载失败")

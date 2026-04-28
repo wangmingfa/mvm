@@ -8,3 +8,10 @@ pub async fn ensure_dir(dir : String) -> Unit {
     e => raise fail("创建文件夹 \{dir} 失败，原因：\{e}")
   }
 }
+
+///|
+pub async fn remove_dir(dir : String) -> Unit {
+  if @fs.exists(dir) {
+    @fs.rmdir(dir, recursive=true)
+  }
+}

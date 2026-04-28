@@ -76,22 +76,28 @@ fn Bun::_get_proper_version(
   })
   guard bunInfos.length() > 0 else { raise fail("Bun版本信息为空") }
   // 提取纯版本号并过滤预发布版本
-  let versions : Array[(String, BunReleaseInfo)] = []
-  for info in bunInfos {
-    let tag = info.tag_name
-    // Bun 的 tag 格式为 bun-v1.2.5 或 v1.2.5
-    let ver = if tag.has_prefix("bun-") {
-      tag["bun-".length():]
-    } else if tag.has_prefix("v") {
-      tag[1:]
-    } else {
-      tag
-    }
-    // 跳过预发布版本
-    if !ver.contains("-canary") && !ver.contains("-debug") {
-      versions.push((ver.to_string(), info))
-    }
-  }
+  let versions : Array[(String, BunReleaseInfo)] = bunInfos
+    .map(info => {
+      let tag = info.tag_name
+      // Bun 的 tag 格式为 bun-v1.2.5 或 v1.2.5
+      let ver = if tag.has_prefix("bun-") {
+        tag["bun-".length():]
+      } else if tag.has_prefix("v") {
+        tag[1:]
+      } else {
+        tag
+      }
+      // 跳过预发布版本
+      if !ver.contains("-canary") && !ver.contains("-debug") {
+        return (ver.to_string(), info)
+      }
+      return ("", info)
+    })
+    .filter(v => !v.0.is_blank())
+
+  let all_versions = versions.map(v => v.0).join("、")
+  @log.debug("所有版本: \{all_versions}")
+
   // 按版本号倒序排序
   versions.sort_by((a, b) => @utils.compare_version(b.0, a.0) catch { _ => 0 })
   guard versions.length() > 0 else { raise fail("Bun版本信息为空") }
@@ -106,11 +112,16 @@ fn Bun::_get_proper_version(
     _ =>
       match version_count {
         1..=3 => {
+          let find_version = if version.has_prefix("v") {
+            version
+          } else {
+            "v\{version}"
+          }
           guard versions.search_by(v => {
               if version_count == 3 {
-                v.0 == version
+                v.0 == find_version
               } else {
-                v.0.has_prefix(version + ".")
+                v.0.has_prefix(find_version + ".")
               }
             })
             is Some(idx) else {
@@ -138,7 +149,7 @@ fn Bun::_get_platform_asset_name() -> String raise {
     name => raise fail("不支持的操作系统：\{name}")
   }
   let arch_str = match os.arch {
-    Aarch64 => "arm64"
+    Aarch64 => "aarch64"
     X86_64 => "x64"
     X86 => "x64"
     arch => raise fail("不支持的架构：\{arch}")
@@ -154,6 +165,8 @@ fn Bun::_check_os_compatiable(
   error_msg_tpl? : String = "版本 {version} 不支持 {os.name} 操作系统下的 {os.arch} 架构",
 ) -> String raise {
   let platform_name = Bun::_get_platform_asset_name()
+  @log.debug("平台名 \{platform_name}")
+
   let asset_names = bunReleaseInfo.assets.map(v => v.name)
   if asset_names.all(v => !v.has_prefix(platform_name)) {
     let variables = {
@@ -175,29 +188,16 @@ pub fn Bun::get_download_url(
   os_info : @os.OsInfo,
   version : String,
 ) -> String raise {
-  let os_str = match os_info.name {
-    MacOS => "darwin"
-    Linux => "linux"
-    Windows => "windows"
-    name => raise fail("不支持的操作系统：\{name}")
-  }
-  let arch_str = match os_info.arch {
-    Aarch64 => "arm64"
-    X86_64 => "x64"
-    X86 => "x64"
-    arch => raise fail("不支持的架构：\{arch}")
-  }
-  let ext = match os_info.name {
-    Windows => "zip"
-    _ => "zip"
-  }
+  let _ = os_info
+  let platform_name = Bun::_get_platform_asset_name()
+  let ext = "zip"
   // Bun 的 tag 格式为 bun-v1.2.5
   let tag = if version.has_prefix("v") {
     "bun-\{version}"
   } else {
     "bun-v\{version}"
   }
-  "\{BUN_RELEASE_URL}/\{tag}/bun-\{os_str}-\{arch_str}.\{ext}"
+  "\{BUN_RELEASE_URL}/\{tag}/\{platform_name}.\{ext}"
 }
 
 ///|
