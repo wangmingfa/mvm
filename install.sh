@@ -7,12 +7,27 @@ GITHUB_REPO="username/mvm"
 
 # 解析参数
 ONLINE=false
-for arg in "$@"; do
-  case "$arg" in
-    --online) ONLINE=true ;;
-    *) echo "未知参数：$arg"; exit 1 ;;
+PREFIX=""
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --online) ONLINE=true; shift ;;
+    --prefix) PREFIX="$2"; shift 2 ;;
+    --prefix=*) PREFIX="${1#*=}"; shift ;;
+    -p) PREFIX="$2"; shift 2 ;;
+    -p=*) PREFIX="${1#*=}"; shift ;;
+    *) echo "未知参数：$1"; exit 1 ;;
   esac
 done
+
+# 默认 PREFIX 为 f
+if [ -z "$PREFIX" ]; then
+  PREFIX="f"
+fi
+
+# --online 模式下 PREFIX 强制为空
+if [ "$ONLINE" = true ]; then
+  PREFIX=""
+fi
 
 # 确定 MVM_HOME 目录
 MVM_HOME="${MVM_HOME:-$HOME}/.mvm"
@@ -22,12 +37,6 @@ BIN_DIR="${MVM_HOME}/bin"
 rm -rf "${BIN_DIR}"
 mkdir -p "${BIN_DIR}"
 
-# 本机测试时，增加f前缀，用于与系统已经安装好的node区分开，避免重名
-# --online 模式下 PREFIX 为空，正式发布无需前缀
-PREFIX=""
-if [ "$ONLINE" != true ]; then
-  PREFIX="f"
-fi
 
 # 支持的工具列表
 TOOLS=("node" "npm" "npx" "corepack" "zig" "bun")
