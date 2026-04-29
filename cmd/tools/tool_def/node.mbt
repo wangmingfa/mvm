@@ -205,7 +205,7 @@ pub async fn Node::get_node_builtin_tool_path_and_version(
     return None
   }
 
-  // 路径：直接替换node为npm
+  // 路径：直接替换node为对应工具名称
   let name = @fs_ext.get_path_name(node_exe_path)
   let tool_path = @fs_ext.join_path(
     node_bin_dir,
@@ -219,9 +219,9 @@ pub async fn Node::get_node_builtin_tool_path_and_version(
   } else {
     Npm.to_string()
   }
-  let npm_package_json_file_path = "\{node_dir}/lib/node_modules/\{node_tool_name}/package.json"
-  if @fs.exists(npm_package_json_file_path) {
-    let json = @fs.read_file(npm_package_json_file_path).json()
+  let node_tool_package_json_file_path = "\{node_dir}/lib/node_modules/\{node_tool_name}/package.json"
+  if @fs.exists(node_tool_package_json_file_path) {
+    let json = @fs.read_file(node_tool_package_json_file_path).json()
     guard json is Object(map) else {
       @log.error("\{node_tool_name} 的 package.json 文件格式不对")
       return None
@@ -234,6 +234,8 @@ pub async fn Node::get_node_builtin_tool_path_and_version(
     }
     return Some((tool_path, node_tool_version))
   }
-  @log.error("无法从 \{npm_package_json_file_path} 获取到 npm 的版本")
+  @log.error(
+    "无法从 \{node_tool_package_json_file_path} 获取到 npm 的版本",
+  )
   None
 }
