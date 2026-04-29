@@ -1,17 +1,11 @@
-///|
-async fn main {
-  @log.debug("参数: \{@env.args()}")
-  guard @env.current_dir() is Some(cwd)
-  @log.debug("当前目录：\{cwd}")
-
-  run() catch {
-    e => @log.println_error(e)
-  }
-}
+// 前缀在install.sh中固定死的
 
 ///|
-async fn run() -> Unit {
-  let args = @env.args()
+const PREFIX = "f_"
+
+///|
+async fn run_executor(args : Array[String]) -> Unit {
+  @log.debug("executor参数: \{args}")
   // 兼容开发环境和生产环境
   // 开发环境：从下标1开始，因为需要传入具体的工具名称
   // 生产环境：从下标0开始，工具名称已在软连接的名称上面
@@ -22,8 +16,9 @@ async fn run() -> Unit {
   }
   let exe_name = @fs_ext.get_path_name(exe_name)
   guard exe_name.split(".").next() is Some(tool_name)
-  let tool_name = if tool_name.has_prefix("f") {
-    tool_name[1:]
+  // 前缀固定位f-
+  let tool_name = if tool_name.has_prefix(PREFIX) {
+    tool_name[PREFIX.length():]
   } else {
     tool_name
   }
@@ -50,7 +45,7 @@ async fn run() -> Unit {
 
   if !@fs.exists(tool_exe_path) {
     // 没有安装，提示用户安装或指定版本
-    @command.run_install(tool, Some(version))
+    run_install(tool, Some(version))
   }
 
   let cmd = "\{tool_exe_path} \{args_str}"

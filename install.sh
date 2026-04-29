@@ -7,39 +7,23 @@ GITHUB_REPO="username/mvm"
 
 # 解析参数
 ONLINE=false
-PREFIX=""
-PREFIX_SET=false
+NO_PREFIX=false
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --online) ONLINE=true; shift ;;
-    --prefix)
-      if [[ $# -gt 1 ]] && [[ ! "$2" =~ ^- ]]; then
-        PREFIX="$2"; shift
-      else
-        PREFIX=""
-      fi
-      PREFIX_SET=true; shift ;;
-    --prefix=*) PREFIX="${1#*=}"; PREFIX_SET=true; shift ;;
-    -p)
-      if [[ $# -gt 1 ]] && [[ ! "$2" =~ ^- ]]; then
-        PREFIX="$2"; shift
-      else
-        PREFIX=""
-      fi
-      PREFIX_SET=true; shift ;;
-    -p=*) PREFIX="${1#*=}"; PREFIX_SET=true; shift ;;
+    --online)      ONLINE=true; shift ;;
+    --no-prefix)   NO_PREFIX=true; shift ;;
+    -np)           NO_PREFIX=true; shift ;;
     *) echo "未知参数：$1"; exit 1 ;;
   esac
 done
 
-# 未传 --prefix/-p 时，默认 PREFIX 为 f
-if [ "$PREFIX_SET" = false ]; then
-  PREFIX="f"
-fi
-
-# --online 模式下 PREFIX 强制为空
+# 确定 PREFIX
 if [ "$ONLINE" = true ]; then
   PREFIX=""
+elif [ "$NO_PREFIX" = true ]; then
+  PREFIX=""
+else
+  PREFIX="f_"
 fi
 
 # 确定 MVM_HOME 目录
@@ -62,7 +46,7 @@ done
 
 # 创建工具软连接（动态拼接 PREFIX）
 for tool in "${DISPLAY_TOOLS[@]}"; do
-  ln -sf "${BIN_DIR}/mvm-exe" "${BIN_DIR}/${tool}"
+  ln -sf "${BIN_DIR}/executor.sh" "${BIN_DIR}/${tool}"
 done
 
 if [ "$ONLINE" = true ]; then
@@ -130,10 +114,10 @@ else
   # 复制可执行文件
   BUILD_DIR="_build/native/release/build/cmd"
   cp "${BUILD_DIR}/main/main.exe" "${BIN_DIR}/mvm"
-  cp "${BUILD_DIR}/exe/exe.exe" "${BIN_DIR}/mvm-exe"
+  cp "executor.sh" "${BIN_DIR}/executor.sh"
 fi
 
-echo "构建完成！可执行文件已安装到 ${BIN_DIR}"
-echo "  - mvm     (主命令)"
-echo "  - mvm-exe (工具执行器)"
+echo "安装完成！可执行文件已安装到 ${BIN_DIR}"
+echo "  - mvm         (主命令)"
+echo "  - executor.sh (工具执行脚本)"
 echo "  工具软连接：${DISPLAY_TOOLS[*]}"
