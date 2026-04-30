@@ -143,16 +143,24 @@ SHELL_PROFILE=$(detect_shell_profile)
 touch "$SHELL_PROFILE"
 
 PATH_ENTRIES=("${BIN_DIR}" "${NPM_DIR}")
+PROFILE_MODIFIED=false
 for entry in "${PATH_ENTRIES[@]}"; do
   if ! grep -qF "export PATH=\"${entry}:" "$SHELL_PROFILE" 2>/dev/null && \
      ! grep -qF ":${entry}:" "$SHELL_PROFILE" 2>/dev/null; then
     echo "" >> "$SHELL_PROFILE"
     echo "export PATH=\"${entry}:\$PATH\"" >> "$SHELL_PROFILE"
     echo "已将 ${entry} 添加到 PATH（写入 ${SHELL_PROFILE}）"
+    PROFILE_MODIFIED=true
   else
     echo "${entry} 已存在于 PATH（${SHELL_PROFILE}），跳过"
   fi
 done
+
+# 如果有新内容加入shell profile，执行source以便生效
+if [ "$PROFILE_MODIFIED" = true ]; then
+  source "$SHELL_PROFILE"
+  echo "已执行 source ${SHELL_PROFILE}，PATH 配置已生效"
+fi
 
 echo ""
 echo "安装完成！可执行文件已安装到 ${BIN_DIR}"
