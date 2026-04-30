@@ -162,7 +162,7 @@ if [ "$PROFILE_MODIFIED" = true ]; then
   RESET='\033[0m'
   echo ""
   echo "PATH 配置已更新，请执行以下命令使其生效："
-  echo "  ${GREEN_BOLD}source ${SHELL_PROFILE}${RESET}"
+  echo -e "  ${GREEN_BOLD}source ${SHELL_PROFILE}${RESET}"
 fi
 
 echo ""
