@@ -129,6 +129,10 @@ async fn handle_install_npm_global_package(
   walk_global_pkgs(npm_exe_path, pkgs, async fn(cmd_name, cmd_path) {
     // 在mvm_bin/npm-pkg下建立软连接
     let symlink_file_path = @fs_ext.join_path(npm_pkg_home, cmd_name)
+    // 如果文件存在，先删除
+    if @fs.exists(symlink_file_path) {
+      @fs.remove(symlink_file_path)
+    }
     @fs.symlink(target=cmd_path, symlink_file_path)
     @log.debug("已在目录 \{npm_pkg_home} 安装全局命令 \{cmd_name}")
   })
