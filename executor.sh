@@ -55,8 +55,27 @@ elif [ "$SCRIPT_NAME" = "executor.sh" ] && ([ "$1" = "npm" ] || [ "$1" = "${PREF
   is_npm=true
 fi
 
-if [ "$is_npm" = true ] && is_npm_global_uninstall "$@" && [ $exit_code -eq 0 ]; then
+LOG_LEVEL=$(echo "${MVM_LOG_LEVEL}" | tr 'A-Z' 'a-z')
+if [ "${LOG_LEVEL}" = "debug" ]; then
+  echo "hash-r检查: SCRIPT_NAME=${SCRIPT_NAME}, is_npm=${is_npm}, exit_code=${exit_code}, args=$*"
+fi
+
+is_uninstall=false
+if is_npm_global_uninstall "$@"; then
+  is_uninstall=true
+fi
+
+if [ "${LOG_LEVEL}" = "debug" ]; then
+  echo "hash-r检查: is_npm_global_uninstall=${is_uninstall}"
+fi
+
+if [ "$is_npm" = true ] && [ "$is_uninstall" = true ] && [ $exit_code -eq 0 ]; then
+  if [ "${LOG_LEVEL}" = "debug" ]; then
+    echo "清除shell hash表: hash -r"
+  fi
   hash -r
+elif [ "${LOG_LEVEL}" = "debug" ]; then
+  echo "hash-r跳过: is_npm=${is_npm}, is_uninstall=${is_uninstall}, exit_code=${exit_code}"
 fi
 
 exit $exit_code

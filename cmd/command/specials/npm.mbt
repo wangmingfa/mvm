@@ -89,6 +89,9 @@ async fn walk_global_pkgs(
       node_dir,
       "lib/node_modules/\{pkg}/package.json",
     )
+    if !@fs.exists(pkg_package_json_file_path) {
+      continue
+    }
     // 读取package.json中的bin字段的值
     let json = @fs.read_file(pkg_package_json_file_path).json()
     guard json is Object(map) else {
@@ -154,7 +157,9 @@ async fn handle_uninstall_npm_global_package(
   }
 
   for _, sym_link_path in before_run_result {
-    @log.debug("删除软连接 \{sym_link_path}")
-    @fs.remove(sym_link_path)
+    if @fs.exists(sym_link_path) {
+      @log.debug("删除软连接 \{sym_link_path}")
+      @fs.remove(sym_link_path)
+    }
   }
 }
