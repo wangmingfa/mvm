@@ -11,7 +11,7 @@ mvm 是一款现代化的多语言版本管理工具，支持 Node.js、Npm、Bu
 ## 安装
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/<username>/mvm/main/install.sh | bash -s -- --online
+curl -fsSL https://raw.githubusercontent.com/wangmingfa/mvm/main/install.sh | bash -s -- --online
 ```
 
 ## 命令详解
@@ -71,4 +71,14 @@ mvm uninstall zig@0.12.0
 moon run cmd/main install node@20
 # 调试模式运行，等同生产：node -v
 MVM_LOG_LEVEL=debug ./executor.sh node -v
+```
+
+2. 本地构建产物测试
+```bash
+# 安装mvm，会自动将构建产物拷贝到$MVM_HOME
+# 默认情况下，为了不与本地已经安装好的node、bun、npm、zig等冲突，会增加f_前缀。
+# 比如: f_node -v
+./install.sh
+# 不需要前缀
+./install.sh -np
 ```
