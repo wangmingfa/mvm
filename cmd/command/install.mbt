@@ -12,6 +12,8 @@ pub async fn run_install(tool : @tools.Tool, version : String?) -> Unit {
   // 检查是否已安装
   if @tools.is_installed(tool, version) {
     @log.warn("\{tool}@\{version} 已安装")
+    // 修复installed.json里面缺失已安装的版本的问题
+    add_installed(tool, version)
     return
   }
 
