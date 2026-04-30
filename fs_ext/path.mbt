@@ -31,6 +31,22 @@ pub fn[T : Show] join_path(current : T, path_to_join : T) -> String {
 }
 
 ///|
+test "join_path" {
+  inspect(
+    join_path("/home/wmf/code/data.txt", "../"),
+    content=(
+      #|/home/wmf/code
+    ),
+  )
+  inspect(
+    join_path("/home/wmf/code/data.txt", "../../"),
+    content=(
+      #|/home/wmf
+    ),
+  )
+}
+
+///|
 fn String::join_path(self : Self, path : String) -> Self {
   join_path(self, path)
 }

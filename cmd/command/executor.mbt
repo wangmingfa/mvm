@@ -57,6 +57,8 @@ async fn run_executor(args : Array[String]) -> Unit {
     run_install(tool, Some(version))
   }
 
+  let before_run_result = before_run(tool, tool_exe_path, exe_args)
+
   let cmd = "\{tool_exe_path} \{args_str}"
   @log.debug("运行：\{cmd}")
   let exit_code = @process.run(tool_exe_path, exe_args, extra_env=envs)
@@ -64,14 +66,31 @@ async fn run_executor(args : Array[String]) -> Unit {
   if exit_code == 0 {
     // 运行成功之后的处理
     // 比如使用npm安装了全局包
-    after_run(tool, exe_args)
+    after_run(before_run_result, tool, tool_exe_path, exe_args)
   }
 }
 
 ///|
-async fn after_run(tool : @tools.Tool, args : ArrayView[String]) -> Unit {
+async fn before_run(
+  tool : @tools.Tool,
+  tool_exe_path : String,
+  args : ArrayView[String],
+) -> Map[String, String]? {
   match tool {
-    Npm => @specials.handle_npm_command(args)
+    Npm => @specials.before_npm_command(tool_exe_path, args)
+    _ => None
+  }
+}
+
+///|
+async fn after_run(
+  before_run_result : Map[String, String]?,
+  tool : @tools.Tool,
+  tool_exe_path : String,
+  args : ArrayView[String],
+) -> Unit {
+  match tool {
+    Npm => @specials.after_npm_command(before_run_result, tool_exe_path, args)
     _ => ()
   }
 }
