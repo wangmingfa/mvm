@@ -17,13 +17,14 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-# 确定 PREFIX
+# 工具名前缀（与 executor.sh、executor.mbt 保持一致）
+PREFIX="f_"
+
+# 确定 PREFIX（--online 或 --no-prefix 时清空前缀）
 if [ "$ONLINE" = true ]; then
   PREFIX=""
 elif [ "$NO_PREFIX" = true ]; then
   PREFIX=""
-else
-  PREFIX="f_"
 fi
 
 # 确定 MVM_HOME 目录

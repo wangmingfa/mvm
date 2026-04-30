@@ -3,6 +3,9 @@
 SCRIPT_NAME=$(basename "$0")
 SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
 
+# 工具名前缀（与 install.sh、executor.mbt 保持一致）
+PREFIX="f_"
+
 run_mvm() {
   if [ -f "${SCRIPT_DIR}/mvm" ]; then
     CMD="${SCRIPT_DIR}/mvm"
@@ -16,6 +19,19 @@ run_mvm() {
   $CMD "$@"
 }
 
+# 判断是否为npm全局卸载命令
+is_npm_global_uninstall() {
+  has_uninstall=false
+  has_global=false
+  for arg in "$@"; do
+    case "$arg" in
+      uninstall|un) has_uninstall=true ;;
+      --global|-g) has_global=true ;;
+    esac
+  done
+  [ "$has_uninstall" = true ] && [ "$has_global" = true ]
+}
+
 if [ "$SCRIPT_NAME" = "executor.sh" ]; then
   # 直接运行：./executor.sh node -v
   if [ $# -eq 0 ]; then
@@ -23,8 +39,24 @@ if [ "$SCRIPT_NAME" = "executor.sh" ]; then
     exit 1
   fi
   run_mvm executor "$@"
+  exit_code=$?
 else
   # 兼容软连接的方式（软连接到当前文件），比如：node -v
   # node实际上是软连接到当前文件的
   run_mvm executor "$SCRIPT_NAME" "$@"
+  exit_code=$?
 fi
+
+# 如果是npm全局卸载且执行成功，清除hash表以便shell重新查找命令路径
+is_npm=false
+if [ "$SCRIPT_NAME" = "npm" ] || [ "$SCRIPT_NAME" = "${PREFIX}npm" ]; then
+  is_npm=true
+elif [ "$SCRIPT_NAME" = "executor.sh" ] && ([ "$1" = "npm" ] || [ "$1" = "${PREFIX}npm" ]); then
+  is_npm=true
+fi
+
+if [ "$is_npm" = true ] && is_npm_global_uninstall "$@" && [ $exit_code -eq 0 ]; then
+  hash -r
+fi
+
+exit $exit_code
