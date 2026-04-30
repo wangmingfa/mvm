@@ -156,10 +156,13 @@ for entry in "${PATH_ENTRIES[@]}"; do
   fi
 done
 
-# 如果有新内容加入shell profile，执行source以便生效
+# 如果有新内容加入shell profile，提示用户手动执行source以便生效
 if [ "$PROFILE_MODIFIED" = true ]; then
-  source "$SHELL_PROFILE"
-  echo "已执行 source ${SHELL_PROFILE}，PATH 配置已生效"
+  GREEN_BOLD='\033[1;32m'
+  RESET='\033[0m'
+  echo ""
+  echo "PATH 配置已更新，请执行以下命令使其生效："
+  echo "  ${GREEN_BOLD}source ${SHELL_PROFILE}${RESET}"
 fi
 
 echo ""
