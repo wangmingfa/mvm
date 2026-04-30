@@ -156,5 +156,7 @@ async fn handle_uninstall_npm_global_package(
   for _, sym_link_path in before_run_result {
     @log.debug("删除软连接 \{sym_link_path}")
     @fs.remove(sym_link_path)
+    // 刷新bash缓存
+    let _ = @process.run("hash", ["-r"])
   }
 }
