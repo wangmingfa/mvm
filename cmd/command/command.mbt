@@ -16,13 +16,13 @@ pub impl Show for Command with to_string(s) {
   match s {
     Executor(args) => "Executor(\{args})"
     Install(tool, version) =>
-      "Install(\{tool.to_string()}, \{version.to_string()})"
-    Pin(tool, version) => "Pin(\{tool.to_string()}, \{version.to_string()})"
-    Use(tool, version) => "Use(\{tool.to_string()}, \{version.to_string()})"
+      "Install(\{tool.to_string()}, \{@utils.option_to_string(version)})"
+    Pin(tool, version) => "Pin(\{tool.to_string()}, \{version})"
+    Use(tool, version) => "Use(\{tool.to_string()}, \{version})"
     List(Some(tool)) => "List(\{tool.to_string()})"
     List(None) => "List(All)"
     Uninstall(tool, version) =>
-      "Uninstall(\{tool.to_string()}, \{version.to_string()})"
+      "Uninstall(\{tool.to_string()}, \{@utils.option_to_string(version)})"
   }
 }
 
@@ -63,17 +63,17 @@ fn parse_with_version(command_type : String, options : String) -> Command raise 
     (before, "@", after) =>
       Command::new_with_version(
         command_type,
-        before.to_string(),
-        version=after.to_string(),
+        before.to_owned(),
+        version=after.to_owned(),
       )
-    tool => Command::new_with_version(command_type, tool.to_string())
+    tool => Command::new_with_version(command_type, tool.to_owned())
   }
 }
 
 ///|
 pub fn get_command(argv : ArrayView[String]) -> Command raise {
   match argv {
-    ["executor", .. args] => Executor(args.to_array())
+    ["executor", .. args] => Executor(args.to_owned())
     ["install", options] | ["i", options] =>
       parse_with_version("install", options)
     ["pin", options] => parse_with_version("pin", options)
@@ -105,7 +105,7 @@ fn[T : Show] get_arg_value_from_args(
       return args.get(idx + 1).map(v => v.to_string())
     }
     if arg_str.has_prefix(find_arg_key_with_equal) {
-      return Some(arg_str[find_arg_key_with_equal.length():].to_string())
+      return Some(arg_str[find_arg_key_with_equal.length():].to_owned())
     }
   }
   if default is Some(default) {
@@ -116,7 +116,7 @@ fn[T : Show] get_arg_value_from_args(
 
 ///|
 pub fn get_arg_value(key : String, default? : String) -> String? {
-  let args = @env.args()[1:].to_array()
+  let args = @env.args()[1:].to_owned()
   if default is Some(default) {
     return get_arg_value_from_args(args, key, default~)
   }

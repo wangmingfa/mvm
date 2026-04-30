@@ -27,7 +27,7 @@ pub fn println_error(e : Error) -> Unit {
       } else {
         0
       }
-      msg[start_index:].trim().to_string()
+      msg[start_index:].trim().to_owned()
     }
     _ => e.to_string()
   }

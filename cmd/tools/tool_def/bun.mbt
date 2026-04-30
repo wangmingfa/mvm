@@ -89,7 +89,7 @@ fn Bun::_get_proper_version(
       }
       // 跳过预发布版本
       if !ver.contains("-canary") && !ver.contains("-debug") {
-        return (ver.to_string(), info)
+        return (ver.to_owned(), info)
       }
       return ("", info)
     })

@@ -31,12 +31,16 @@ MVM_HOME="${MVM_HOME:-$HOME}/.mvm"
 
 # 确定 bin 目录
 BIN_DIR="${MVM_HOME}/bin"
-rm -rf "${BIN_DIR}"
 mkdir -p "${BIN_DIR}"
-
 
 # 支持的工具列表
 TOOLS=("node" "npm" "npx" "corepack" "zig" "bun")
+
+# 清理旧的工具软连接（原始名和带当前前缀的）
+for tool in "${TOOLS[@]}"; do
+  rm -f "${BIN_DIR}/${tool}"
+  rm -f "${BIN_DIR}/${PREFIX}${tool}"
+done
 
 # 构建显示用的工具名列表
 DISPLAY_TOOLS=()
@@ -117,7 +121,42 @@ else
   cp "executor.sh" "${BIN_DIR}/executor.sh"
 fi
 
+# 配置 PATH：自动识别 shell 配置文件，避免重复添加
+detect_shell_profile() {
+  case "$SHELL" in
+    */zsh)  echo "$HOME/.zshrc" ;;
+    */bash)
+      if [[ "$(uname -s)" == "Darwin" ]]; then
+        echo "$HOME/.bash_profile"
+      else
+        echo "$HOME/.bashrc"
+      fi
+      ;;
+    *)      echo "$HOME/.profile" ;;
+  esac
+}
+
+NPM_DIR="${BIN_DIR}/npm-pkg"
+mkdir -p "${NPM_DIR}"
+
+SHELL_PROFILE=$(detect_shell_profile)
+touch "$SHELL_PROFILE"
+
+PATH_ENTRIES=("${BIN_DIR}" "${NPM_DIR}")
+for entry in "${PATH_ENTRIES[@]}"; do
+  if ! grep -qF "export PATH=\"${entry}:" "$SHELL_PROFILE" 2>/dev/null && \
+     ! grep -qF ":${entry}:" "$SHELL_PROFILE" 2>/dev/null; then
+    echo "" >> "$SHELL_PROFILE"
+    echo "export PATH=\"${entry}:\$PATH\"" >> "$SHELL_PROFILE"
+    echo "已将 ${entry} 添加到 PATH（写入 ${SHELL_PROFILE}）"
+  else
+    echo "${entry} 已存在于 PATH（${SHELL_PROFILE}），跳过"
+  fi
+done
+
+echo ""
 echo "安装完成！可执行文件已安装到 ${BIN_DIR}"
 echo "  - mvm         (主命令)"
 echo "  - executor.sh (工具执行脚本)"
+echo "  - npm-pkg 目录    (npm 全局包安装路径：${NPM_DIR})"
 echo "  工具软连接：${DISPLAY_TOOLS[*]}"

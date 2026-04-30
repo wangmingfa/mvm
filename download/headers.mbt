@@ -24,7 +24,7 @@ fn get_file_name(url : String, headers : Map[String, String]) -> String {
       }
       if result.results().get(1) is Some(file_name) &&
         file_name is Some(file_name) {
-        return file_name.to_string()
+        return file_name.to_owned()
       }
     }
   }
@@ -38,6 +38,6 @@ fn get_file_name(url : String, headers : Map[String, String]) -> String {
     content_type.contains("text/html") {
     "\{last_part}.html"
   } else {
-    last_part.to_string()
+    last_part.to_owned()
   }
 }

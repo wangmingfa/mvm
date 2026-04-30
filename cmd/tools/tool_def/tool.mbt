@@ -13,6 +13,16 @@ pub fn mvm_home() -> String {
 }
 
 ///|
+pub fn mvm_bin_home() -> String {
+  @fs_ext.join_path(mvm_home(), "bin")
+}
+
+///|
+pub fn mvm_npm_pkg_home() -> String {
+  @fs_ext.join_path(mvm_bin_home(), "npm-pkg")
+}
+
+///|
 pub fn cache_dir() -> String {
   @fs_ext.join_path(mvm_home(), ".cache")
 }

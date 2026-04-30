@@ -197,7 +197,7 @@ pub fn Node::get_exe_path(version : String) -> String {
 pub async fn Node::get_node_builtin_tool_path_and_version(
   tool : Tool,
   node_exe_path : String,
-) -> (String, String)? {
+) -> (String, String, Map[String, String])? {
   // 处理node内置工具
 
   guard @fs_ext.get_parent_dir(node_exe_path) is Some(node_bin_dir) else {
@@ -212,7 +212,7 @@ pub async fn Node::get_node_builtin_tool_path_and_version(
     name.replace(old="node", new=tool.to_string()),
   )
 
-  let node_dir = "\{node_bin_dir}/../"
+  let node_dir = @fs_ext.join_path(node_bin_dir, "../")
   // npm和npx共用一个package.json
   let node_tool_name = if tool is Corepack {
     tool.to_string()
@@ -232,7 +232,9 @@ pub async fn Node::get_node_builtin_tool_path_and_version(
       )
       return None
     }
-    return Some((tool_path, node_tool_version))
+    return Some(
+      (tool_path, node_tool_version, { "NPM_CONFIG_PREFIX": node_dir }),
+    )
   }
   @log.error(
     "无法从 \{node_tool_package_json_file_path} 获取到 npm 的版本",

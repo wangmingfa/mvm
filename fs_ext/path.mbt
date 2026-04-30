@@ -48,7 +48,7 @@ fn canonicalize_path(path : String) -> String {
   let parts = path.split("/")
   let stack : Array[String] = []
   for part in parts {
-    let part = part.to_string()
+    let part = part.to_owned()
     if part == "." || part == "" {
       continue
     } else if part == ".." {
@@ -103,7 +103,7 @@ test "canonicalize_path" {
 pub fn get_path_name(path : String) -> String {
   let paths = path.split("\\").flat_map(v => v.split("/"))
   guard paths.last() is Some(name)
-  name.to_string()
+  name.to_owned()
 }
 
 ///|

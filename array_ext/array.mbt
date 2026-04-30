@@ -2,7 +2,7 @@
 pub fn remove_prefix(arr : Array[String], prefix : String) -> Array[String] {
   arr.map(v => {
     if v.has_prefix(prefix) {
-      v[prefix.length():].to_string()
+      v[prefix.length():].to_owned()
     } else {
       v
     }

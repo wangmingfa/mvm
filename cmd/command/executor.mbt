@@ -23,16 +23,23 @@ async fn run_executor(args : Array[String]) -> Unit {
     tool_name
   }
 
-  @log.debug("工具名称 \{tool_name}")
-
-  let tool = @tools.Tool::from_string(tool_name.to_string())
   let exe_args = args[arg_start_index + 1:]
+
+  let tool = @tools.Tool::from_string(tool_name.to_owned()) catch {
+    // 处理手动安装的第三方包，比如npm install -g安装的包
+    _ => {
+      @specials.run_3rd_party_executor(tool_name, exe_args)
+      return
+    }
+  }
+
+  @log.debug("工具名称 \{tool_name}")
   let args_str = exe_args.join(" ")
   let result = @tools.get_tool_exe_path(tool)
 
   @log.debug("运行：\{tool} \{args_str}")
 
-  guard result is Some((tool_exe_path, version)) else {
+  guard result is Some((tool_exe_path, version, envs)) else {
     let use_command = @utils.yellow("use")
     let pin = @utils.yellow("pin")
     @log.error(
@@ -41,7 +48,9 @@ async fn run_executor(args : Array[String]) -> Unit {
     return
   }
 
-  @log.debug("使用 \{tool} 的 \{version} 版本运行命令")
+  @log.debug(
+    "使用 \{tool} 的 \{version} 版本运行命令，额外环境变量：\{envs}",
+  )
 
   if !@fs.exists(tool_exe_path) {
     // 没有安装，提示用户安装或指定版本
@@ -50,5 +59,19 @@ async fn run_executor(args : Array[String]) -> Unit {
 
   let cmd = "\{tool_exe_path} \{args_str}"
   @log.debug("运行：\{cmd}")
-  let _ = @process.run(tool_exe_path, exe_args)
+  let exit_code = @process.run(tool_exe_path, exe_args, extra_env=envs)
+
+  if exit_code == 0 {
+    // 运行成功之后的处理
+    // 比如使用npm安装了全局包
+    after_run(tool, exe_args)
+  }
+}
+
+///|
+async fn after_run(tool : @tools.Tool, args : ArrayView[String]) -> Unit {
+  match tool {
+    Npm => @specials.handle_npm_command(args)
+    _ => ()
+  }
 }
