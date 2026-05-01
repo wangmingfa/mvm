@@ -59,14 +59,15 @@ fn Command::new_with_version(
 
 ///|
 fn parse_with_version(command_type : String, options : String) -> Command raise {
-  lexmatch options {
-    (before, "@", after) =>
+  match options.split("@").to_array() {
+    [before, after] =>
       Command::new_with_version(
         command_type,
         before.to_owned(),
         version=after.to_owned(),
       )
-    tool => Command::new_with_version(command_type, tool.to_owned())
+    [tool] => Command::new_with_version(command_type, tool.to_owned())
+    _ => raise fail("无效的参数 \{options}")
   }
 }
 

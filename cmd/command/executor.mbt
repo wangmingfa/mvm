@@ -1,4 +1,6 @@
 // 工具名前缀（与 install.sh、executor.sh 保持一致）
+
+///|
 const PREFIX = "f_"
 
 ///|
