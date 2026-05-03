@@ -1,12 +1,17 @@
 ///|
 pub fn parse_version(version : String) -> FixedArray[Int] raise {
-  lexmatch version {
-    (_, "[[:digit:]]+\.[[:digit:]]+(\.[[:digit:]]+)*" as version, _) => {
-      let arr = version.split(".").to_array().map(v => @string.parse_int(v))
-      FixedArray::from_array(arr)
-    }
-    _ => raise fail("无效的版本：\{version}")
+  if version =~ (re"[0-9]+\.[0-9]+(\.[0-9]+)*" as version) {
+    let arr = version.split(".").to_array().map(v => @string.parse_int(v))
+    return FixedArray::from_array(arr)
   }
+  raise fail("无效的版本：\{version}")
+  // lexmatch version {
+  //   (_, "[[:digit:]]+\.[[:digit:]]+(\.[[:digit:]]+)*" as version, _) => {
+  //     let arr = version.split(".").to_array().map(v => @string.parse_int(v))
+  //     FixedArray::from_array(arr)
+  //   }
+  //   _ => raise fail("无效的版本：\{version}")
+  // }
 }
 
 ///|
