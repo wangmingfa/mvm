@@ -130,19 +130,22 @@ pub async fn download_file(url : String, dest : String) -> Bool {
 ///|
 /// 解压文件
 pub async fn extract_file(file : String, dest : String) -> Bool {
-  @log.debug("正在解压到 \{dest} ...")
+  @log.debug("正在解压 \{file} 到 \{dest} ...")
   let (code, data) = match file {
     f if f.has_suffix(".tar.gz") =>
       @process.collect_output_merged("tar", ["-xzf", f, "-C", dest])
     f if f.has_suffix(".tar.xz") =>
       @process.collect_output_merged("tar", ["-xJf", f, "-C", dest])
-    f if f.has_suffix(".zip") =>
+    f if f.has_suffix(".zip") => {
+      check_unzip_is_installed()
       @process.collect_output_merged("unzip", ["-q", "-o", f, "-d", dest])
+    }
     _ => {
       @log.error("未知的压缩格式")
       return false
     }
   }
+  @log.debug("解压结果: \{code}")
   match code {
     0 => true
     _ => {
@@ -150,5 +153,12 @@ pub async fn extract_file(file : String, dest : String) -> Bool {
       @log.error(data.text())
       false
     }
+  }
+}
+
+///|
+async fn check_unzip_is_installed() -> Unit {
+  if !@command.command_exists("unzip") {
+    raise fail("请先安装 unzip")
   }
 }

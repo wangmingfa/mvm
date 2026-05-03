@@ -1,7 +1,7 @@
 // 检查命令是否存在
 
 ///|
-async fn command_exists(cmd : String) -> Bool {
+pub async fn command_exists(cmd : String) -> Bool {
   let os = @os.get_os_name()
   match os {
     Linux | MacOS => {

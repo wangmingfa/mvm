@@ -12,7 +12,7 @@ async fn add_installed(tool : Tool, version : String) -> Unit {
   let json = if @fs.exists(installed_file_path) {
     @fs.read_file(installed_file_path).json() catch {
       e => {
-        println(
+        @log.error(
           "文件 \{@utils.yellow(installed_file_path)} 不是有效的json格式",
         )
         raise e

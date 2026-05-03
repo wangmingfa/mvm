@@ -203,6 +203,8 @@ pub async fn post_install(tool : Tool, target_dir : String) -> Unit {
       _ => []
     }
     exe_files.insert(0, "+x")
+    let msg = exe_files.join(",")
+    @log.debug("增加可执行权限: \{msg}")
     let _ = @process.run("chmod", exe_files)
   }
 }

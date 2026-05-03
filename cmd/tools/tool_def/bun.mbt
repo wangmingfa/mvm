@@ -1,5 +1,5 @@
 ///|
-const BUN_RELEASE_URL = "https://github.com/oven-sh/bun/releases/download"
+const BUN_RELEASE_URL = "https://cdn.gh-proxy.org/https://github.com/oven-sh/bun/releases/download"
 
 ///|
 const BUN_INDEX_URL = "https://api.github.com/repos/oven-sh/bun/releases"

@@ -10,4 +10,5 @@ import {
   "username/mvm/utils",
   "username/mvm/log",
   "username/mvm/cmd/command/specials",
+  "username/mvm/command",
 }
