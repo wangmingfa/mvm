@@ -2,6 +2,86 @@
 using @fs_ext {get_parent_dir, ensure_dir}
 
 ///|
+async fn get_file_size_from_url(url : String) -> Int64? {
+  let os = @os.get_os_name()
+  match os {
+    Windows => get_file_size_with_curl_exe(url)
+    _ => get_file_size_with_curl(url)
+  }
+}
+
+///|
+async fn get_file_size_with_curl_exe(url : String) -> Int64? {
+  // 优先使用 curl.exe 获取文件大小，因为powershell的Invoke-WebRequest会有蓝色背景闪烁，体验不好
+  let (code, output) = @process.collect_stdout("curl.exe", ["-sI", url]) catch {
+    _ => return get_file_size_with_powershell(url)
+  }
+  if code == 0 {
+    let stdout = output.text()
+    let lines = stdout.split("\n").collect()
+    for line in lines {
+      let line = line.trim()
+      if line.has_prefix("Content-Length:") {
+        let value = line["Content-Length:".length():].trim()
+        let size = @string.parse_int64(value) catch { _ => return None }
+        return Some(size)
+      }
+    }
+  }
+  get_file_size_with_powershell(url)
+}
+
+///|
+async fn get_file_size_with_curl(url : String) -> Int64? {
+  let (code, output) = @process.collect_stdout("curl", ["-sI", url]) catch {
+    _ => return None
+  }
+  if code == 0 {
+    let stdout = output.text()
+    let lines = stdout.split("\n").collect()
+    for line in lines {
+      let line = line.trim()
+      if line.has_prefix("Content-Length:") {
+        let value = line["Content-Length:".length():].trim()
+        let size = @string.parse_int64(value) catch { _ => return None }
+        return Some(size)
+      }
+    }
+  }
+  None
+}
+
+///|
+async fn get_file_size_with_powershell(url : String) -> Int64? {
+  let ps_script =
+    $| try { 
+    $|  $response = Invoke-WebRequest -Uri '\{url}' -Method Head -UserAgent 'curl/8.7.1' -UseBasicParsing -ErrorAction Stop; 
+    $|  $response.Headers['Content-Length'] 
+    $|} catch { 
+    $|  '0' 
+    $|}
+
+  let (code, output) = @process.collect_stdout("powershell", [
+    "-Command", ps_script,
+  ]) catch {
+    _ => return None
+  }
+  if code == 0 {
+    let stdout = output.text().trim()
+    if stdout != "0" {
+      let size = @string.parse_int64(stdout) catch { _ => return None }
+      return Some(size)
+    }
+  }
+  None
+}
+
+///|
+priv suberror DownloadError {
+  FileAlreadyComplete
+}
+
+///|
 pub async fn download(
   url : String,
   dest : String,
@@ -15,7 +95,20 @@ pub async fn download(
     0
   }
 
-  let (client, size, name, start) = get_client(url, range_start=exist_file_size)
+  let (client, size, name, start) = get_client(
+    url,
+    range_start=exist_file_size,
+    dest~,
+    dest_is_file~,
+  ) catch {
+    e => {
+      if e is DownloadError::FileAlreadyComplete {
+        @log.info("文件已完整下载，跳过")
+        return
+      }
+      raise e
+    }
+  }
   defer client.close()
 
   let dest_dir = if dest_is_file {
@@ -65,6 +158,8 @@ pub async fn download(
 async fn get_client(
   url : String,
   range_start? : Int64 = 0,
+  dest? : String = "",
+  dest_is_file? : Bool = false,
 ) -> (@http.Client, Int64, String, Int64) {
   let (res, client) = @http.get_stream(url, headers={
     "User-Agent": "curl/8.7.1",
@@ -81,10 +176,25 @@ async fn get_client(
         raise fail("重定向失败: 未找到 Location 头")
       }
       @log.debug("重定向到：\{location}")
-      get_client(location, range_start~)
+      get_client(location, range_start~, dest~, dest_is_file~)
     }
     416 => {
       client.close()
+      if dest_is_file && range_start > 0 && dest != "" {
+        let exist_file_size = if @fs.exists(dest) {
+          let file = @fs.open(dest, mode=ReadOnly)
+          defer file.close()
+          file.size()
+        } else {
+          0
+        }
+        let remote_size = get_file_size_from_url(url)
+        match remote_size {
+          Some(remote_size) if exist_file_size == remote_size =>
+            raise DownloadError::FileAlreadyComplete
+          _ => ()
+        }
+      }
       @log.debug("服务器不支持断点续传（416），将重新下载...")
       get_client(url, range_start=0)
     }
@@ -113,7 +223,7 @@ async fn get_client(
         },
       )
     }
-    _ => raise fail("下载失败，原因：\{res.code} \{res.reason}")
+    _ => raise fail("\{url} 下载失败，原因：\{res.code} \{res.reason}")
   }
 }
 

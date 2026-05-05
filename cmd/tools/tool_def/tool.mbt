@@ -192,7 +192,7 @@ async fn get_config_inner(
   fallback_to_global_config : Bool,
 ) -> (String, Config)? {
   let path = @fs_ext.join_path(dir, CONFIG_FILE)
-  @log.debug("在 \{dir} 查找 \{tool} 的版本号")
+  @log.debug("在 \{dir} 查找 \{@utils.option_to_string(tool)} 的版本号")
   if @fs.exists(path) {
     let json = @fs.read_file(path).json() catch {
       _ => {
@@ -263,7 +263,7 @@ impl Show for Config with output(s, logger) {
 ///|
 impl Show for Config with to_string(s) {
   (
-    $|{node: \{s.node}, bun: \{s.bun}, zig: \{s.zig}}
+    $|{node: \{@utils.option_to_string(s.node)}, bun: \{@utils.option_to_string(s.bun)}, zig: \{@utils.option_to_string(s.zig)}}
   )
 }
 

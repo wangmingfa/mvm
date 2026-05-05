@@ -32,7 +32,10 @@ pub async fn run_uninstall(tool : @tools.Tool, version : String?) -> Unit {
   let removed_versions = remove_installed(tool, remove_versions)
 
   match removed_versions.length() {
-    0 => @log.warn("未安装 \{tool}@\{version}，无需卸载")
+    0 =>
+      @log.warn(
+        "未安装 \{tool}@\{@utils.option_to_string(version)}，无需卸载",
+      )
     1 => @log.success("已卸载 \{tool} \{removed_versions[0]}")
     _ => {
       let version_msg = removed_versions.join("、")
