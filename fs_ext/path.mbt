@@ -223,25 +223,25 @@ pub fn get_parent_dir(path : String) -> String? {
 
 ///|
 test "get_parent_dir" {
-  inspect(
+  debug_inspect(
     get_parent_dir("/home/peter/code"),
     content=(
       #|Some("/home/peter")
     ),
   )
-  inspect(
+  debug_inspect(
     get_parent_dir("home/peter/code"),
     content=(
       #|Some("home/peter")
     ),
   )
-  inspect(
+  debug_inspect(
     get_parent_dir("home/peter/code/"),
     content=(
       #|Some("home/peter")
     ),
   )
-  inspect(
+  debug_inspect(
     get_parent_dir("home/peter/code/a.txt"),
     content=(
       #|Some("home/peter/code")

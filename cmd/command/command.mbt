@@ -130,19 +130,19 @@ test "get_arg_value" {
     "--log-level=debug", // key=value
      "--node", "24", // key value
   ]
-  inspect(
+  debug_inspect(
     get_arg_value_from_args(args, "log-level"),
     content=(
       #|Some("debug")
     ),
   )
-  inspect(
+  debug_inspect(
     get_arg_value_from_args(args, "node"),
     content=(
       #|Some("24")
     ),
   )
-  inspect(
+  debug_inspect(
     get_arg_value_from_args(args, "zig", default="v0.15.1"),
     content=(
       #|Some("v0.15.1")

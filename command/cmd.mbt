@@ -51,7 +51,7 @@ pub async fn get_best_downloader() -> String? {
 
 ///|
 async test "get_best_downloader" {
-  inspect(
+  debug_inspect(
     get_best_downloader(),
     content=(
       #|Some("curl")
