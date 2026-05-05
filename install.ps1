@@ -6,7 +6,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-$GITHUB_REPO = "username/mvm"
+$GITHUB_REPO = "wangmingfa/mvm"
 
 $ONLINE = $online.IsPresent
 $NO_PREFIX = $noPrefix.IsPresent -or $np.IsPresent

@@ -3,7 +3,7 @@
 set -e
 
 # GitHub 仓库地址（请根据实际情况修改）
-GITHUB_REPO="username/mvm"
+GITHUB_REPO="wangmingfa/mvm"
 
 # 解析参数
 ONLINE=false
