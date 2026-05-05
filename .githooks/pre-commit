@@ -1,5 +1,68 @@
 #!/bin/sh
 
+# 同步 install.config 到 install.sh 和 install.ps1
+sync_install_config() {
+  if [ ! -f "install.config" ]; then
+    echo "警告: 找不到 install.config"
+    return 0
+  fi
+
+  CONFIG_CONTENT=$(cat install.config | sed 's/[\/&]/\\&/g')
+
+  # 处理 install.sh
+  if [ -f "install.sh" ]; then
+    awk -v config="$CONFIG_CONTENT" '
+      /# === CONFIG_START ===/,/# === CONFIG_END ===/ {
+        if ($0 ~ /# === CONFIG_START ===/) {
+          print $0
+          print config
+          skip = 1
+        } else if ($0 ~ /# === CONFIG_END ===/) {
+          print $0
+          skip = 0
+        }
+        next
+      }
+      !skip { print }
+    ' install.sh > install.sh.tmp
+    mv install.sh.tmp install.sh
+    echo "已同步 install.config 到 install.sh"
+    git add install.sh
+  fi
+
+  # 处理 install.ps1
+  if [ -f "install.ps1" ]; then
+    CONFIG_PREFIX=$(grep 'PREFIX=' install.config | cut -d'"' -f2)
+    CONFIG_TOOLS=$(grep 'TOOLS=' install.config | sed -e 's/TOOLS=//' -e 's/(/@(/' -e 's/)/)/' -e 's/"//g')
+
+    awk -v prefix="$CONFIG_PREFIX" -v tools="$CONFIG_TOOLS" '
+      /# === CONFIG_START ===/,/# === CONFIG_END ===/ {
+        if ($0 ~ /# === CONFIG_START ===/) {
+          print $0
+          print "# 工具名前缀"
+          print "$PREFIX = \"" prefix "\""
+          print ""
+          print "# 支持的工具列表"
+          print "$TOOLS = " tools
+          skip = 1
+        } else if ($0 ~ /# === CONFIG_END ===/) {
+          print $0
+          skip = 0
+        }
+        next
+      }
+      !skip { print }
+    ' install.ps1 > install.ps1.tmp
+    mv install.ps1.tmp install.ps1
+    echo "已同步 install.config 到 install.ps1"
+    git add install.ps1
+  fi
+}
+
+# 执行配置同步
+sync_install_config
+
+# 执行 moon check
 if command -v moon > /dev/null 2>&1; then
   moon check
 else

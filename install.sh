@@ -17,8 +17,13 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-# 工具名前缀（与 executor.sh、executor.mbt 保持一致）
+# === CONFIG_START ===
+# 工具名前缀
 PREFIX="f_"
+
+# 支持的工具列表
+TOOLS=("node" "npm" "npx" "corepack" "zig" "bun")
+# === CONFIG_END ===
 
 # 确定 PREFIX（--online 或 --no-prefix 时清空前缀）
 if [ "$ONLINE" = true ]; then
@@ -33,9 +38,6 @@ MVM_HOME="${MVM_HOME:-$HOME}/.mvm"
 # 确定 bin 目录
 BIN_DIR="${MVM_HOME}/bin"
 mkdir -p "${BIN_DIR}"
-
-# 支持的工具列表
-TOOLS=("node" "npm" "npx" "corepack" "zig" "bun")
 
 # 清理旧的工具软连接（原始名和带当前前缀的）
 for tool in "${TOOLS[@]}"; do
