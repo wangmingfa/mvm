@@ -1,5 +1,8 @@
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Definition
-$mvmPath = Join-Path $ScriptDir "mvm"
+$mvmPath = Join-Path $ScriptDir "mvm.exe"
+
+# 打印mvmPath
+Write-Host "mvmPath: $mvmPath"
 
 # 构建命令参数
 $cmdArgs = @("executor") + $args

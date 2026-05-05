@@ -1,7 +1,6 @@
-param(
+﻿param(
     [switch]$online,
-    [switch]$noPrefix,
-    [alias("np")][switch]$np
+    [alias("np")][switch]$noPrefix
 )
 
 $ErrorActionPreference = "Stop"
@@ -9,7 +8,7 @@ $ErrorActionPreference = "Stop"
 $GITHUB_REPO = "wangmingfa/mvm"
 
 $ONLINE = $online.IsPresent
-$NO_PREFIX = $noPrefix.IsPresent -or $np.IsPresent
+$NO_PREFIX = $noPrefix.IsPresent
 
 # === CONFIG_START ===
 # 工具名前缀
@@ -46,9 +45,7 @@ foreach ($tool in $TOOLS) {
 }
 
 $executorPath = Join-Path $BIN_DIR "executor.ps1"
-if (-not (Test-Path $executorPath)) {
-    Copy-Item -Path "executor.sh" -Destination $executorPath -Force
-}
+Copy-Item -Path "executor.ps1" -Destination $executorPath -Force
 
 foreach ($tool in $DISPLAY_TOOLS) {
     $toolScriptPath = Join-Path $BIN_DIR ($tool + ".ps1")
@@ -124,41 +121,35 @@ if ($ONLINE) {
     }
     
     Copy-Item -Path $MVM_EXE -Destination (Join-Path $BIN_DIR "mvm.exe") -Force
-    Copy-Item -Path "executor.sh" -Destination (Join-Path $BIN_DIR "executor.sh") -Force
 }
 
 $NPM_DIR = Join-Path $BIN_DIR "npm-pkg"
 New-Item -ItemType Directory -Force -Path $NPM_DIR | Out-Null
 
-$USER_PROFILE = $PROFILE
-if (-not (Test-Path $USER_PROFILE)) {
-    New-Item -ItemType File -Path $USER_PROFILE -Force | Out-Null
-}
-
 $PATH_ENTRIES = @($BIN_DIR, $NPM_DIR)
-$PROFILE_MODIFIED = $false
-$PROFILE_CONTENT = Get-Content $USER_PROFILE -Raw -ErrorAction SilentlyContinue
+$CURRENT_PATH = [Environment]::GetEnvironmentVariable("PATH", "User")
+$PATH_MODIFIED = $false
 
 foreach ($entry in $PATH_ENTRIES) {
     $escapedEntry = [regex]::Escape($entry)
-    if ($PROFILE_CONTENT -notmatch [regex]::Escape("`$env:PATH") + ".*" + $escapedEntry) {
-        Add-Content -Path $USER_PROFILE -Value "`$env:PATH = `"$entry;`$env:PATH`""
-        Write-Host "已将 $entry 添加到 PATH（写入 $USER_PROFILE）"
-        $PROFILE_MODIFIED = $true
+    if ($CURRENT_PATH -notmatch $escapedEntry) {
+        $CURRENT_PATH = "$entry;$CURRENT_PATH"
+        Write-Host "已将 $entry 添加到用户 PATH 环境变量"
+        $PATH_MODIFIED = $true
     } else {
-        Write-Host "$entry 已存在于 PATH（$USER_PROFILE），跳过"
+        Write-Host "$entry 已存在于用户 PATH 环境变量，跳过"
     }
 }
 
-if ($PROFILE_MODIFIED) {
+if ($PATH_MODIFIED) {
+    [Environment]::SetEnvironmentVariable("PATH", $CURRENT_PATH, "User")
     Write-Host ""
-    Write-Host "PATH 配置已更新，请重新启动 PowerShell 或执行以下命令使其生效："
-    Write-Host "  . $USER_PROFILE"
+    Write-Host "PATH 环境变量已更新，请重新启动 PowerShell 使其生效"
 }
 
 Write-Host ""
 Write-Host "安装完成！可执行文件已安装到 $BIN_DIR"
 Write-Host "  - mvm.exe         (主命令)"
-Write-Host "  - executor.sh (工具执行脚本)"
+Write-Host "  - executor.ps1    (工具执行脚本)"
 Write-Host "  - npm-pkg 目录    (npm 全局包安装路径：$NPM_DIR)"
 Write-Host "  工具脚本：$($DISPLAY_TOOLS -join ', ')"
