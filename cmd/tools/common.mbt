@@ -49,7 +49,7 @@ pub async fn get_target_version(
     Node => Node::get_target_version(os, version, version_count)
     Bun => Bun::get_target_version(os, version, version_count)
     Zig => Zig::get_target_version(os, version, version_count)
-    _ => raise fail("暂不支持改工具：\{tool}")
+    _ => raise fail("暂不支持该工具：\{tool}")
   }
 }
 

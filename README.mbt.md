@@ -74,7 +74,7 @@ MVM_LOG_LEVEL=debug ./executor.sh node -v
 ```
 
 ```powershell
-$env:MVM_LOG_LEVEL="debug"; moon run .\cmd\main\ -- executor  node -v
+$env:MVM_LOG_LEVEL="debug"; ./executor.ps1  node -v
 ```
 
 2. 本地构建产物测试

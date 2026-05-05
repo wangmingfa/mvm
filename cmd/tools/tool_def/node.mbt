@@ -207,19 +207,21 @@ pub async fn Node::get_node_builtin_tool_path_and_version(
 
   // 路径：直接替换node为对应工具名称
   let name = @fs_ext.get_path_name(node_exe_path)
+  // 如果是windows，则需要将exe转为ps1后缀
+  let old = if @os.get_os_name() is Windows { "node.exe" } else { "node" }
   let tool_path = @fs_ext.join_path(
     node_bin_dir,
-    name.replace(old="node", new=tool.to_string()),
+    name.replace(old~, new="\{tool.to_string()}.ps1"),
   )
 
-  let node_dir = @fs_ext.join_path(node_bin_dir, "../")
+  let { root: node_dir, lib: lib_dir } = Node::get_node_dir(node_exe_path)
   // npm和npx共用一个package.json
   let node_tool_name = if tool is Corepack {
     tool.to_string()
   } else {
     Npm.to_string()
   }
-  let node_tool_package_json_file_path = "\{node_dir}/lib/node_modules/\{node_tool_name}/package.json"
+  let node_tool_package_json_file_path = "\{lib_dir}/node_modules/\{node_tool_name}/package.json"
   if @fs.exists(node_tool_package_json_file_path) {
     let json = @fs.read_file(node_tool_package_json_file_path).json()
     guard json is Object(map) else {
@@ -240,4 +242,31 @@ pub async fn Node::get_node_builtin_tool_path_and_version(
     "无法从 \{node_tool_package_json_file_path} 获取到 npm 的版本",
   )
   None
+}
+
+///|
+pub struct NodeDir {
+  root : String
+  lib : String
+}
+
+///|
+pub fn Node::get_node_dir(exe_path : String) -> NodeDir raise {
+  let os = @os.get_os_name()
+  guard @fs_ext.get_parent_dir(exe_path) is Some(node_bin_dir) else {
+    raise fail("无法获取到 node 的 bin 目录")
+  }
+  // windows下的node_bin_dir和node_dir是一样的，linux和mac下node_bin_dir是node_dir/bin
+  let node_dir = if os is Windows {
+    node_bin_dir
+  } else {
+    @fs_ext.join_path(node_bin_dir, "../")
+  }
+  // windows下，没有lib目录，直接在node_dir下找
+  let lib_dir = if os is Windows {
+    node_dir
+  } else {
+    @fs_ext.join_path(node_dir, "lib")
+  }
+  { root: node_dir, lib: lib_dir }
 }

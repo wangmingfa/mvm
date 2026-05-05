@@ -21,7 +21,6 @@ pub async fn before_npm_command(
       !uninstall_cmds.any(cmd => arg == cmd) &&
       !global_flgas.any(flag => arg == flag)
     })
-    // let node_dir = @fs_ext.join_path(npm_exe_path, "../../")
     let npm_pkg_home = @tool_def.mvm_npm_pkg_home()
     let result : Map[String, String] = {}
     walk_global_pkgs(npm_exe_path, pkgs, fn(cmd_name, _) {
@@ -82,12 +81,12 @@ async fn walk_global_pkgs(
   pkgs : ArrayView[String],
   handle_pkg_cmd : async (String, String) -> Unit,
 ) -> Unit {
-  let node_dir = @fs_ext.join_path(npm_exe_path, "../../")
+  let { lib: lib_dir, .. } = @tool_def.Node::get_node_dir(npm_exe_path)
   // 在mvm_bin目录下的npm-pkg目录添加所安装的npm包的所有全局命令的软连接
   for pkg in pkgs {
     let pkg_package_json_file_path = @fs_ext.join_path(
-      node_dir,
-      "lib/node_modules/\{pkg}/package.json",
+      lib_dir,
+      "node_modules/\{pkg}/package.json",
     )
     if !@fs.exists(pkg_package_json_file_path) {
       continue

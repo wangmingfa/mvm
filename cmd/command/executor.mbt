@@ -53,6 +53,9 @@ async fn run_executor(args : Array[String]) -> Unit {
   )
 
   if !@fs.exists(tool_exe_path) {
+    @log.debug(
+      "工具 \{tool} 的可执行文件 \{tool_exe_path} 不存在，正在安装...",
+    )
     // 没有安装，提示用户安装或指定版本
     run_install(tool, Some(version))
   }
