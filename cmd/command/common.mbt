@@ -2,7 +2,7 @@
 const INSTALLED_FILE = "installed.json"
 
 ///|
-fn get_installed_file_path() -> String {
+fn get_installed_file_path() -> String raise {
   @fs_ext.join_path(@tools.mvm_home(), INSTALLED_FILE)
 }
 

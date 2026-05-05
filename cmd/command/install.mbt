@@ -19,7 +19,7 @@ pub async fn run_install(tool : @tools.Tool, version : String?) -> Unit {
 
   // npm 随 node 安装
   if tool is @tools.Tool::Npm {
-    println("npm 会随 node 自动安装，请先安装 node")
+    @log.error("npm 会随 node 自动安装，请先安装 node")
     return
   }
 
@@ -36,7 +36,7 @@ pub async fn run_install(tool : @tools.Tool, version : String?) -> Unit {
   }
 
   // 下载文件
-  let tmp_dir = "\{@tools.mvm_home()}/tmp-\{tool}-\{version}"
+  let tmp_dir = "\{@tools.temp_dir()}/tmp-\{tool}-\{version}"
   ensure_dir(tmp_dir)
   let ext = if url.has_suffix(".tar.gz") {
     "tar.gz"
@@ -47,9 +47,7 @@ pub async fn run_install(tool : @tools.Tool, version : String?) -> Unit {
   }
   let archive_file = "\{tmp_dir}/\{tool}-\{version}.\{ext}"
 
-  if !download_file(url, archive_file) {
-    return
-  }
+  download_file(url, archive_file)
 
   // 解压到临时目录
   let extract_dir = "\{tmp_dir}/extract-\{tool}-\{version}"
@@ -114,17 +112,14 @@ pub async fn run_install(tool : @tools.Tool, version : String?) -> Unit {
 
 ///|
 /// 下载文件
-pub async fn download_file(url : String, dest : String) -> Bool {
+pub async fn download_file(url : String, dest : String) -> Unit {
   @log.debug("正在下载: \{@utils.blue(url)}")
   @log.debug("保存到：\{dest}")
-  @download.download_by_native_command(url, dest) catch {
-    e => {
-      @log.error("下载失败，原因：")
-      @log.error(e)
-      return false
-    }
+  let os = @os.get_os_name()
+  match os {
+    Windows => @download.download(url, dest, dest_is_file=true)
+    _ => @download.download_by_native_command(url, dest)
   }
-  true
 }
 
 ///|
@@ -136,10 +131,7 @@ pub async fn extract_file(file : String, dest : String) -> Bool {
       @process.collect_output_merged("tar", ["-xzf", f, "-C", dest])
     f if f.has_suffix(".tar.xz") =>
       @process.collect_output_merged("tar", ["-xJf", f, "-C", dest])
-    f if f.has_suffix(".zip") => {
-      check_unzip_is_installed()
-      @process.collect_output_merged("unzip", ["-q", "-o", f, "-d", dest])
-    }
+    f if f.has_suffix(".zip") => unzip(file, dest)
     _ => {
       @log.error("未知的压缩格式")
       return false
@@ -158,7 +150,26 @@ pub async fn extract_file(file : String, dest : String) -> Bool {
 
 ///|
 async fn check_unzip_is_installed() -> Unit {
-  if !@command.command_exists("unzip") {
+  if !@mvm_cmd.command_exists("unzip") {
     raise fail("请先安装 unzip")
+  }
+}
+
+///|
+async fn unzip(zip_file_path : String, output_dir : String) -> (Int, &@io.Data) {
+  let os = @os.get_os_name()
+  match os {
+    Linux | MacOS => {
+      check_unzip_is_installed()
+      @process.collect_output_merged("unzip", [
+        "-q", "-o", zip_file_path, "-d", output_dir,
+      ])
+    }
+    Windows =>
+      @process.collect_output_merged("powershell", [
+        "-Command",
+        "Expand-Archive -Path \"\{zip_file_path}\" -DestinationPath \"\{output_dir}\" -Force",
+      ])
+    _ => raise fail("不支持的操作系统")
   }
 }

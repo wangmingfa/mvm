@@ -73,6 +73,10 @@ moon run cmd/main install node@20
 MVM_LOG_LEVEL=debug ./executor.sh node -v
 ```
 
+```powershell
+$env:MVM_LOG_LEVEL="debug"; moon run .\cmd\main\ -- executor  node -v
+```
+
 2. 本地构建产物测试
 ```bash
 # 安装mvm，会自动将构建产物拷贝到$MVM_HOME

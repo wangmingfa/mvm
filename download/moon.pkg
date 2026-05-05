@@ -11,4 +11,5 @@ import {
   "username/mvm/fs_ext",
   "username/mvm/command",
   "username/mvm/log",
+  "username/mvm/os",
 }

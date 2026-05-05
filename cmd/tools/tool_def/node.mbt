@@ -184,11 +184,11 @@ pub fn Node::get_download_url(
 }
 
 ///|
-pub fn Node::get_exe_path(version : String) -> String {
-  // TODO
+pub fn Node::get_exe_path(version : String) -> String raise {
   let os = @os.get_os_name()
+  let sub_dir = if os is Windows { "" } else { "bin" }
   let suffix = if os is Windows { ".exe" } else { "" }
-  [version_dir(Tool::Node, version), "bin", "node", suffix]
+  [version_dir(Tool::Node, version), sub_dir, "node\{suffix}"]
   .filter(v => !v.is_blank())
   .join("/")
 }

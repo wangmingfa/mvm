@@ -11,6 +11,7 @@ pub using @tool_def {
   tool_dir,
   version_dir,
   get_config,
+  temp_dir,
 }
 
 ///|
@@ -169,6 +170,7 @@ pub async fn _get_tool_exe_path(
     Zig => Zig::get_exe_path(version)
     _ => raise fail("不支持的工具：\{tool}")
   }
+  let path = @fs_ext.canonicalize_path(path)
   Some((path, version, {}))
 }
 

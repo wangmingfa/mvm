@@ -3,7 +3,9 @@ using @command {get_command, run}
 
 ///|
 async fn main {
-  guard @env.current_dir() is Some(_dir)
+  guard @env.current_dir() is Some(_dir) else {
+    raise fail("无法获取当前目录")
+  }
   let args = @env.args()[1:]
   @log.debug("参数: \{args}")
   try {

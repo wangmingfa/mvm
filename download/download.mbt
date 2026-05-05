@@ -19,7 +19,9 @@ pub async fn download(
   defer client.close()
 
   let dest_dir = if dest_is_file {
-    guard get_parent_dir(dest) is Some(dir)
+    guard get_parent_dir(dest) is Some(dir) else {
+      raise fail("无法获取到 \{dest} 的父目录")
+    }
     dir
   } else {
     dest
@@ -64,6 +66,7 @@ async fn get_client(
   url : String,
   range_start? : Int64 = 0,
 ) -> (@http.Client, Int64, String, Int64) {
+  // FIXME 有可能文件已经下载完了，这时候应该直接返回而不是继续下载
   let (res, client) = @http.get_stream(url, headers={
     "User-Agent": "curl/8.7.1",
     "Accept": "*/*",
@@ -166,7 +169,7 @@ pub async fn download_by_native_command(url : String, dest : String) -> Unit {
         url +
         "' -OutFile '" +
         dest +
-        "' -UserAgent 'Mozilla/5.0' -MaximumRedirection 5 -TimeoutSec 300"
+        "' -UserAgent 'Mozilla/5.0' -MaximumRedirection 5 -TimeoutSec 300 -Resume"
 
       let args = ["-Command", ps_script]
 
@@ -177,6 +180,14 @@ pub async fn download_by_native_command(url : String, dest : String) -> Unit {
   let args_str = args.join(" ")
   let cmd = "\{downloader} \{args_str}"
   @log.debug("下载命令: \{cmd}")
+
+  let os = @os.get_os_name()
+  let (downloader, args) = match os {
+    Windows =>
+      // powershell 命令需要包装一层
+      ("powershell", ["-Command", cmd])
+    _ => (downloader, args)
+  }
 
   match @process.run(downloader, args) {
     0 => ()

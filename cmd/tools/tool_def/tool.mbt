@@ -4,27 +4,42 @@
 
 ///|
 /// MVM 主目录
-pub fn mvm_home() -> String {
+pub fn mvm_home() -> String raise {
   if @env.get_env_var("MVM_HOME") is Some(home) {
     return home
   }
-  guard @env.get_env_var("HOME") is Some(home)
+  let os = @os.get_os_name()
+  let home = if os is Windows {
+    @env.get_env_var("USERPROFILE")
+  } else {
+    @env.get_env_var("HOME")
+  }
+  guard home is Some(home) else {
+    raise fail(
+      "无法获取用户主目录，请确保环境变量 HOME 已设置",
+    )
+  }
   @fs_ext.join_path(home, ".mvm")
 }
 
 ///|
-pub fn mvm_bin_home() -> String {
+pub fn mvm_bin_home() -> String raise {
   @fs_ext.join_path(mvm_home(), "bin")
 }
 
 ///|
-pub fn mvm_npm_pkg_home() -> String {
+pub fn mvm_npm_pkg_home() -> String raise {
   @fs_ext.join_path(mvm_bin_home(), "npm-pkg")
 }
 
 ///|
-pub fn cache_dir() -> String {
+pub fn cache_dir() -> String raise {
   @fs_ext.join_path(mvm_home(), ".cache")
+}
+
+///|
+pub fn temp_dir() -> String raise {
+  @fs_ext.join_path(mvm_home(), ".temp")
 }
 
 ///|
@@ -50,19 +65,19 @@ pub async fn write_cache_file_content(
 
 ///|
 /// 工具安装目录
-pub fn tools_dir() -> String {
+pub fn tools_dir() -> String raise {
   "\{mvm_home()}/tools"
 }
 
 ///|
 /// 获取特定工具的安装目录
-pub fn tool_dir(tool : Tool) -> String {
+pub fn tool_dir(tool : Tool) -> String raise {
   "\{tools_dir()}/\{tool.to_string().to_lower()}"
 }
 
 ///|
 /// 获取特定版本的安装路径
-pub fn version_dir(tool : Tool, version : String) -> String {
+pub fn version_dir(tool : Tool, version : String) -> String raise {
   "\{tool_dir(tool)}/\{version}"
 }
 
@@ -281,7 +296,7 @@ fn get_project_config_path() -> String {
 }
 
 ///|
-fn get_global_config_path() -> String {
+fn get_global_config_path() -> String raise {
   @fs_ext.join_path(mvm_home(), CONFIG_FILE)
 }
 

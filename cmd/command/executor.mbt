@@ -61,7 +61,7 @@ async fn run_executor(args : Array[String]) -> Unit {
 
   let cmd = "\{tool_exe_path} \{args_str}"
   @log.debug("运行：\{cmd}")
-  let exit_code = @process.run(tool_exe_path, exe_args, extra_env=envs)
+  let exit_code = @mvm_cmd.run(tool_exe_path, exe_args, extra_env=envs)
 
   if exit_code == 0 {
     // 运行成功之后的处理

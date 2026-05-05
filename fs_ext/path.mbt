@@ -58,7 +58,7 @@ fn String::canonicalize_path(self : Self) -> Self {
 
 ///|
 /// 将路径中的相对路径符号转换，比如: .和..
-fn canonicalize_path(path : String) -> String {
+pub fn canonicalize_path(path : String) -> String {
   let path = path.replace_all(old="\\", new="/")
   let is_absolute = path.length() > 0 && path[0] == '/'
   let parts = path.split("/")
@@ -85,11 +85,12 @@ fn canonicalize_path(path : String) -> String {
       result = "\{result}/\{part}"
     }
   }
-  if is_absolute {
-    "/\{result}"
-  } else {
-    result
-  }
+  let result = if is_absolute { "/\{result}" } else { result }
+  result
+  // match @os.get_os_name() {
+  //   Windows => result.replace_all(old="/", new="\\")
+  //   _ => result
+  // }
 }
 
 ///|
