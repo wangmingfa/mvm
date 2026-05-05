@@ -5,9 +5,9 @@ $mvmPath = Join-Path $ScriptDir "mvm.exe"
 $cmdArgs = @("executor") + $args
 
 if (Test-Path $mvmPath) {
-    & $mvmPath @cmdArgs 2>&1 | Out-Host
+    & $mvmPath @cmdArgs
 } else {
-    moon run cmd/main -- executor @args 2>&1 | Out-Host
+    moon run cmd/main -- executor @args
 }
 
 exit $LASTEXITCODE

@@ -29,7 +29,15 @@ pub fn println_error(e : Error) -> Unit {
       }
       msg[start_index:].trim().to_owned()
     }
-    _ => e.to_string()
+    _ => {
+      let msg = e.to_string()
+      if msg == "Cancelled" {
+        println("")
+        "操作已取消"
+      } else {
+        msg
+      }
+    }
   }
   error(msg)
 }

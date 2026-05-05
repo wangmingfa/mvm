@@ -28,9 +28,9 @@ pub async fn download(
   }
   ensure_dir(dest_dir)
   let is_append = start > 0
-  println("文件大小：\{@utils.get_readable_file_size(size)}")
+  @log.debug("文件大小：\{@utils.get_readable_file_size(size)}")
   if is_append {
-    println(
+    @log.debug(
       "文件 \{dest} 支持断点续传，已下载大小：\{@utils.get_readable_file_size(start)}",
     )
   }
@@ -56,7 +56,7 @@ pub async fn download(
   ])
   progress_bar.set_complete()
   @progress.clear_progress()
-  println(
+  @log.info(
     "\n文件已保存：\{file_path} 耗时：\{@utils.get_readable_time(progress_bar.duration())}",
   )
 }
@@ -66,7 +66,6 @@ async fn get_client(
   url : String,
   range_start? : Int64 = 0,
 ) -> (@http.Client, Int64, String, Int64) {
-  // FIXME 有可能文件已经下载完了，这时候应该直接返回而不是继续下载
   let (res, client) = @http.get_stream(url, headers={
     "User-Agent": "curl/8.7.1",
     "Accept": "*/*",
@@ -81,8 +80,13 @@ async fn get_client(
       guard location is Some(location) else {
         raise fail("重定向失败: 未找到 Location 头")
       }
-      println("重定向到：\{location}")
+      @log.debug("重定向到：\{location}")
       get_client(location, range_start~)
+    }
+    416 => {
+      client.close()
+      @log.debug("服务器不支持断点续传（416），将重新下载...")
+      get_client(url, range_start=0)
     }
     200..<300 as code => {
       let size = if @utils.get_from_map_ignore_case(
