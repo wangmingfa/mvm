@@ -81,12 +81,23 @@ if [ "$ONLINE" = true ]; then
   esac
 
   # 获取最新 release 的 tag（使用 GitHub JSON API）
-  LATEST_TAG=$(curl -sL \
+  API_RESP=$(curl -sL \
     -H "Accept: application/vnd.github+json" \
-    "https://api.github.com/repos/${GITHUB_REPO}/releases/latest" \
-    | grep -o '"tag_name":"[^"]*"' | head -1 | cut -d'"' -f4)
+    "https://api.github.com/repos/${GITHUB_REPO}/releases/latest")
+  LATEST_TAG=$(echo "$API_RESP" | grep -o '"tag_name": *"[^"]*"' | head -1 | grep -o '"[^"]*"$' | tr -d '"')
+
+  # 兜底：若 releases/latest 无结果，尝试 tags API
+  if [ -z "$LATEST_TAG" ]; then
+    echo "releases/latest 未找到，尝试从 tags 获取..."
+    LATEST_TAG=$(curl -sL \
+      -H "Accept: application/vnd.github+json" \
+      "https://api.github.com/repos/${GITHUB_REPO}/tags" \
+      | grep -o '"name": *"[^"]*"' | head -1 | grep -o '"[^"]*"$' | tr -d '"')
+  fi
+
   if [ -z "$LATEST_TAG" ]; then
     echo "无法获取最新 release 版本号"
+    echo "API 响应：${API_RESP}"
     exit 1
   fi
   echo "最新版本：${LATEST_TAG}"

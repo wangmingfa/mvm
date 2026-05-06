@@ -67,7 +67,6 @@ if ($ONLINE) {
     $OS = "windows"
     $ARCH = "x86_64"
     $EXT = "zip"
-    $ARCHIVE = "mvm-${OS}-${ARCH}.${EXT}"
 
     try {
         $releaseInfo = Invoke-RestMethod -Uri "https://api.github.com/repos/${GITHUB_REPO}/releases/latest" -ErrorAction Stop
@@ -77,6 +76,8 @@ if ($ONLINE) {
         Write-Error "无法获取最新 release 版本号: $_"
         exit 1
     }
+
+    $ARCHIVE = "mvm-${LATEST_TAG}-${OS}-${ARCH}.${EXT}"
 
     $DOWNLOAD_URL = "https://github.com/${GITHUB_REPO}/releases/download/${LATEST_TAG}/${ARCHIVE}"
     Write-Host "正在下载：${DOWNLOAD_URL}"
