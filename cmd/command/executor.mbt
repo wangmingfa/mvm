@@ -5,6 +5,9 @@ const PREFIX = "f_"
 
 ///|
 async fn run_executor(args : Array[String]) -> Unit {
+  // 进入备用屏幕，防止打印的日志影响本身的命令
+  @log.enter_alternate_screen_on_release_mode()
+
   @log.debug("executor参数: \{args}")
   // 兼容开发环境和生产环境
   // 开发环境：从下标1开始，因为需要传入具体的工具名称
@@ -64,6 +67,10 @@ async fn run_executor(args : Array[String]) -> Unit {
 
   let cmd = "\{tool_exe_path} \{args_str}"
   @log.debug("运行：\{cmd}")
+
+  // 退出备用屏幕
+  @log.exit_alternate_screen_on_release_mode()
+
   let exit_code = @mvm_cmd.run(tool_exe_path, exe_args, extra_env=envs)
 
   if exit_code == 0 {

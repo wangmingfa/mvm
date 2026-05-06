@@ -14,23 +14,35 @@ const BLUE = "\u{001B}[34m"
 const RESET = "\u{001B}[0m"
 
 ///|
+/// 用指定颜色包裹文本，自动处理嵌套颜色（内层颜色结束后自动恢复外层颜色）
+pub fn[T : Show] styled(color : String, msg : T) -> String {
+  let content = msg.to_string()
+  let patched = content.replace(old=RESET, new=color)
+  "\{color}\{patched}\{RESET}"
+}
+
+///|
+/// 红色文字
 pub fn[T : Show] red(msg : T) -> String {
-  "\{RED}\{msg}\{RESET}"
+  styled(RED, msg)
 }
 
 ///|
+/// 绿色文字
 pub fn[T : Show] green(msg : T) -> String {
-  "\{GREEN}\{msg}\{RESET}"
+  styled(GREEN, msg)
 }
 
 ///|
+/// 黄色文字
 pub fn[T : Show] yellow(msg : T) -> String {
-  "\{YELLOW}\{msg}\{RESET}"
+  styled(YELLOW, msg)
 }
 
 ///|
+/// 蓝色文字
 pub fn[T : Show] blue(msg : T) -> String {
-  "\{BLUE}\{msg}\{RESET}"
+  styled(BLUE, msg)
 }
 
 ///|
@@ -51,4 +63,18 @@ test "yellow" {
 ///|
 test "blue" {
   println(blue("这是蓝色文字"))
+}
+
+///|
+/// 嵌套颜色：红色文字中插入蓝色，后面的文字自动保持红色
+test "nested color" {
+  println(red("红色开头" + blue("蓝色中间") + "红色结尾"))
+}
+
+///|
+/// 多层嵌套：红色包裹蓝色，蓝色包裹黄色
+test "multi-level nested color" {
+  let y = yellow("黄色")
+  let b = blue("蓝色\{y}蓝色")
+  println(red("红色\{b}红色"))
 }

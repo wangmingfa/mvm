@@ -21,7 +21,7 @@ const FAILED_KEY = "FAILED:"
 pub fn println_error(e : Error) -> Unit {
   let msg = match e {
     Failure::Failure(msg) => {
-      let start_index = if !is_debug() &&
+      let start_index = if is_release() &&
         msg.find(FAILED_KEY) is Some(start_index) {
         start_index + FAILED_KEY.length()
       } else {
@@ -89,12 +89,10 @@ pub fn[T : Show] debug(msg : T, loc~ : SourceLoc) -> Unit {
 }
 
 ///|
-pub extern "C" fn clear() -> Unit = "clear_print"
-
-///|
 test "log" {
   let blue_text = @utils.blue("蓝色文字")
   success("操作成功了")
+  success("操作 \{blue_text} 成功了")
   error("操作 \{blue_text} 失败了")
   warn("警告 \{blue_text} 信息")
   info("开始 \{blue_text} 操作")
@@ -102,11 +100,45 @@ test "log" {
 }
 
 ///|
-test "clear" {
-  success("操作成功了")
-  error("操作失败了")
-  warn("警告信息")
-  info("开始操作")
-  debug("调试信息")
-  clear()
+extern "C" fn c_enter_alternate_screen() -> Unit = "enter_alternate_screen"
+
+///|
+extern "C" fn c_exit_alternate_screen() -> Unit = "exit_alternate_screen"
+
+///|
+fn enter_alternate_screen() -> Unit {
+  c_enter_alternate_screen()
+  // println("\u{001B}[?1049h\u{001B}[2J\u{001B}[H]")
+}
+
+///|
+fn exit_alternate_screen() -> Unit {
+  c_exit_alternate_screen()
+  // println("\u{001B}[?1049l")
+}
+
+///|
+pub fn enter_alternate_screen_on_release_mode() -> Unit {
+  if is_release() {
+    enter_alternate_screen()
+  }
+}
+
+///|
+pub fn exit_alternate_screen_on_release_mode() -> Unit {
+  if is_release() {
+    exit_alternate_screen()
+  }
+}
+
+///|
+test "alternate_screen" {
+  println("0")
+  enter_alternate_screen()
+  println("1")
+  println("2")
+  println("3")
+  println("4")
+  exit_alternate_screen()
+  println("5")
 }
