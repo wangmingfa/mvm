@@ -80,19 +80,19 @@ if [ "$ONLINE" = true ]; then
     *) echo "不支持的系统组合：${OS}_${ARCH}"; exit 1 ;;
   esac
 
-  # 确定压缩包格式（mac/linux 均为 tar.gz）
-  EXT="tar.gz"
-
-  ARCHIVE="mvm-${OS}-${ARCH}.${EXT}"
-
-  # 获取最新 release 的 tag
-  LATEST_TAG=$(curl -sL "https://github.com/${GITHUB_REPO}/releases/latest" \
-    | grep -oP '"tag_name":"\K[^"]+' || true)
+  # 获取最新 release 的 tag（使用 GitHub JSON API）
+  LATEST_TAG=$(curl -sL \
+    -H "Accept: application/vnd.github+json" \
+    "https://api.github.com/repos/${GITHUB_REPO}/releases/latest" \
+    | grep -o '"tag_name":"[^"]*"' | head -1 | cut -d'"' -f4)
   if [ -z "$LATEST_TAG" ]; then
     echo "无法获取最新 release 版本号"
     exit 1
   fi
   echo "最新版本：${LATEST_TAG}"
+
+  # 确定压缩包文件名（格式：mvm-{version}-{os}-{arch}.tar.gz）
+  ARCHIVE="mvm-${LATEST_TAG}-${OS}-${ARCH}.tar.gz"
 
   # 下载压缩包
   DOWNLOAD_URL="https://github.com/${GITHUB_REPO}/releases/download/${LATEST_TAG}/${ARCHIVE}"
