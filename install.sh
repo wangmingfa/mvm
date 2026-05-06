@@ -32,8 +32,8 @@ elif [ "$NO_PREFIX" = true ]; then
   PREFIX=""
 fi
 
-# 确定 MVM_HOME 目录
-MVM_HOME="${MVM_HOME:-$HOME}/.mvm"
+# 确定 MVM_HOME 目录（有环境变量则直接使用，否则使用 $HOME/.mvm）
+MVM_HOME="${MVM_HOME:-$HOME/.mvm}"
 
 # 确定 bin 目录
 BIN_DIR="${MVM_HOME}/bin"
@@ -74,11 +74,14 @@ if [ "$ONLINE" = true ]; then
     *)             echo "不支持的架构：$(uname -m)"; exit 1 ;;
   esac
 
-  # 确定压缩包名称和格式
-  case "$OS" in
-    macos|linux) EXT="tar.gz" ;;
-    *) EXT="zip" ;;
+  # 校验 OS+ARCH 组合（仅支持 macos+arm64、linux+x86_64）
+  case "${OS}_${ARCH}" in
+    macos_arm64|linux_x86_64) ;;
+    *) echo "不支持的系统组合：${OS}_${ARCH}"; exit 1 ;;
   esac
+
+  # 确定压缩包格式（mac/linux 均为 tar.gz）
+  EXT="tar.gz"
 
   ARCHIVE="mvm-${OS}-${ARCH}.${EXT}"
 

@@ -4,5 +4,6 @@ import {
 }
 
 options(
+  "native-stub": [ "log.c" ],
   targets: { "debug.mbt": [ "debug" ], "release.mbt": [ "release" ] },
 )

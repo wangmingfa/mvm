@@ -89,10 +89,24 @@ pub fn[T : Show] debug(msg : T, loc~ : SourceLoc) -> Unit {
 }
 
 ///|
+pub extern "C" fn clear() -> Unit = "clear_print"
+
+///|
 test "log" {
+  let blue_text = @utils.blue("蓝色文字")
+  success("操作成功了")
+  error("操作 \{blue_text} 失败了")
+  warn("警告 \{blue_text} 信息")
+  info("开始 \{blue_text} 操作")
+  debug("调试 \{blue_text} 信息")
+}
+
+///|
+test "clear" {
   success("操作成功了")
   error("操作失败了")
   warn("警告信息")
   info("开始操作")
   debug("调试信息")
+  clear()
 }

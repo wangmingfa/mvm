@@ -1,4 +1,4 @@
-﻿param(
+param(
     [switch]$online,
     [alias("np")][switch]$noPrefix
 )
@@ -45,7 +45,6 @@ foreach ($tool in $TOOLS) {
 }
 
 $executorPath = Join-Path $BIN_DIR "executor.ps1"
-Copy-Item -Path "executor.ps1" -Destination $executorPath -Force
 
 foreach ($tool in $DISPLAY_TOOLS) {
     $toolScriptPath = Join-Path $BIN_DIR ($tool + ".ps1")
@@ -59,20 +58,14 @@ foreach ($tool in $DISPLAY_TOOLS) {
 if ($ONLINE) {
     Write-Host "正在从 GitHub 下载最新 release..."
 
+    # 检测操作系统（仅支持 Windows）
+    if (-not ($IsWindows -or [Environment]::OSVersion.Platform -eq "Win32NT")) {
+        Write-Error "不支持的操作系统，install.ps1 仅支持 Windows"
+        exit 1
+    }
+
     $OS = "windows"
-    switch ([Environment]::OSVersion.Platform) {
-        "Win32NT" { $OS = "windows" }
-        default {
-            Write-Error "不支持的操作系统"
-            exit 1
-        }
-    }
-
-    switch ([Environment]::Is64BitOperatingSystem) {
-        $true { $ARCH = "x86_64" }
-        $false { $ARCH = "x86" }
-    }
-
+    $ARCH = "x86_64"
     $EXT = "zip"
     $ARCHIVE = "mvm-${OS}-${ARCH}.${EXT}"
 
@@ -121,6 +114,7 @@ if ($ONLINE) {
     }
     
     Copy-Item -Path $MVM_EXE -Destination (Join-Path $BIN_DIR "mvm.exe") -Force
+    Copy-Item -Path "executor.ps1" -Destination $executorPath -Force
 }
 
 $NPM_DIR = Join-Path $BIN_DIR "npm-pkg"
