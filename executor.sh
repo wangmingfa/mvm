@@ -3,9 +3,6 @@
 SCRIPT_NAME=$(basename "$0")
 SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
 
-# 工具名前缀（与 install.sh、executor.mbt 保持一致）
-PREFIX="f_"
-
 run_mvm() {
   if [ -f "${SCRIPT_DIR}/mvm" ]; then
     CMD="${SCRIPT_DIR}/mvm"

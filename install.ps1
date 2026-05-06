@@ -15,7 +15,7 @@ $NO_PREFIX = $noPrefix.IsPresent
 $PREFIX = "f_"
 
 # 支持的工具列表
-$TOOLS = @("node", "npm", "npx", "corepack", "zig", "bun")
+$TOOLS = @(node npm npx corepack zig bun)
 # === CONFIG_END ===
 
 if ($ONLINE -or $NO_PREFIX) {
