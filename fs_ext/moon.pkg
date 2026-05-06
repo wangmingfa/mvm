@@ -4,4 +4,9 @@ import {
   "moonbitlang/async",
   "moonbitlang/async/fs",
   "username/mvm/array_ext",
+  "username/mvm/ffi",
 }
+
+options(
+  "native-stub": [ "file.c" ],
+)

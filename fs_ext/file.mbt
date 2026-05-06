@@ -213,3 +213,36 @@ async test "move dir" {
   // 删除临时文件
   @fs.rmdir(dest_path, recursive=true)
 }
+
+// #borrow(path)
+
+///|
+#borrow(path)
+extern "C" fn c_symlink_status(path : Bytes) -> Int = "symlink_status"
+
+///|
+pub enum SymlinkStatus {
+  SymlinkNone = 0 // 不存在（路径都没有）
+  SymlinkBroken = 1 // 软链接存在，但目标失效
+  SymlinkOk = 2 // 软链接存在且目标有效
+}
+
+///|
+pub fn symlink_status(symlink_file_path : String) -> SymlinkStatus {
+  let path = @ffi.string_to_c_bytes(symlink_file_path)
+  match c_symlink_status(path) {
+    0 => SymlinkNone
+    1 => SymlinkBroken
+    2 => SymlinkOk
+    _ => SymlinkNone
+  }
+}
+
+///|
+test "symlink_status" {
+  match symlink_status("/Users/11048490/.mvm-test/bin/npm-pkg/vite") {
+    SymlinkBroken => println("软连接失效")
+    SymlinkNone => println("软连接不存在")
+    SymlinkOk => println("软连接有效")
+  }
+}

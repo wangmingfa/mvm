@@ -10,23 +10,11 @@ extern "C" fn c_progress_bar(
 pub extern "C" fn clear_progress() -> Unit = "clear_progress"
 
 ///|
-/// 一个辅助函数，将 MoonBit String 转换为 C 期望的 null-terminated byte array
-fn string_to_c_bytes(s : String) -> Bytes {
-  // let arr = s.to_bytes().to_array()
-  let arr = @utf8.encode(s).to_array()
-  // 确保以 \0 结尾
-  if arr.last() != Some(0) {
-    arr.push(0)
-  }
-  Bytes::from_array(arr)
-}
-
-///|
 pub fn progress_bar(completed : Int64, total : Int64, suffix? : String) -> Unit {
   c_progress_bar(
     completed,
     total,
-    string_to_c_bytes(if suffix is Some(s) { s } else { "" }),
+    @ffi.string_to_c_bytes(if suffix is Some(s) { s } else { "" }),
   )
 }
 

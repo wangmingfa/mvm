@@ -151,13 +151,15 @@ async fn handle_uninstall_npm_global_package(
   @log.debug("全局卸载NPM包: \{pkgs}")
 
   guard before_run_result is Some(before_run_result) else {
-    @log.error("before_run_result不能为空")
+    @log.info("没有需要删除的npm包软连接")
     return
   }
 
-  for _, sym_link_path in before_run_result {
-    if @fs.exists(sym_link_path) {
-      @log.debug("删除软连接 \{sym_link_path}")
+  for pkg, sym_link_path in before_run_result {
+    @log.debug("删除软连接 \{pkg} : \{sym_link_path}")
+    if @fs_ext.symlink_status(sym_link_path) is SymlinkNone {
+      @log.debug("软连接不存在，无需删除")
+    } else {
       @fs.remove(sym_link_path)
     }
   }

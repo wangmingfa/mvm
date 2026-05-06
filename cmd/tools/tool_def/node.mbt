@@ -207,11 +207,13 @@ pub async fn Node::get_node_builtin_tool_path_and_version(
 
   // 路径：直接替换node为对应工具名称
   let name = @fs_ext.get_path_name(node_exe_path)
+  let os = @os.get_os_name()
   // 如果是windows，则需要将exe转为ps1后缀
-  let old = if @os.get_os_name() is Windows { "node.exe" } else { "node" }
+  let old = if os is Windows { "node.exe" } else { "node" }
+  let tool_ext = if os is Windows { ".ps1" } else { "" }
   let tool_path = @fs_ext.join_path(
     node_bin_dir,
-    name.replace(old~, new="\{tool.to_string()}.ps1"),
+    name.replace(old~, new="\{tool}\{tool_ext}"),
   )
 
   let { root: node_dir, lib: lib_dir } = Node::get_node_dir(node_exe_path)
