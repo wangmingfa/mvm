@@ -1,4 +1,4 @@
-# username/mvm
+# wangmingfa/mvm
 
 **mvm** - One Tool to Manage Them All
 
@@ -7,6 +7,8 @@
 mvm 是一款现代化的多语言版本管理工具，支持 Node.js、Npm、Bun、Zig 以及更多语言。只需一条命令，你就可以在项目之间自由切换任意语言的版本，干净、高效、毫不妥协。
 
 简单、统一、极快 —— 这就是 mvm。
+
+> 💡 此工具灵感来源于 [Volta](https://volta.sh/)。
 
 ## 安装
 
