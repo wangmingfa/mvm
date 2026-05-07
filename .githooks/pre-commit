@@ -33,7 +33,7 @@ sync_install_config() {
   # 处理 install.ps1
   if [ -f "install.ps1" ]; then
     CONFIG_PREFIX=$(grep 'PREFIX=' install.config | cut -d'"' -f2)
-    CONFIG_TOOLS=$(grep 'TOOLS=' install.config | sed -e 's/TOOLS=//' -e 's/(/@(/' -e 's/)/)/' -e 's/"//g')
+    CONFIG_TOOLS=$(grep 'TOOLS=' install.config | sed -e 's/TOOLS=//' -e 's/(/@(/' -e 's/\([a-zA-Z_][a-zA-Z0-9_]*\)/"\1"/g' -e 's/" "/, "/g')
 
     awk -v prefix="$CONFIG_PREFIX" -v tools="$CONFIG_TOOLS" '
       /# === CONFIG_START ===/,/# === CONFIG_END ===/ {
