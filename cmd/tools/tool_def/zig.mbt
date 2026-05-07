@@ -161,9 +161,7 @@ pub fn Zig::get_download_url(
 
 ///|
 pub fn Zig::get_exe_path(version : String) -> String raise {
-  let os = @os.get_os_name()
-  let suffix = if os is Windows { ".exe" } else { "" }
-  [version_dir(Tool::Zig, version), "zig", suffix]
-  .filter(v => !v.is_blank())
-  .join("/")
+  // let os = @os.get_os_name()
+  // let suffix = if os is Windows { ".exe" } else { "" }
+  [version_dir(Tool::Zig, version), "zig"].filter(v => !v.is_blank()).join("/")
 }
