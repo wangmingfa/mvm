@@ -202,9 +202,7 @@ pub fn Bun::get_download_url(
 
 ///|
 pub fn Bun::get_exe_path(version : String) -> String raise {
-  let os = @os.get_os_name()
-  let suffix = if os is Windows { ".exe" } else { "" }
-  [version_dir(Tool::Bun, version), "bun", suffix]
-  .filter(v => !v.is_blank())
-  .join("/")
+  // let os = @os.get_os_name()
+  // let suffix = if os is Windows { ".exe" } else { "" }
+  [version_dir(Tool::Bun, version), "bun"].filter(v => !v.is_blank()).join("/")
 }
