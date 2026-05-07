@@ -10,8 +10,14 @@ mvm 是一款现代化的多语言版本管理工具，支持 Node.js、Npm、Bu
 
 ## 安装
 
+**macOS / Linux**
 ```bash
 curl -fsSL https://raw.githubusercontent.com/wangmingfa/mvm/main/install.sh | bash -s -- --online
+```
+
+**Windows（PowerShell）**
+```powershell
+& ([scriptblock]::Create((irm https://raw.githubusercontent.com/wangmingfa/mvm/main/install.ps1))) --online
 ```
 
 ## 命令详解

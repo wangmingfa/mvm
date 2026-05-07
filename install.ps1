@@ -7,8 +7,8 @@ $ErrorActionPreference = "Stop"
 
 $GITHUB_REPO = "wangmingfa/mvm"
 
-$ONLINE = $online.IsPresent
-$NO_PREFIX = $noPrefix.IsPresent
+$ONLINE = $online.IsPresent -or ("--online" -in $args)
+$NO_PREFIX = $noPrefix.IsPresent -or ("--no-prefix" -in $args) -or ("-np" -in $args)
 
 # === CONFIG_START ===
 # 工具名前缀
