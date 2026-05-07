@@ -1,4 +1,4 @@
-param(
+﻿param(
     [switch]$online,
     [alias("np")][switch]$noPrefix
 )
