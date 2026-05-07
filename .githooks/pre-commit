@@ -7,15 +7,14 @@ sync_install_config() {
     return 0
   fi
 
-  CONFIG_CONTENT=$(cat install.config | sed 's/[\/&]/\\&/g')
-
   # 处理 install.sh
   if [ -f "install.sh" ]; then
-    awk -v config="$CONFIG_CONTENT" '
+    export AWK_CONFIG="$(cat install.config | sed 's/[\/&]/\\&/g')"
+    awk '
       /# === CONFIG_START ===/,/# === CONFIG_END ===/ {
         if ($0 ~ /# === CONFIG_START ===/) {
           print $0
-          print config
+          print ENVIRON["AWK_CONFIG"]
           skip = 1
         } else if ($0 ~ /# === CONFIG_END ===/) {
           print $0
@@ -33,7 +32,7 @@ sync_install_config() {
   # 处理 install.ps1
   if [ -f "install.ps1" ]; then
     CONFIG_PREFIX=$(grep 'PREFIX=' install.config | cut -d'"' -f2)
-    CONFIG_TOOLS=$(grep 'TOOLS=' install.config | sed -e 's/TOOLS=//' -e 's/(/@(/' -e 's/\([a-zA-Z_][a-zA-Z0-9_]*\)/"\1"/g' -e 's/" "/, "/g')
+    CONFIG_TOOLS=$(grep 'TOOLS=' install.config | sed -e 's/TOOLS=//' -e 's/(/@(/' -e 's/" "/", "/g')
 
     awk -v prefix="$CONFIG_PREFIX" -v tools="$CONFIG_TOOLS" '
       /# === CONFIG_START ===/,/# === CONFIG_END ===/ {
