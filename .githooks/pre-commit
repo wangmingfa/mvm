@@ -9,7 +9,8 @@ sync_install_config() {
 
   # 处理 install.sh
   if [ -f "install.sh" ]; then
-    export AWK_CONFIG="$(cat install.config | sed 's/[\/&]/\\&/g')"
+    AWK_CONFIG="$(sed 's/[\/&]/\\&/g' install.config)"
+    export AWK_CONFIG
     awk '
       /# === CONFIG_START ===/,/# === CONFIG_END ===/ {
         if ($0 ~ /# === CONFIG_START ===/) {
