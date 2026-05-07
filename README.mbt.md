@@ -16,6 +16,8 @@ curl -fsSL https://raw.githubusercontent.com/wangmingfa/mvm/main/install.sh | ba
 ```
 
 **Windows（PowerShell）**
+> **注意：** 需要 PowerShell 7+ 版本。可通过在终端执行 `$PSVersionTable.PSVersion` 查看当前版本。
+
 ```powershell
 & ([scriptblock]::Create((irm https://raw.githubusercontent.com/wangmingfa/mvm/main/install.ps1))) --online
 ```
