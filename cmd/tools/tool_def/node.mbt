@@ -196,8 +196,10 @@ pub fn Node::get_exe_path(version : String) -> String raise {
 ///|
 pub async fn Node::get_node_builtin_tool_path_and_version(
   tool : Tool,
-  node_exe_path : String,
-) -> (String, String, Map[String, String])? {
+  node_tool_exe : ToolExe,
+) -> ToolExe? {
+  let { path: node_exe_path, .. } = node_tool_exe
+
   // 处理node内置工具
 
   guard @fs_ext.get_parent_dir(node_exe_path) is Some(node_bin_dir) else {
@@ -224,7 +226,7 @@ pub async fn Node::get_node_builtin_tool_path_and_version(
     Npm.to_string()
   }
   let node_tool_package_json_file_path = "\{lib_dir}/node_modules/\{node_tool_name}/package.json"
-  if @fs.exists(node_tool_package_json_file_path) {
+  let node_tool_version = if @fs.exists(node_tool_package_json_file_path) {
     let json = @fs.read_file(node_tool_package_json_file_path).json()
     guard json is Object(map) else {
       @log.error("\{node_tool_name} 的 package.json 文件格式不对")
@@ -236,14 +238,32 @@ pub async fn Node::get_node_builtin_tool_path_and_version(
       )
       return None
     }
-    return Some(
-      (tool_path, node_tool_version, { "NPM_CONFIG_PREFIX": node_dir }),
-    )
+    // return Some(
+    //   ToolExe::new_node_builtin_tool(
+    //     tool,
+    //     node_tool_exe,
+    //     tool_path,
+    //     node_tool_version,
+    //     envs={ "NPM_CONFIG_PREFIX": node_dir },
+    //   ),
+    // )
+    node_tool_version
+  } else {
+    ""
   }
-  @log.error(
-    "无法从 \{node_tool_package_json_file_path} 获取到 npm 的版本",
+  // @log.error(
+  //   "无法从 \{node_tool_package_json_file_path} 获取到 \{tool} 的版本",
+  // )
+  // None
+  Some(
+    ToolExe::new_node_builtin_tool(
+      tool,
+      node_tool_exe,
+      tool_path,
+      node_tool_version,
+      envs={ "NPM_CONFIG_PREFIX": node_dir },
+    ),
   )
-  None
 }
 
 ///|

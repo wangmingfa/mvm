@@ -30,3 +30,14 @@ void exit_alternate_screen() {
     printf("\033[?1049l");
     fflush(stdout);
 }
+
+
+// 只清除当前程序输出的 n 行，不影响终端历史输出
+void clear_lines(int n)
+{
+    for (int i = 0; i < n; i++) {
+        printf("\033[A");    // 光标上移一行
+        printf("\033[K");    // 清除该行
+    }
+    fflush(stdout);
+}

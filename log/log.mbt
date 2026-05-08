@@ -2,6 +2,21 @@
 using @utils {red, green, yellow}
 
 ///|
+let log_line_count : Ref[Int] = Ref::new(0)
+
+///|
+pub fn add_log_lines(lines? : Int = 1) -> Unit {
+  log_line_count.val += lines
+}
+
+///|
+pub fn add_log_lines_by_content(content : String) -> Int {
+  let lines = content.split("\n").to_array().length()
+  add_log_lines(lines~)
+  lines
+}
+
+///|
 fn[T : Show] log(prefix : String, loc? : String = "", msg : T) -> Unit {
   let time = @utils.get_date_str() catch { _ => "" }
   let prefix = if prefix.is_blank() { prefix } else { "[\{prefix}]" }
@@ -11,6 +26,11 @@ fn[T : Show] log(prefix : String, loc? : String = "", msg : T) -> Unit {
   let text = [time, prefix, loc, msg.to_string()]
     .filter(v => !v.is_blank())
     .join(" ")
+
+  // 记录行数
+  let _ = add_log_lines_by_content(text)
+  // println("行数: \{log_line_count.val}")
+
   println(text)
 }
 
@@ -104,6 +124,14 @@ extern "C" fn c_enter_alternate_screen() -> Unit = "enter_alternate_screen"
 
 ///|
 extern "C" fn c_exit_alternate_screen() -> Unit = "exit_alternate_screen"
+
+///|
+pub extern "C" fn clear_lines(lines : Int) -> Unit = "clear_lines"
+
+///|
+pub fn clear_all_lines() -> Unit {
+  clear_lines(log_line_count.val)
+}
 
 ///|
 fn enter_alternate_screen() -> Unit {

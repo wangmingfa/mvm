@@ -1,6 +1,7 @@
 import {
   "moonbitlang/core/env",
   "moonbitlang/core/json",
+  "moonbitlang/core/debug",
   "moonbitlang/async/fs",
   "moonbitlang/async/process",
   "username/mvm/os",

@@ -106,7 +106,7 @@ pub(all) enum Tool {
   Corepack
   Bun
   Zig
-}
+} derive(Debug)
 
 ///|
 pub fn Tool::installable_tools() -> Array[Tool] {
@@ -195,16 +195,10 @@ async fn get_config_inner(
   @log.debug("在 \{dir} 查找 \{@utils.option_to_string(tool)} 的版本号")
   if @fs.exists(path) {
     let json = @fs.read_file(path).json() catch {
-      _ => {
-        println("文件 \{@utils.red(path)} 不是有效的json格式")
-        return None
-      }
+      _ => raise fail("文件 \{@utils.red(path)} 不是有效的json格式")
     }
     let config : Config = @json.from_json(json) catch {
-      _ => {
-        println("文件 \{@utils.red(path)} 有效")
-        return None
-      }
+      _ => raise fail("文件 \{@utils.red(path)} 有效")
     }
     // println("json: \{json}")
     // println("config: \{config}")
@@ -333,4 +327,46 @@ pub async fn write_project_config(tool : Tool, version : String) -> String {
 pub async fn write_global_config(tool : Tool, version : String) -> String {
   let config_file_path = get_global_config_path()
   write_config(config_file_path, tool, version)
+}
+
+///|
+pub struct ToolExe {
+  tool : Tool
+  // 工具的可执行文件路径
+  path : String
+  // 工具的版本
+  version : String
+  // 运行工具需要的环境变量
+  envs : Map[String, String]
+  // 依赖的其它工具
+  // 比如npm、npx、corepack是依赖node的
+  dependent_tool_exe : ToolExe?
+} derive(Debug)
+
+///|
+pub fn ToolExe::new(
+  tool : Tool,
+  path : String,
+  version : String,
+  envs? : Map[String, String] = {},
+  dependent_tool_exe? : ToolExe? = None,
+) -> ToolExe {
+  { tool, path, version, envs, dependent_tool_exe }
+}
+
+///|
+pub fn ToolExe::new_node_builtin_tool(
+  tool : Tool,
+  node_tool_exe : ToolExe,
+  path : String,
+  version : String,
+  envs? : Map[String, String] = {},
+) -> ToolExe {
+  ToolExe::new(
+    tool,
+    path,
+    version,
+    envs~,
+    dependent_tool_exe=Some(node_tool_exe),
+  )
 }

@@ -54,12 +54,10 @@ async fn remove_installed(
     return []
   }
   let json = @fs.read_file(installed_file_path).json() catch {
-    e => {
-      println(
+    _ =>
+      raise fail(
         "文件 \{@utils.yellow(installed_file_path)} 不是有效的json格式",
       )
-      raise e
-    }
   }
   guard json is Object(map) else {
     raise fail("文件 \{@utils.yellow(installed_file_path)} 格式不对")

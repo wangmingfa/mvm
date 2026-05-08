@@ -5,9 +5,6 @@ const PREFIX = "f_"
 
 ///|
 async fn run_executor(args : Array[String]) -> Unit {
-  // 进入备用屏幕，防止打印的日志影响本身的命令
-  @log.enter_alternate_screen_on_release_mode()
-
   @log.debug("executor参数: \{args}")
   // 兼容开发环境和生产环境
   // 开发环境：从下标1开始，因为需要传入具体的工具名称
@@ -38,29 +35,43 @@ async fn run_executor(args : Array[String]) -> Unit {
 
   @log.debug("工具名称 \{tool_name}")
   let args_str = exe_args.join(" ")
-  let result = @tools.get_tool_exe_path(tool)
 
-  @log.debug("运行：\{tool} \{args_str}")
+  let (tool_exe_path, envs) = while true {
+    let tool_exe = @tools.get_tool_exe_path(tool)
 
-  guard result is Some((tool_exe_path, version, envs)) else {
-    let use_command = @utils.yellow("use")
-    let pin = @utils.yellow("pin")
-    @log.error(
-      "没有指定 \{@utils.yellow(tool_name)} 的版本，请先使用 \{use_command} 或 \{pin} 指定版本",
-    )
-    return
-  }
+    @log.debug("运行：\{tool} \{args_str}")
 
-  @log.debug(
-    "使用 \{tool} 的 \{version} 版本运行命令，额外环境变量：\{envs}",
-  )
+    guard tool_exe
+      is Some({ path: tool_exe_path, version, envs, dependent_tool_exe, .. }) else {
+      let use_command = @utils.yellow("use")
+      let pin = @utils.yellow("pin")
+      @log.error(
+        "没有指定 \{@utils.yellow(tool_name)} 的版本，请先使用 \{use_command} 或 \{pin} 指定版本",
+      )
+      return
+    }
 
-  if !@fs.exists(tool_exe_path) {
     @log.debug(
-      "工具 \{tool} 的可执行文件 \{tool_exe_path} 不存在，正在安装...",
+      "使用 \{tool} 的 \{version} 版本运行命令，额外环境变量：\{envs}",
     )
-    // 没有安装，提示用户安装或指定版本
-    run_install(tool, Some(version))
+
+    if @fs.exists(tool_exe_path) {
+      break (tool_exe_path, envs)
+    } else {
+      let (install_tool, install_version) = if dependent_tool_exe
+        is Some({ tool, version, .. }) {
+        (tool, version)
+      } else {
+        (tool, version)
+      }
+      @log.debug(
+        "工具 \{tool} 的可执行文件 \{tool_exe_path} 不存在，正在安装 \{install_tool} ...",
+      )
+      // 没有安装，提示用户安装或指定版本
+      run_install(install_tool, Some(install_version))
+    }
+  } nobreak {
+    ("", {})
   }
 
   let before_run_result = before_run(tool, tool_exe_path, exe_args)
@@ -68,8 +79,10 @@ async fn run_executor(args : Array[String]) -> Unit {
   let cmd = "\{tool_exe_path} \{args_str}"
   @log.debug("运行：\{cmd}")
 
-  // 退出备用屏幕
-  @log.exit_alternate_screen_on_release_mode()
+  if !@log.is_debug_log_level() {
+    // 非debug日志级别，清除之前的内容
+    @log.clear_all_lines()
+  }
 
   let exit_code = @mvm_cmd.run(tool_exe_path, exe_args, extra_env=envs)
 

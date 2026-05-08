@@ -1,5 +1,5 @@
 ///|
-using @tool_def {type Node, type Bun, type Zig}
+using @tool_def {type Node, type Bun, type Zig, type ToolExe}
 
 ///|
 pub using @tool_def {
@@ -157,9 +157,7 @@ pub fn get_download_url(
 
 ///|
 /// 获取工具的运行路径，返回路径、版本和运行此命令需要的环境变量
-pub async fn _get_tool_exe_path(
-  tool : Tool,
-) -> (String, String, Map[String, String])? {
+pub async fn _get_tool_exe_path(tool : Tool) -> ToolExe? {
   guard get_config(tool~) is Some((_, config)) &&
     config.get_value(tool) is Some(version) else {
     return None
@@ -171,21 +169,21 @@ pub async fn _get_tool_exe_path(
     _ => raise fail("不支持的工具：\{tool}")
   }
   let path = @fs_ext.canonicalize_path(path)
-  Some((path, version, {}))
+  Some(ToolExe::new(tool, path, version))
 }
 
 ///|
-pub async fn get_tool_exe_path(
-  tool : Tool,
-) -> (String, String, Map[String, String])? {
+pub async fn get_tool_exe_path(tool : Tool) -> ToolExe? {
   let is_node_builtin_tools = @tool_def.Tool::is_node_builtin_tools(tool)
   // 如果是查找npm，实际上是去找Node
   let real_tool = if is_node_builtin_tools { @tool_def.Node } else { tool }
   let res = _get_tool_exe_path(real_tool)
 
   if is_node_builtin_tools {
-    guard res is Some((path, _, _)) else { return None }
-    return @tool_def.Node::get_node_builtin_tool_path_and_version(tool, path)
+    guard res is Some(node_tool_exe) else { return None }
+    return @tool_def.Node::get_node_builtin_tool_path_and_version(
+      tool, node_tool_exe,
+    )
   }
   res
 }

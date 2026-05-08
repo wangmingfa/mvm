@@ -68,3 +68,8 @@ fn match_log_level(log_level : LogLevel) -> Bool {
   let current_log_level = get_log_level()
   return log_level.to_int() >= current_log_level.to_int()
 }
+
+///|
+pub fn is_debug_log_level() -> Bool {
+  match_log_level(Debug)
+}

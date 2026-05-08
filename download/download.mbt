@@ -147,6 +147,8 @@ pub async fn download(
       }
     },
   ])
+  // 进度条需要添加一行
+  @log.add_log_lines(lines=1)
   progress_bar.set_complete()
   @progress.clear_progress()
   @log.info(
@@ -259,7 +261,7 @@ pub async fn download_by_native_command(url : String, dest : String) -> Unit {
          "-o", dest, // 输出文件
          url,
       ]
-
+      @log.add_log_lines(lines=2)
       args
     }
     "wget" => {
@@ -274,7 +276,7 @@ pub async fn download_by_native_command(url : String, dest : String) -> Unit {
          "-O", dest, // 输出文件
          url,
       ]
-
+      @log.add_log_lines(lines=1)
       args
     }
     "powershell" => {
