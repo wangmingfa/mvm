@@ -1,9 +1,3 @@
-# 检查 PowerShell 版本（必须 >= 7）
-if ($PSVersionTable.PSVersion.Major -lt 7) {
-    Write-Host "错误：此脚本需要 PowerShell 7 或更高版本。当前版本：$($PSVersionTable.PSVersion)。请访问 https://aka.ms/powershell 升级。" -ForegroundColor Red
-    exit 1
-}
-
 $ScriptName = Split-Path -Leaf $MyInvocation.MyCommand.Definition
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Definition
 $mvmPath = Join-Path $ScriptDir "mvm.exe"
