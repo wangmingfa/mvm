@@ -150,7 +150,6 @@ pub async fn download(
   // 进度条需要添加一行
   @log.add_log_lines(lines=1)
   progress_bar.set_complete()
-  @progress.clear_progress()
   @log.info(
     "\n文件已保存：\{file_path} 耗时：\{@utils.get_readable_time(progress_bar.duration())}",
   )
