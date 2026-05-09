@@ -124,8 +124,19 @@ if ($ONLINE) {
     Start-Process -FilePath "cmd.exe" -ArgumentList "/c `"$UPDATE_BAT`"" -WindowStyle Hidden
     # 脚本退出 → mvm.exe 退出 → 文件锁释放 → update.bat 完成替换
 } else {
-    Write-Host "正在构建 mvm..."
-    & moon build --release
+    $BUILD_TMP = [System.IO.Path]::GetTempFileName()
+    & moon build --release 2>&1 | Tee-Object -FilePath $BUILD_TMP
+    if ($LASTEXITCODE -ne 0) {
+        Remove-Item $BUILD_TMP -Force -ErrorAction SilentlyContinue
+        Write-Error "构建失败，请检查错误信息"
+        exit $LASTEXITCODE
+    }
+    $buildLines = (Get-Content $BUILD_TMP | Measure-Object -Line).Lines
+    Remove-Item $BUILD_TMP -Force -ErrorAction SilentlyContinue
+    # 上移 buildLines 行并清除到屏幕末尾
+    if ($buildLines -gt 0) {
+        [Console]::Write("`e[${buildLines}A`e[J")
+    }
 
     $BUILD_DIR = "_build/native/release/build/cmd/main"
     $MVM_EXE = Join-Path $BUILD_DIR "main.exe"
@@ -150,17 +161,12 @@ foreach ($entry in $PATH_ENTRIES) {
     $escapedEntry = [regex]::Escape($entry)
     if ($CURRENT_PATH -notmatch $escapedEntry) {
         $CURRENT_PATH = "$entry;$CURRENT_PATH"
-        Write-Host "已将 $entry 添加到用户 PATH 环境变量"
         $PATH_MODIFIED = $true
-    } else {
-        Write-Host "$entry 已存在于用户 PATH 环境变量，跳过"
     }
 }
 
 if ($PATH_MODIFIED) {
     [Environment]::SetEnvironmentVariable("PATH", $CURRENT_PATH, "User")
-    Write-Host ""
-    Write-Host "PATH 环境变量已更新，请重新启动 PowerShell 使其生效"
 }
 
 Write-Host ""
@@ -169,3 +175,6 @@ Write-Host "  - mvm.exe         (主命令)"
 Write-Host "  - executor.ps1    (工具执行脚本)"
 Write-Host "  - npm-pkg 目录    (npm 全局包安装路径：$NPM_DIR)"
 Write-Host "  工具脚本：$($DISPLAY_TOOLS -join ', ')"
+Write-Host ""
+Write-Host "如果 mvm 命令无效，请重启终端或执行：" -ForegroundColor Yellow
+Write-Host '   $env:PATH = [Environment]::GetEnvironmentVariable("PATH","User") + ";" + $env:PATH' -ForegroundColor Cyan

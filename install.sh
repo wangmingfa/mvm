@@ -129,8 +129,17 @@ if [ "$ONLINE" = true ]; then
   rm -rf "${TMP_DIR}"
 else
   # 本地构建模式
-  echo "正在构建 mvm..."
-  moon build --release
+  BUILD_TMP=$(mktemp)
+  moon build --release 2>&1 | tee "$BUILD_TMP"
+  BUILD_CODE=${PIPESTATUS[0]}
+  BUILD_LINES=$(wc -l < "$BUILD_TMP")
+  rm -f "$BUILD_TMP"
+  if [ "$BUILD_CODE" -ne 0 ]; then
+    echo "构建失败，请检查错误信息" >&2
+    exit "$BUILD_CODE"
+  fi
+  # 上移 BUILD_LINES 行并清除到屏幕末尾
+  printf "\033[%dA\033[J" "$BUILD_LINES"
 
   # 复制可执行文件
   BUILD_DIR="_build/native/release/build/cmd"
@@ -160,27 +169,17 @@ SHELL_PROFILE=$(detect_shell_profile)
 touch "$SHELL_PROFILE"
 
 PATH_ENTRIES=("${BIN_DIR}" "${NPM_DIR}")
-PROFILE_MODIFIED=false
 for entry in "${PATH_ENTRIES[@]}"; do
   if ! grep -qF "export PATH=\"${entry}:" "$SHELL_PROFILE" 2>/dev/null && \
      ! grep -qF ":${entry}:" "$SHELL_PROFILE" 2>/dev/null; then
     echo "" >> "$SHELL_PROFILE"
     echo "export PATH=\"${entry}:\$PATH\"" >> "$SHELL_PROFILE"
-    echo "已将 ${entry} 添加到 PATH（写入 ${SHELL_PROFILE}）"
-    PROFILE_MODIFIED=true
-  else
-    echo "${entry} 已存在于 PATH（${SHELL_PROFILE}），跳过"
   fi
 done
 
-# 如果有新内容加入shell profile，提示用户手动执行source以便生效
-if [ "$PROFILE_MODIFIED" = true ]; then
-  GREEN_BOLD='\033[1;32m'
-  RESET='\033[0m'
-  echo ""
-  echo "PATH 配置已更新，请重新启动终端或执行以下命令使其生效："
-  echo -e "  ${GREEN_BOLD}source ${SHELL_PROFILE}${RESET}"
-fi
+YELLOW_BOLD='\033[1;33m'
+CYAN_BOLD='\033[1;36m'
+RESET='\033[0m'
 
 echo ""
 echo "安装完成！可执行文件已安装到 ${BIN_DIR}"
@@ -188,3 +187,6 @@ echo "  - mvm         (主命令)"
 echo "  - executor.sh (工具执行脚本)"
 echo "  - npm-pkg 目录    (npm 全局包安装路径：${NPM_DIR})"
 echo "  工具软连接：${DISPLAY_TOOLS[*]}"
+echo ""
+echo -e "${YELLOW_BOLD}如果 mvm 命令无效，请重启终端或执行：${RESET}"
+echo -e "   ${CYAN_BOLD}source ${SHELL_PROFILE}${RESET}"
