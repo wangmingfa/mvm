@@ -99,9 +99,30 @@ if ($ONLINE) {
     }
 
     Write-Host "正在解压..."
-    Expand-Archive -Path $ARCHIVE_PATH -DestinationPath $BIN_DIR -Force
+    $EXTRACT_DIR = Join-Path $TMP_DIR "extract"
+    New-Item -ItemType Directory -Force -Path $EXTRACT_DIR | Out-Null
+    Expand-Archive -Path $ARCHIVE_PATH -DestinationPath $EXTRACT_DIR -Force
 
-    Remove-Item -Recurse -Force $TMP_DIR
+    # mvm.exe 当前正在运行（文件锁），无法直接覆盖。
+    # 生成 update.bat：等 mvm.exe 退出后再执行文件替换。
+    $UPDATE_BAT = Join-Path $TMP_DIR "update.bat"
+    $MVM_DEST = Join-Path $BIN_DIR "mvm.exe"
+    $MVM_SRC  = Join-Path $EXTRACT_DIR "mvm.exe"
+
+    # 构建 bat 内容：等待 2 秒（等 mvm.exe 退出释放锁），然后逐文件复制
+    $batLines = @(
+        "@echo off",
+        "timeout /t 2 /nobreak >nul",
+        "copy /Y `"$MVM_SRC`" `"$MVM_DEST`"",
+        "if exist `"$(Join-Path $EXTRACT_DIR 'executor.ps1')`" copy /Y `"$(Join-Path $EXTRACT_DIR 'executor.ps1')`" `"$(Join-Path $BIN_DIR 'executor.ps1')`"",
+        "rmdir /s /q `"$TMP_DIR`"",
+        "echo 升级完成！"
+    )
+    $batLines -join "`r`n" | Set-Content -Path $UPDATE_BAT -Encoding ASCII
+
+    Write-Host "正在后台启动更新程序，mvm 退出后将自动完成替换..."
+    Start-Process -FilePath "cmd.exe" -ArgumentList "/c `"$UPDATE_BAT`"" -WindowStyle Hidden
+    # 脚本退出 → mvm.exe 退出 → 文件锁释放 → update.bat 完成替换
 } else {
     Write-Host "正在构建 mvm..."
     & moon build --release
