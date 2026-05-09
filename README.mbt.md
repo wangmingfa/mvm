@@ -97,3 +97,18 @@ $env:MVM_LOG_LEVEL="debug"; ./executor.ps1  node -v
 # 不需要前缀
 ./install.sh -np
 ```
+
+## Skills 子模块
+
+本项目使用 [moonbitlang/skills](https://github.com/moonbitlang/skills) 作为子模块。
+
+**添加子模块：**
+> 项目中已经添加此子模块，无需再次添加
+```bash
+git submodule add https://github.com/moonbitlang/skills.git .claude
+```
+
+**更新子模块：**
+```bash
+git submodule update --init --recursive
+```
