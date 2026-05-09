@@ -2,6 +2,8 @@
 /// 执行命令
 pub async fn run(command : Command) -> Unit {
   match command {
+    Version => run_version()
+    Upgrade => run_upgrade()
     Executor(args) => run_executor(args)
     Install(tool, version) => run_install(tool, version)
     Pin(tool, version) => run_pin(tool, version)

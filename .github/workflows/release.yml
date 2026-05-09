@@ -61,6 +61,24 @@ jobs:
         uses: ilammy/msvc-dev-cmd@v1
 
       # -------------------------
+      # 注入版本号
+      # -------------------------
+      - name: Inject version (Linux / macOS)
+        if: matrix.os_name != 'windows'
+        shell: bash
+        run: |
+          sed -i.bak 's/const VERSION = "v0.0.1"/const VERSION = "${{ github.ref_name }}"/' cmd/command/version.mbt
+          rm -f cmd/command/version.mbt.bak
+          grep 'const VERSION' cmd/command/version.mbt
+
+      - name: Inject version (Windows)
+        if: matrix.os_name == 'windows'
+        shell: powershell
+        run: |
+          (Get-Content cmd/command/version.mbt) -replace 'const VERSION = "v0.0.1"', 'const VERSION = "${{ github.ref_name }}"' | Set-Content cmd/command/version.mbt
+          Select-String 'const VERSION' cmd/command/version.mbt
+
+      # -------------------------
       # Build
       # -------------------------
       - name: Check & Build (Linux / macOS)

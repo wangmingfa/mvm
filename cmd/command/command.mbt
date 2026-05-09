@@ -3,6 +3,8 @@ using @tools {type Tool}
 
 ///|
 pub enum Command {
+  Version
+  Upgrade
   Executor(Array[String])
   Install(Tool, String?)
   Pin(Tool, String)
@@ -14,6 +16,8 @@ pub enum Command {
 ///|
 pub impl Show for Command with to_string(s) {
   match s {
+    Version => "Version"
+    Upgrade => "Upgrade"
     Executor(args) => "Executor(\{args})"
     Install(tool, version) =>
       "Install(\{tool.to_string()}, \{@utils.option_to_string(version)})"
@@ -74,6 +78,8 @@ fn parse_with_version(command_type : String, options : String) -> Command raise 
 ///|
 pub fn get_command(argv : ArrayView[String]) -> Command raise {
   match argv {
+    ["--version"] | ["-v"] => Version
+    ["upgrade"] => Upgrade
     ["executor", .. args] => Executor(args.to_owned())
     ["install", options] | ["i", options] =>
       parse_with_version("install", options)
