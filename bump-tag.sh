@@ -5,24 +5,16 @@ set -euo pipefail
 # 解析参数
 # =============================
 auto_mode=false
+delete_mode=false
 selected=2
 
-while getopts "y" opt; do
+while getopts "yd" opt; do
   case "$opt" in
     y) auto_mode=true ;;
-    *) echo "用法: $0 [-y] [major|minor|patch]" && exit 1 ;;
+    d) delete_mode=true ;;
+    *) echo "用法: $0 [-y] [-d] [major|minor|patch]" && exit 1 ;;
   esac
 done
-
-# 处理可选的位置参数（版本类型）
-if [[ $# -ge 1 ]]; then
-  case "$1" in
-    major) selected=0; auto_mode=true ;;
-    minor) selected=1; auto_mode=true ;;
-    patch) selected=2; auto_mode=true ;;
-    *) echo "错误: 无效的版本类型 '$1'" && exit 1 ;;
-  esac
-fi
 
 # =============================
 # 拉取远程最新 tags
@@ -37,6 +29,49 @@ latest_tag=$(git tag --list 'v*' --sort=-v:refname | head -n 1)
 
 version="${latest_tag#v}"
 IFS='.' read -r major minor patch <<< "$version"
+
+# =============================
+# 删除并重新发布模式
+# =============================
+if [[ "$delete_mode" == true ]]; then
+  echo "⚠️  将删除并重新发布当前 tag: $latest_tag"
+  echo
+
+  if [[ "$auto_mode" == false ]]; then
+    read -rp "确认删除并重新发布？(y/N): " confirm
+    if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
+      echo "已取消"
+      exit 0
+    fi
+  fi
+
+  git tag -d "$latest_tag"
+  git push origin --delete "$latest_tag" 2>/dev/null || true
+  echo "已删除远程 tag: $latest_tag"
+  echo
+
+  # 删除模式下直接重新发布同一个 tag
+  echo "正在重新发布 tag: $latest_tag"
+  git tag "$latest_tag"
+  git push origin "$latest_tag"
+
+  echo
+  echo "✅ 已成功重新发布 tag: $latest_tag"
+  exit 0
+fi
+
+# =============================
+# 处理可选的位置参数（版本类型）
+# =============================
+shift $((OPTIND - 1))
+if [[ $# -ge 1 ]]; then
+  case "$1" in
+    major) selected=0; auto_mode=true ;;
+    minor) selected=1; auto_mode=true ;;
+    patch) selected=2; auto_mode=true ;;
+    *) echo "错误: 无效的版本类型 '$1'" && exit 1 ;;
+  esac
+fi
 
 # =============================
 # 菜单配置
