@@ -146,6 +146,10 @@ $env:MVM_LOG_LEVEL="debug"; ./executor.ps1  node -v
 ./bump-tag.sh major
 ./bump-tag.sh minor
 ./bump-tag.sh patch
+
+# 删除并重新发布当前 tag（用于更新已发布的 tag）
+./bump-tag.sh -d
+./bump-tag.sh -yd  # 自动模式
 ```
 
 ## Skills 子模块

@@ -146,6 +146,10 @@ $env:MVM_LOG_LEVEL="debug"; ./executor.ps1  node -v
 ./bump-tag.sh major
 ./bump-tag.sh minor
 ./bump-tag.sh patch
+
+# Delete and re-release current tag (to update an existing tag)
+./bump-tag.sh -d
+./bump-tag.sh -yd  # auto mode
 ```
 
 ## Skills Submodule
