@@ -276,24 +276,24 @@ pub fn replace_url(template : String, ctx : UrlReplaceContext) -> String {
 
 ///|
 /// 应用全局配置转换 URL
+/// node_mirror: 用于 Node.js 镜像（优先级高于 github_proxy）
 /// github_proxy: 用于 GitHub 相关下载（如 node index.json）
-/// node_mirror: 用于 Node.js 镜像（会替换 URL 中的 nodejs-release 部分）
 pub fn apply_global_config(
   url : String,
   config : GlobalConfig,
   ctx : UrlReplaceContext,
 ) -> String {
-  match config.github_proxy {
-    Some(proxy) if proxy != "" => {
-      @log.debug("使用 GitHub 代理: \{proxy}")
-      return replace_url(proxy, ctx)
-    }
-    _ => ()
-  }
   match config.node_mirror {
     Some(mirror) if mirror != "" && ctx.tool == "node" => {
       @log.debug("使用 Node 镜像: \{mirror}")
       return url.replace(old=NODE_RELEASE_URL, new=mirror)
+    }
+    _ => ()
+  }
+  match config.github_proxy {
+    Some(proxy) if proxy != "" => {
+      @log.debug("使用 GitHub 代理: \{proxy}")
+      return replace_url(proxy, ctx)
     }
     _ => ()
   }
