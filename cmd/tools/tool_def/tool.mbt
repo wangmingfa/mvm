@@ -164,6 +164,9 @@ pub fn Tool::is_node_builtin_tools(tool : Tool) -> Bool {
 const CONFIG_FILE = "mvm.json"
 
 ///|
+const VOLTA_CONFIG_FILE = "package.json"
+
+///|
 const GLOBAL_SETTINGS_FILE = "config.json"
 
 ///|
@@ -295,36 +298,47 @@ pub async fn get_config(
 
 ///|
 /// 检查项目配置文件是否存在
+/// 优先从 mvm.json 获取配置，如果没有则尝试从 Volta package.json 获取（仅支持 Node）
 async fn get_config_inner(
   tool : Tool?,
   dir : String,
   search_upwards : Bool,
   fallback_to_global_config : Bool,
 ) -> (String, Config)? {
-  let path = @fs_ext.join_path(dir, CONFIG_FILE)
+  let mvm_path = @fs_ext.join_path(dir, CONFIG_FILE)
   @log.debug("在 \{dir} 查找 \{@utils.option_to_string(tool)} 的版本号")
-  if @fs.exists(path) {
-    let json = @fs.read_file(path).json() catch {
-      _ => raise fail("文件 \{@utils.red(path)} 不是有效的json格式")
+  
+  // 优先从 mvm.json 获取
+  if @fs.exists(mvm_path) {
+    let json = @fs.read_file(mvm_path).json() catch {
+      _ => raise fail("文件 \{@utils.red(mvm_path)} 不是有效的json格式")
     }
     let config : Config = @json.from_json(json) catch {
-      _ => raise fail("文件 \{@utils.red(path)} 有效")
+      _ => raise fail("文件 \{@utils.red(mvm_path)} 有效")
     }
-    // println("json: \{json}")
-    // println("config: \{config}")
-    if tool is Some(tool) {
-      // 指定了tool
-      if json is Object(map) &&
-        map.get(tool.to_string()) is Some(String(version)) {
-        // 有版本
-        @log.debug("在 \{path} 找到 \{tool} 版本 \{version}")
-        return Some((path, config))
+    if tool is Some(t) {
+      if json is Object(map) && map.get(t.to_string()) is Some(String(version)) {
+        @log.debug("在 \{mvm_path} 找到 \{t} 版本 \{version}")
+        return Some((mvm_path, config))
       }
     } else {
-      // 没有指定tool
-      return Some((path, config))
+      return Some((mvm_path, config))
     }
   }
+  
+  // mvm.json 中没有该工具的配置，尝试从 Volta package.json 获取（仅支持 Node）
+  if tool is Some(Node) {
+    match get_node_version_from_volta_package_json(dir) {
+      Some(volta_version) => {
+        let volta_config : Config = { node: Some(volta_version), bun: None, zig: None }
+        let volta_path = @fs_ext.join_path(dir, VOLTA_CONFIG_FILE)
+        @log.debug("从 Volta package.json 找到 node 版本: \{volta_version}")
+        return Some((volta_path, volta_config))
+      }
+      None => ()
+    }
+  }
+  
   if dir == mvm_home() {
     return None
   }
@@ -332,7 +346,6 @@ async fn get_config_inner(
   guard @fs_ext.get_parent_dir(dir) is Some(parent) else {
     return if fallback_to_global_config {
       @log.debug("从 MVM_HOME 查找")
-      // 没有上一级，则从mvm_home找
       get_config_inner(
         tool,
         mvm_home(),
@@ -378,6 +391,32 @@ pub fn Config::get_value(self : Self, tool : Tool) -> String? raise {
     Bun => self.bun
     Zig => self.zig
     _ => raise fail("不支持获取 \{tool} 的值")
+  }
+}
+
+///|
+/// 从 Volta package.json 获取 node 版本
+/// Volta 格式: { "volta": { "node": "20.0.0" } }
+async fn get_node_version_from_volta_package_json(dir : String) -> String? {
+  let path = @fs_ext.join_path(dir, VOLTA_CONFIG_FILE)
+  if !(@fs.exists(path)) {
+    return None
+  }
+  let content = @fs.read_file(path)
+  let json = content.json() catch { _ => return None }
+  guard json is Object(map) else { return None }
+  match map.get("volta") {
+    Some(Object(volta_map)) => {
+      match volta_map.get("node") {
+        Some(String(version)) => {
+          let version = if version.has_prefix("v") { version } else { "v\{version}" }
+          @log.debug("从 Volta package.json 找到 node 版本: \{version}")
+          return Some(version)
+        }
+        _ => return None
+      }
+    }
+    _ => return None
   }
 }
 
