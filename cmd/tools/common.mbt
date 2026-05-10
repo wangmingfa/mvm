@@ -17,6 +17,7 @@ pub using @tool_def {
   replace_url,
   apply_global_config,
   make_global_config,
+  type UrlReplaceContext,
 }
 
 ///|

@@ -1,0 +1,54 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "username/mvm/log"
+
+// Values
+pub fn add_log_lines(lines? : Int) -> Unit
+
+pub fn add_log_lines_by_content(String) -> Int
+
+pub fn clear_all_lines() -> Unit
+
+pub fn clear_lines(Int) -> Unit
+
+#callsite(autofill(loc))
+pub fn[T : Show] debug(T, loc~ : SourceLoc) -> Unit
+
+pub fn enter_alternate_screen_on_release_mode() -> Unit
+
+#callsite(autofill(loc))
+pub fn[T : Show] error(T, loc~ : SourceLoc) -> Unit
+
+pub fn exit_alternate_screen_on_release_mode() -> Unit
+
+#callsite(autofill(loc))
+pub fn[T : Show] info(T, loc~ : SourceLoc) -> Unit
+
+pub fn is_debug_log_level() -> Bool
+
+pub fn println_error(Error) -> Unit
+
+pub fn set_log_level(LogLevel) -> Unit
+
+#callsite(autofill(loc))
+pub fn[T : Show] success(T, loc~ : SourceLoc) -> Unit
+
+#callsite(autofill(loc))
+pub fn[T : Show] warn(T, loc~ : SourceLoc) -> Unit
+
+// Errors
+
+// Types and methods
+pub(all) enum LogLevel {
+  Debug
+  Info
+  Warn
+  Error
+}
+pub fn LogLevel::from_string(String) -> Self raise
+pub fn LogLevel::from_string_with_default(String, Self) -> Self
+pub fn LogLevel::to_int(Self) -> Int
+
+// Type aliases
+
+// Traits
+

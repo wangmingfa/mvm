@@ -1,0 +1,57 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "username/mvm/cmd/command"
+
+import {
+  "username/mvm/cmd/tools/tool_def",
+}
+
+// Values
+pub async fn download_file(String, String) -> Unit
+
+pub async fn extract_file(String, String) -> Bool
+
+pub fn get_arg_value(String, default? : String) -> String?
+
+pub fn get_command(ArrayView[String]) -> Command raise
+
+pub async fn run(Command) -> Unit
+
+pub async fn run_config() -> Unit
+
+pub async fn run_config_set(String, String) -> Unit
+
+pub async fn run_install(@tool_def.Tool, String?) -> Unit
+
+pub async fn run_list(@tool_def.Tool?) -> Unit
+
+pub async fn run_pin(@tool_def.Tool, String) -> Unit
+
+pub async fn run_uninstall(@tool_def.Tool, String?) -> Unit
+
+pub async fn run_upgrade() -> Unit
+
+pub async fn run_use(@tool_def.Tool, String) -> Unit
+
+pub fn run_version() -> Unit
+
+// Errors
+
+// Types and methods
+pub enum Command {
+  Version
+  Upgrade
+  Executor(Array[String])
+  Install(@tool_def.Tool, String?)
+  Pin(@tool_def.Tool, String)
+  Use(@tool_def.Tool, String)
+  List(@tool_def.Tool?)
+  Uninstall(@tool_def.Tool, String?)
+  ConfigList
+  ConfigSet(String, String)
+}
+pub impl Show for Command
+
+// Type aliases
+
+// Traits
+

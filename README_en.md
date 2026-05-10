@@ -82,6 +82,18 @@ mvm uninstall node@18.17.0
 mvm uninstall zig@0.12.0
 ```
 
+6. `mvm config`——View or set configuration
+```bash
+# View current configuration
+mvm config
+mvm config list
+mvm config ls
+
+# Set configuration
+mvm config set node_mirror https://npm.taobao.org/mirrors/node
+mvm config set github_proxy https://cdn.gh-proxy.org/
+```
+
 ## Volta Compatibility
 
 mvm is compatible with Volta's project configuration. If a Volta `package.json` (with `volta.node` field) exists in the project directory, mvm will automatically read the Node.js version from it.

@@ -185,11 +185,15 @@ const GLOBAL_SETTINGS_FILE = "config.json"
 /// }
 pub struct GlobalConfig {
   github_proxy : String?
+  node_mirror : String?
 } derive(FromJson, ToJson)
 
 ///|
-pub fn make_global_config(github_proxy : String?) -> GlobalConfig {
-  { github_proxy, }
+pub fn make_global_config(
+  github_proxy : String?,
+  node_mirror : String?,
+) -> GlobalConfig {
+  { github_proxy, node_mirror }
 }
 
 ///|
@@ -224,7 +228,7 @@ pub async fn get_global_config() -> (String, GlobalConfig) {
     }
     (config_path, config)
   } else {
-    (config_path, { github_proxy: None })
+    (config_path, { github_proxy: None, node_mirror: None })
   }
 }
 
@@ -247,6 +251,17 @@ pub struct UrlReplaceContext {
 }
 
 ///|
+pub fn UrlReplaceContext::new(
+  url : String,
+  tool : String,
+  version : String,
+  os : String,
+  arch : String,
+) -> UrlReplaceContext {
+  { url, tool, version, os, arch }
+}
+
+///|
 /// 替换 URL 中的变量
 /// 支持的变量：$URL, $TOOL, $VERSION, $OS, $ARCH
 pub fn replace_url(template : String, ctx : UrlReplaceContext) -> String {
@@ -261,6 +276,8 @@ pub fn replace_url(template : String, ctx : UrlReplaceContext) -> String {
 
 ///|
 /// 应用全局配置转换 URL
+/// github_proxy: 用于 GitHub 相关下载（如 node index.json）
+/// node_mirror: 用于 Node.js 镜像（会替换 URL 中的 nodejs-release 部分）
 pub fn apply_global_config(
   url : String,
   config : GlobalConfig,
@@ -270,6 +287,13 @@ pub fn apply_global_config(
     Some(proxy) if proxy != "" => {
       @log.debug("使用 GitHub 代理: \{proxy}")
       return replace_url(proxy, ctx)
+    }
+    _ => ()
+  }
+  match config.node_mirror {
+    Some(mirror) if mirror != "" && ctx.tool == "node" => {
+      @log.debug("使用 Node 镜像: \{mirror}")
+      return url.replace(old=NODE_RELEASE_URL, new=mirror)
     }
     _ => ()
   }
@@ -307,11 +331,12 @@ async fn get_config_inner(
 ) -> (String, Config)? {
   let mvm_path = @fs_ext.join_path(dir, CONFIG_FILE)
   @log.debug("在 \{dir} 查找 \{@utils.option_to_string(tool)} 的版本号")
-  
+
   // 优先从 mvm.json 获取
   if @fs.exists(mvm_path) {
     let json = @fs.read_file(mvm_path).json() catch {
-      _ => raise fail("文件 \{@utils.red(mvm_path)} 不是有效的json格式")
+      _ =>
+        raise fail("文件 \{@utils.red(mvm_path)} 不是有效的json格式")
     }
     let config : Config = @json.from_json(json) catch {
       _ => raise fail("文件 \{@utils.red(mvm_path)} 有效")
@@ -325,20 +350,26 @@ async fn get_config_inner(
       return Some((mvm_path, config))
     }
   }
-  
+
   // mvm.json 中没有该工具的配置，尝试从 Volta package.json 获取（仅支持 Node）
   if tool is Some(Node) {
     match get_node_version_from_volta_package_json(dir) {
       Some(volta_version) => {
-        let volta_config : Config = { node: Some(volta_version), bun: None, zig: None }
+        let volta_config : Config = {
+          node: Some(volta_version),
+          bun: None,
+          zig: None,
+        }
         let volta_path = @fs_ext.join_path(dir, VOLTA_CONFIG_FILE)
-        @log.debug("从 Volta package.json 找到 node 版本: \{volta_version}")
+        @log.debug(
+          "从 Volta package.json 找到 node 版本: \{volta_version}",
+        )
         return Some((volta_path, volta_config))
       }
       None => ()
     }
   }
-  
+
   if dir == mvm_home() {
     return None
   }
@@ -399,23 +430,26 @@ pub fn Config::get_value(self : Self, tool : Tool) -> String? raise {
 /// Volta 格式: { "volta": { "node": "20.0.0" } }
 async fn get_node_version_from_volta_package_json(dir : String) -> String? {
   let path = @fs_ext.join_path(dir, VOLTA_CONFIG_FILE)
-  if !(@fs.exists(path)) {
+  if !@fs.exists(path) {
     return None
   }
   let content = @fs.read_file(path)
   let json = content.json() catch { _ => return None }
   guard json is Object(map) else { return None }
   match map.get("volta") {
-    Some(Object(volta_map)) => {
+    Some(Object(volta_map)) =>
       match volta_map.get("node") {
         Some(String(version)) => {
-          let version = if version.has_prefix("v") { version } else { "v\{version}" }
+          let version = if version.has_prefix("v") {
+            version
+          } else {
+            "v\{version}"
+          }
           @log.debug("从 Volta package.json 找到 node 版本: \{version}")
           return Some(version)
         }
         _ => return None
       }
-    }
     _ => return None
   }
 }

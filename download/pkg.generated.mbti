@@ -1,0 +1,16 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "username/mvm/download"
+
+// Values
+pub async fn download(String, String, dest_is_file? : Bool) -> Unit
+
+pub async fn download_by_native_command(String, String) -> Unit
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
+

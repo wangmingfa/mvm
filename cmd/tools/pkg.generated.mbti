@@ -1,0 +1,58 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "username/mvm/cmd/tools"
+
+import {
+  "username/mvm/cmd/tools/tool_def",
+  "username/mvm/os",
+}
+
+// Values
+pub async fn _get_tool_exe_path(@tool_def.Tool) -> @tool_def.ToolExe?
+
+pub fn apply_global_config(String, @tool_def.GlobalConfig, @tool_def.UrlReplaceContext) -> String
+
+pub async fn get_config(tool? : @tool_def.Tool, dir? : String, search_upwards? : Bool, fallback_to_global_config? : Bool) -> (String, @tool_def.Config)?
+
+pub fn get_download_url(@os.OsInfo, @tool_def.Tool, String) -> (String, UInt) raise
+
+pub async fn get_global_config() -> (String, @tool_def.GlobalConfig)
+
+pub async fn get_target_version(@os.OsInfo, @tool_def.Tool, String) -> String
+
+pub async fn get_tool_exe_path(@tool_def.Tool) -> @tool_def.ToolExe?
+
+pub async fn is_installed(@tool_def.Tool, String) -> Bool
+
+pub fn make_global_config(String?, String?) -> @tool_def.GlobalConfig
+
+pub fn match_version(@tool_def.Tool, String, String) -> Bool
+
+pub fn mvm_home() -> String raise
+
+pub async fn post_install(@tool_def.Tool, String) -> Unit
+
+pub fn replace_url(String, @tool_def.UrlReplaceContext) -> String
+
+pub async fn save_global_config(@tool_def.GlobalConfig) -> String
+
+pub fn temp_dir() -> String raise
+
+pub fn tool_dir(@tool_def.Tool) -> String raise
+
+pub fn version_dir(@tool_def.Tool, String) -> String raise
+
+pub async fn write_global_config(@tool_def.Tool, String) -> String
+
+pub async fn write_project_config(@tool_def.Tool, String) -> String
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+pub using @tool_def {type Tool}
+
+pub using @tool_def {type UrlReplaceContext}
+
+// Traits
+

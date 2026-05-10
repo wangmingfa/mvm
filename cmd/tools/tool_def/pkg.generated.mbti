@@ -1,0 +1,131 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "username/mvm/cmd/tools/tool_def"
+
+import {
+  "moonbitlang/core/debug",
+  "moonbitlang/core/json",
+  "username/mvm/os",
+}
+
+// Values
+pub fn apply_global_config(String, GlobalConfig, UrlReplaceContext) -> String
+
+pub fn cache_dir() -> String raise
+
+pub async fn get_config(tool? : Tool, dir? : String, search_upwards? : Bool, fallback_to_global_config? : Bool) -> (String, Config)?
+
+pub async fn get_global_config() -> (String, GlobalConfig)
+
+pub async fn installed_versions(Tool) -> Array[String]
+
+pub async fn is_installed(Tool, String) -> Bool
+
+pub fn make_global_config(String?, String?) -> GlobalConfig
+
+pub fn mvm_bin_home() -> String raise
+
+pub fn mvm_home() -> String raise
+
+pub fn mvm_npm_pkg_home() -> String raise
+
+pub async fn read_cache_file_content(String) -> String?
+
+pub fn replace_url(String, UrlReplaceContext) -> String
+
+pub async fn save_global_config(GlobalConfig) -> String
+
+pub fn temp_dir() -> String raise
+
+pub fn tool_dir(Tool) -> String raise
+
+pub fn tools_dir() -> String raise
+
+pub fn version_dir(Tool, String) -> String raise
+
+pub async fn write_cache_file_content(String, String) -> Unit
+
+pub async fn write_global_config(Tool, String) -> String
+
+pub async fn write_project_config(Tool, String) -> String
+
+// Errors
+
+// Types and methods
+pub struct Bun {
+}
+pub fn Bun::get_download_url(@os.OsInfo, String) -> String raise
+pub fn Bun::get_exe_path(String) -> String raise
+pub async fn Bun::get_target_version(@os.OsInfo, String, Int) -> String
+
+type BunAssetInfo derive(@json.FromJson)
+
+type BunReleaseInfo derive(@json.FromJson)
+
+pub struct Config {
+  node : String?
+  bun : String?
+  zig : String?
+} derive(ToJson, @json.FromJson)
+pub fn Config::get_value(Self, Tool) -> String? raise
+
+pub struct GlobalConfig {
+  github_proxy : String?
+  node_mirror : String?
+} derive(ToJson, @json.FromJson)
+
+type Node
+pub fn Node::get_download_url(@os.OsInfo, String) -> String raise
+pub fn Node::get_exe_path(String) -> String raise
+pub async fn Node::get_node_builtin_tool_path_and_version(Tool, ToolExe) -> ToolExe?
+pub fn Node::get_node_dir(String) -> NodeDir raise
+pub async fn Node::get_target_version(@os.OsInfo, String, Int) -> String
+
+pub struct NodeDir {
+  root : String
+  lib : String
+}
+
+type NodeJsInfo derive(@json.FromJson)
+
+pub(all) enum Tool {
+  Node
+  Npm
+  Npx
+  Corepack
+  Bun
+  Zig
+} derive(@debug.Debug)
+pub fn Tool::from_string(String) -> Self raise
+pub fn Tool::installable_tools() -> Array[Self]
+pub fn Tool::is_node_builtin_tools(Self) -> Bool
+pub impl Show for Tool
+
+pub struct ToolExe {
+  tool : Tool
+  path : String
+  version : String
+  envs : Map[String, String]
+  dependent_tool_exe : ToolExe?
+} derive(@debug.Debug)
+pub fn ToolExe::new(Tool, String, String, envs? : Map[String, String], dependent_tool_exe? : Self?) -> Self
+pub fn ToolExe::new_node_builtin_tool(Tool, Self, String, String, envs? : Map[String, String]) -> Self
+
+pub struct UrlReplaceContext {
+  url : String
+  tool : String
+  version : String
+  os : String
+  arch : String
+}
+pub fn UrlReplaceContext::new(String, String, String, String, String) -> Self
+
+pub struct Zig {
+}
+pub fn Zig::get_download_url(@os.OsInfo, String) -> String raise
+pub fn Zig::get_exe_path(String) -> String raise
+pub async fn Zig::get_target_version(@os.OsInfo, String, Int) -> String
+
+// Type aliases
+
+// Traits
+

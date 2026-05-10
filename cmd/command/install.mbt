@@ -35,6 +35,24 @@ pub async fn run_install(tool : @tools.Tool, version : String?) -> Unit {
     return
   }
 
+  // 应用全局配置（如镜像、代理）
+  let (_, config) = @tools.get_global_config()
+  let arch_str = if os_info.arch is Aarch64 { "arm64" } else { "x64" }
+  let os_str = match os_info.name {
+    Windows => "win"
+    Linux => "linux"
+    MacOS => "darwin"
+    _ => raise fail("不支持的操作系统")
+  }
+  let ctx = @tools.UrlReplaceContext::new(
+    url,
+    tool.to_string(),
+    version,
+    os_str,
+    arch_str,
+  )
+  let url = @tools.apply_global_config(url, config, ctx)
+
   // 下载文件
   let tmp_dir = "\{@tools.temp_dir()}/tmp-\{tool}-\{version}"
   ensure_dir(tmp_dir)

@@ -1,0 +1,57 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "username/mvm/os"
+
+import {
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub fn get_os_arch() -> Arch
+
+pub fn get_os_info() -> OsInfo
+
+pub fn get_os_name() -> OS
+
+// Errors
+
+// Types and methods
+pub enum Arch {
+  X86_64
+  X86
+  Aarch64
+  Arm
+  Riscv64
+  Riscv32
+  Loongarch64
+  Mips64
+  Mips
+  Ppc64
+  Ppc
+  S390x
+  Unknown(String)
+} derive(Eq, @debug.Debug)
+pub impl Show for Arch
+
+pub enum OS {
+  MacOS
+  Linux
+  Windows
+  FreeBSD
+  OpenBSD
+  NetBSD
+  DragonFly
+  Solaris
+  Haiku
+  Unknown(String)
+} derive(Eq, @debug.Debug)
+pub impl Show for OS
+
+pub struct OsInfo {
+  name : OS
+  arch : Arch
+}
+
+// Type aliases
+
+// Traits
+

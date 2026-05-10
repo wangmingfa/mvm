@@ -1,0 +1,46 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "username/mvm/utils"
+
+import {
+  "moonbitlang/x/time",
+}
+
+// Values
+pub fn[T : Show] blue(T) -> String
+
+pub fn compare_version(String, String) -> Int raise
+
+pub fn get_date(milliseconds? : Int64) -> @time.PlainDateTime raise
+
+pub fn get_date_str(date? : @time.PlainDateTime) -> String raise
+
+pub fn get_duration_and_total_time(current_size~ : Int64, file_size~ : Int64, start_time_ms~ : Int64, current_speed~ : Int64) -> String
+
+pub fn get_from_map_ignore_case(Map[String, String], String) -> String?
+
+pub fn get_readable_file_size(Int64) -> String
+
+pub fn get_readable_time(Int64) -> String
+
+pub fn get_speed_with_readable_unit(Int64, Int64) -> (String, Int64)
+
+pub fn[T : Show] green(T) -> String
+
+pub fn[T : Show] option_to_string(T?) -> String
+
+pub fn parse_version(String) -> FixedArray[Int] raise
+
+pub fn[T : Show] red(T) -> String
+
+pub fn[T : Show] styled(String, T) -> String
+
+pub fn[T : Show] yellow(T) -> String
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
+
