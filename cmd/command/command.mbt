@@ -11,6 +11,8 @@ pub enum Command {
   Use(Tool, String)
   List(Tool?)
   Uninstall(Tool, String?)
+  ConfigList
+  ConfigSet(String, String)
 }
 
 ///|
@@ -27,6 +29,8 @@ pub impl Show for Command with to_string(s) {
     List(None) => "List(All)"
     Uninstall(tool, version) =>
       "Uninstall(\{tool.to_string()}, \{@utils.option_to_string(version)})"
+    ConfigList => "ConfigList"
+    ConfigSet(key, value) => "ConfigSet(\{key}, \{value})"
   }
 }
 
@@ -89,6 +93,18 @@ pub fn get_command(argv : ArrayView[String]) -> Command raise {
       parse_with_version("uninstall", options)
     ["list"] | ["ls"] => List(None)
     ["list", tool] | ["ls", tool] => List(Some(Tool::from_string(tool)))
+    ["config", "list"] | ["config", "ls"] | ["config", "l"] => ConfigList
+    ["config"] => raise fail("请使用 mvm config list 查看配置")
+    ["config", "set", key, value] => ConfigSet(key, value)
+    ["config", "set", ..] => {
+      let url = "https://cdn.gh-proxy.org/" + "$" + "URL"
+      raise fail(
+        "config set 命令需要提供 key 和 value。示例：mvm config set github_proxy " +
+        url,
+      )
+    }
+    ["config", subcommand, ..] =>
+      raise fail("不支持的 config 子命令：\{subcommand}")
     [cmd] => raise fail("命令 '\{cmd}' 缺少参数")
     [] => raise fail("请提供命令参数。示例：mvm install node@22")
     _ => {

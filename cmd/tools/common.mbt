@@ -12,6 +12,11 @@ pub using @tool_def {
   version_dir,
   get_config,
   temp_dir,
+  get_global_config,
+  save_global_config,
+  replace_url,
+  apply_global_config,
+  make_global_config,
 }
 
 ///|

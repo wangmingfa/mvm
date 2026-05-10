@@ -10,5 +10,7 @@ pub async fn run(command : Command) -> Unit {
     Use(tool, version) => run_use(tool, version)
     List(tool_opt) => run_list(tool_opt)
     Uninstall(tool, version) => run_uninstall(tool, version)
+    ConfigList => run_config()
+    ConfigSet(key, value) => run_config_set(key, value)
   }
 }

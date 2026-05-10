@@ -164,6 +164,116 @@ pub fn Tool::is_node_builtin_tools(tool : Tool) -> Bool {
 const CONFIG_FILE = "mvm.json"
 
 ///|
+const GLOBAL_SETTINGS_FILE = "config.json"
+
+///|
+/// config.json 配置说明
+///
+/// 支持的变量：
+/// - `$URL` - 原始下载链接
+/// - `$TOOL` - 工具名（如 node, npm, bun, zig）
+/// - `$VERSION` - 版本号（如 v20.1.0）
+/// - `$OS` - 操作系统（如 darwin, linux, windows）
+/// - `$ARCH` - 架构（如 x64, arm64）
+///
+/// 示例配置：
+/// {
+///   "github_proxy": "https://cdn.gh-proxy.org/$URL"
+/// }
+pub struct GlobalConfig {
+  github_proxy : String?
+} derive(FromJson, ToJson)
+
+///|
+pub fn make_global_config(github_proxy : String?) -> GlobalConfig {
+  { github_proxy, }
+}
+
+///|
+impl Show for GlobalConfig with output(s, logger) {
+  logger.write_string(s.to_string())
+}
+
+///|
+impl Show for GlobalConfig with to_string(s) {
+  (
+    $|{github_proxy: \{@utils.option_to_string(s.github_proxy)}}
+  )
+}
+
+///|
+fn get_global_settings_path() -> String raise {
+  @fs_ext.join_path(mvm_home(), GLOBAL_SETTINGS_FILE)
+}
+
+///|
+pub async fn get_global_config() -> (String, GlobalConfig) {
+  let config_path = @fs_ext.canonicalize_path(get_global_settings_path())
+  if @fs.exists(config_path) {
+    let json = @fs.read_file(config_path).json() catch {
+      _ =>
+        raise fail(
+          "文件 \{@utils.red(config_path)} 不是有效的json格式",
+        )
+    }
+    let config : GlobalConfig = @json.from_json(json) catch {
+      _ => raise fail("文件 \{@utils.red(config_path)} 格式无效")
+    }
+    (config_path, config)
+  } else {
+    (config_path, { github_proxy: None })
+  }
+}
+
+///|
+pub async fn save_global_config(config : GlobalConfig) -> String {
+  let config_path = get_global_settings_path()
+  let content = config.to_json().stringify(indent=2)
+  @fs.write_file(config_path, content, create_mode=CreateOrTruncate)
+  config_path
+}
+
+///|
+/// URL 替换上下文
+pub struct UrlReplaceContext {
+  url : String
+  tool : String
+  version : String
+  os : String
+  arch : String
+}
+
+///|
+/// 替换 URL 中的变量
+/// 支持的变量：$URL, $TOOL, $VERSION, $OS, $ARCH
+pub fn replace_url(template : String, ctx : UrlReplaceContext) -> String {
+  let result = template
+  result
+  .replace(old="$URL", new=ctx.url)
+  .replace(old="$TOOL", new=ctx.tool)
+  .replace(old="$VERSION", new=ctx.version)
+  .replace(old="$OS", new=ctx.os)
+  .replace(old="$ARCH", new=ctx.arch)
+}
+
+///|
+/// 应用全局配置转换 URL
+pub fn apply_global_config(
+  url : String,
+  config : GlobalConfig,
+  ctx : UrlReplaceContext,
+) -> String {
+  match config.github_proxy {
+    Some(proxy) if proxy != "" => {
+      @log.debug("使用 GitHub 代理: \{proxy}")
+      return replace_url(proxy, ctx)
+    }
+    _ => ()
+  }
+  url
+}
+
+///|
 pub async fn get_config(
   tool? : Tool,
   dir? : String,
