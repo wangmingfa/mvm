@@ -33,7 +33,7 @@ curl -fsSL https://raw.githubusercontent.com/wangmingfa/mvm/main/install.sh | ba
 
 ## 命令详解
 
-1. `mvm install`--安装版本
+1. `mvm install`——安装版本
 ```bash
 # 安装最新稳定版
 mvm install node
