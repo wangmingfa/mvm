@@ -98,6 +98,20 @@ $env:MVM_LOG_LEVEL="debug"; ./executor.ps1  node -v
 ./install.sh -np
 ```
 
+3. 发布新版本
+```bash
+# 交互模式（上下键选择版本类型）
+./bump-tag.sh
+
+# 自动模式（默认 patch）
+./bump-tag.sh -y
+
+# 直接指定版本类型
+./bump-tag.sh major
+./bump-tag.sh minor
+./bump-tag.sh patch
+```
+
 ## Skills 子模块
 
 本项目使用 [moonbitlang/skills](https://github.com/moonbitlang/skills) 作为子模块。

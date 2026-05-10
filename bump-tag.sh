@@ -2,6 +2,29 @@
 set -euo pipefail
 
 # =============================
+# 解析参数
+# =============================
+auto_mode=false
+selected=2
+
+while getopts "y" opt; do
+  case "$opt" in
+    y) auto_mode=true ;;
+    *) echo "用法: $0 [-y] [major|minor|patch]" && exit 1 ;;
+  esac
+done
+
+# 处理可选的位置参数（版本类型）
+if [[ $# -ge 1 ]]; then
+  case "$1" in
+    major) selected=0; auto_mode=true ;;
+    minor) selected=1; auto_mode=true ;;
+    patch) selected=2; auto_mode=true ;;
+    *) echo "错误: 无效的版本类型 '$1'" && exit 1 ;;
+  esac
+fi
+
+# =============================
 # 获取最新 tag
 # =============================
 latest_tag=$(git tag --list 'v*' --sort=-v:refname | head -n 1)
@@ -18,9 +41,6 @@ options=(
   "minor  → $major.$((minor + 1)).0"
   "patch  → $major.$minor.$((patch + 1))"
 )
-
-# 默认选中 patch
-selected=2
 
 # =============================
 # 渲染菜单
@@ -51,31 +71,33 @@ read_key() {
 }
 
 # =============================
-# 交互主循环
+# 交互主循环（非自动模式）
 # =============================
-while true; do
-  render_menu
-  key=$(read_key)
+if [[ "$auto_mode" == false ]]; then
+  while true; do
+    render_menu
+    key=$(read_key)
 
-  case "$key" in
-    $'\x1b[A') # ↑
-      ((selected--))
-      ((selected < 0)) && selected=$((${#options[@]} - 1))
-      ;;
-    $'\x1b[B') # ↓
-      ((selected++))
-      ((selected >= ${#options[@]})) && selected=0
-      ;;
-    '') # Enter（read -n3 时回车是空串）
-      break
-      ;;
-    $'\x03') # Ctrl+C
-      echo
-      echo "已取消"
-      exit 0
-      ;;
-  esac
-done
+    case "$key" in
+      $'\x1b[A') # ↑
+        ((selected--))
+        ((selected < 0)) && selected=$((${#options[@]} - 1))
+        ;;
+      $'\x1b[B') # ↓
+        ((selected++))
+        ((selected >= ${#options[@]})) && selected=0
+        ;;
+      '') # Enter（read -n3 时回车是空串）
+        break
+        ;;
+      $'\x03') # Ctrl+C
+        echo
+        echo "已取消"
+        exit 0
+        ;;
+    esac
+  done
+fi
 
 # =============================
 # 计算新版本
@@ -98,11 +120,15 @@ clear
 echo "当前 tag : $latest_tag"
 echo "新 tag   : $new_tag"
 echo
-read -rp "确认创建并推送该 tag？(y/N): " confirm
 
-if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
-  echo "已取消"
-  exit 0
+if [[ "$auto_mode" == true ]]; then
+  echo "自动模式：直接创建并推送 tag"
+else
+  read -rp "确认创建并推送该 tag？(y/N): " confirm
+  if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
+    echo "已取消"
+    exit 0
+  fi
 fi
 
 # =============================
