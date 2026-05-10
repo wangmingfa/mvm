@@ -55,7 +55,7 @@ mvm use node@20
 mvm use node@20.18.0
 ```
 
-3. `mvm pin`--项目级版本锁定（强烈推荐）
+3. `mvm pin`——项目级版本锁定（强烈推荐）
 ```bash
 # 进入项目目录
 cd my-project
