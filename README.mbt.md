@@ -64,7 +64,7 @@ mvm pin bun@1.2.3
 mvm pin zig@0.15.2
 ```
 
-4. `mvm list`—— 查看版本
+4. `mvm list`——查看版本
 ```bash
 # 查看所有
 mvm list
@@ -74,7 +74,7 @@ mvm list node
 mvm list bun
 ```
 
-5. `mvm uninstall`—— 卸载版本
+5. `mvm uninstall`——卸载版本
 ```bash
 mvm uninstall node@18.17.0
 mvm uninstall zig@0.12.0
