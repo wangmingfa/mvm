@@ -49,7 +49,7 @@ mvm install bun@1.1.0
 mvm install zig@0.13.0
 ```
 
-2. `mvm use`--设置全局版本
+2. `mvm use`——设置全局版本
 ```bash
 mvm use node@20
 mvm use node@20.18.0
