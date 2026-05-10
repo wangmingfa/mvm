@@ -25,6 +25,12 @@ curl -fsSL https://raw.githubusercontent.com/wangmingfa/mvm/main/install.sh | ba
 
 > **提示：** 如果脚本执行时遇到中文乱码导致报错，请按照 [此文档](https://wangmingfa.github.io/docs/#/windows/powershell/garbled-text) 进行操作。
 
+## 平台支持
+
+- macOS：ARM 架构（Apple Silicon）
+- Windows：x86 架构
+- Linux：x86 架构
+
 ## 命令详解
 
 1. `mvm install`--安装版本
