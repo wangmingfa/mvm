@@ -1,5 +1,7 @@
 # wangmingfa/mvm
 
+**🌐 English | [中文](README.md)**
+
 **mvm** (Multi Version Manager) —— One Tool to Manage Them All
 
 No more headaches from installing different version managers for different languages.
