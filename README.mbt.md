@@ -1,6 +1,6 @@
 # wangmingfa/mvm
 
-**mvm** - One Tool to Manage Them All
+**mvm**（Multi Version Manager）——One Tool to Manage Them All
 
 再也不用为不同语言安装不同的版本管理器而头疼了。
 
