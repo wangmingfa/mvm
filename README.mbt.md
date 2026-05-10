@@ -80,6 +80,22 @@ mvm uninstall node@18.17.0
 mvm uninstall zig@0.12.0
 ```
 
+## Volta 兼容
+
+mvm 兼容 Volta 的项目配置。如果项目目录下存在 Volta 的 `package.json`（包含 `volta.node` 字段），mvm 会自动读取其中的 Node.js 版本信息。
+
+**示例：**
+```json
+{
+  "name": "my-project",
+  "volta": {
+    "node": "20.0.0"
+  }
+}
+```
+
+> **提示：** mvm 会优先读取项目目录下的 `mvm.json` 配置，如不存在才会读取 Volta 的 `package.json`。
+
 ## 开发
 
 1. 程序入口
