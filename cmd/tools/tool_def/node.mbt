@@ -1,5 +1,8 @@
+///| 阿里云node.js镜像
+// const NODE_RELEASE_URL = "https://mirrors.aliyun.com/nodejs-release"
+
 ///|
-const NODE_RELEASE_URL = "https://mirrors.aliyun.com/nodejs-release"
+const NODE_RELEASE_URL = "https://nodejs.org/dist"
 
 ///|
 const NODE_INDEX_URL = "https://nodejs.org/dist/index.json"

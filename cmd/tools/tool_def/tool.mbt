@@ -190,9 +190,20 @@ pub struct GlobalConfig {
 
 ///|
 pub fn make_global_config(
-  github_proxy : String?,
-  node_mirror : String?,
+  existing_config? : GlobalConfig = { github_proxy: None, node_mirror: None },
+  github_proxy? : String? = None,
+  node_mirror? : String? = None,
 ) -> GlobalConfig {
+  let github_proxy = if github_proxy is Some(v) {
+    Some(v)
+  } else {
+    existing_config.github_proxy
+  }
+  let node_mirror = if node_mirror is Some(v) {
+    Some(v)
+  } else {
+    existing_config.node_mirror
+  }
   { github_proxy, node_mirror }
 }
 

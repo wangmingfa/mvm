@@ -131,8 +131,8 @@ pub async fn run_install(tool : @tools.Tool, version : String?) -> Unit {
 ///|
 /// 下载文件
 pub async fn download_file(url : String, dest : String) -> Unit {
-  @log.debug("正在下载: \{@utils.blue(url)}")
-  @log.debug("保存到：\{dest}")
+  @log.info("正在下载: \{@utils.blue(url)}")
+  @log.info("保存到：\{dest}")
   let os = @os.get_os_name()
   match os {
     Windows => @download.download(url, dest, dest_is_file=true)
@@ -143,7 +143,7 @@ pub async fn download_file(url : String, dest : String) -> Unit {
 ///|
 /// 解压文件
 pub async fn extract_file(file : String, dest : String) -> Bool {
-  @log.debug("正在解压 \{file} 到 \{dest} ...")
+  @log.info("正在解压 \{file} 到 \{dest} ...")
   let (code, data) = match file {
     f if f.has_suffix(".tar.gz") =>
       @process.collect_output_merged("tar", ["-xzf", f, "-C", dest])

@@ -22,15 +22,22 @@ pub async fn run_config() -> Unit {
 ///|
 /// 执行设置配置命令
 pub async fn run_config_set(key : String, value : String) -> Unit {
+  let (_, existing_config) = @tools.get_global_config()
   match key {
     "github_proxy" => {
-      let new_config = @tools.make_global_config(Some(value), None)
+      let new_config = @tools.make_global_config(
+        existing_config~,
+        github_proxy=Some(value),
+      )
       let config_path = @tools.save_global_config(new_config)
       println("配置已保存到: \{config_path}")
       println("设置 \{key} = \{value}")
     }
     "node_mirror" => {
-      let new_config = @tools.make_global_config(None, Some(value))
+      let new_config = @tools.make_global_config(
+        existing_config~,
+        node_mirror=Some(value),
+      )
       let config_path = @tools.save_global_config(new_config)
       println("配置已保存到: \{config_path}")
       println("设置 \{key} = \{value}")

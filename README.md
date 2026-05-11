@@ -85,13 +85,12 @@ mvm uninstall zig@0.12.0
 6. `mvm config`——查看/设置配置
 ```bash
 # 查看当前配置
-mvm config
 mvm config list
 mvm config ls
 
 # 设置配置
-mvm config set node_mirror https://npm.taobao.org/mirrors/node
-mvm config set github_proxy https://cdn.gh-proxy.org/
+mvm config set node_mirror https://mirrors.aliyun.com/nodejs-release
+mvm config set github_proxy https://cdn.gh-proxy.org/$URL
 ```
 
 ## Volta 兼容
