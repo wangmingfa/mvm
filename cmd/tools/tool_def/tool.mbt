@@ -144,6 +144,12 @@ pub fn Tool::from_string(tool : String) -> Tool raise {
 }
 
 ///|
+pub fn Tool::from_string_with_option_result(tool : String) -> Tool? {
+  let tool = Tool::from_string(tool) catch { _ => return None }
+  Some(tool)
+}
+
+///|
 impl Eq for Tool with equal(a, b) {
   match a {
     Node => b is Node

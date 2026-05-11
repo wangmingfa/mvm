@@ -214,11 +214,20 @@ test "canonicalize_path windows" {
 }
 
 ///|
-pub fn get_parent_dir(path : String) -> String? {
+pub fn get_parent_dir(path : String, levels? : Int = 1) -> String? raise {
+  guard levels > 0 else {
+    raise fail("levels 必须大于 0，当前值：\{levels}")
+  }
   let path = path.canonicalize_path()
   guard path.contains("/") else { return None }
   let arr = path.split("/").to_array()
-  let _ = arr.pop()
+  for _ in 0..<levels {
+    guard arr.length() > 0 else { return None }
+    let _ = arr.pop()
+  }
+  if arr.is_empty() {
+    return None
+  }
   Some(arr.join("/"))
 }
 
@@ -246,6 +255,36 @@ test "get_parent_dir" {
     get_parent_dir("home/peter/code/a.txt"),
     content=(
       #|Some("home/peter/code")
+    ),
+  )
+  debug_inspect(
+    get_parent_dir("/home/peter/code/a.txt", levels=2),
+    content=(
+      #|Some("/home/peter")
+    ),
+  )
+  debug_inspect(
+    get_parent_dir("/home/peter/code/a.txt", levels=3),
+    content=(
+      #|Some("/home")
+    ),
+  )
+  debug_inspect(
+    get_parent_dir("/home/peter/code/a.txt", levels=4),
+    content=(
+      #|Some("")
+    ),
+  )
+  debug_inspect(
+    get_parent_dir("/home", levels=1),
+    content=(
+      #|Some("")
+    ),
+  )
+  debug_inspect(
+    get_parent_dir("/home", levels=2),
+    content=(
+      #|None
     ),
   )
 }

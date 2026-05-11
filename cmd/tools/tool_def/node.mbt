@@ -197,6 +197,7 @@ pub fn Node::get_exe_path(version : String) -> String raise {
 }
 
 ///|
+/// 获取node内置工具的路径，比如：npm、npx、corepack等
 pub async fn Node::get_node_builtin_tool_path_and_version(
   tool : Tool,
   node_tool_exe : ToolExe,
@@ -221,7 +222,7 @@ pub async fn Node::get_node_builtin_tool_path_and_version(
     name.replace(old~, new="\{tool}\{tool_ext}"),
   )
 
-  let { root: node_dir, lib: lib_dir } = Node::get_node_dir(node_exe_path)
+  let { root: node_dir, lib: lib_dir, .. } = Node::get_node_dir(node_exe_path)
   // npm和npx共用一个package.json
   let node_tool_name = if tool is Corepack {
     tool.to_string()
@@ -270,9 +271,83 @@ pub async fn Node::get_node_builtin_tool_path_and_version(
 }
 
 ///|
+/// 获取npm全局安装的第三方包的路径和版本
+pub async fn Node::get_npm_global_pkg_path_and_version(
+  npm_pkg_name : String,
+  node_tool_exe : ToolExe,
+) -> NpmPkgExe? {
+  // 在 node 的 bin 目录下查找与包名同名的软连接
+  let { bin: node_bin_dir, .. } = Node::get_node_dir(node_tool_exe.path)
+
+  @log.debug("node的bin目录 \{node_bin_dir}")
+
+  let symlink_path = @fs_ext.join_path(node_bin_dir, npm_pkg_name)
+  if !@fs.exists(symlink_path) {
+    raise fail("NPM 包 \{npm_pkg_name} 未安装，路径：\{symlink_path}")
+  }
+
+  @log.debug("NPM包 \{npm_pkg_name} 的运行文件路径 \{symlink_path}")
+
+  // 解析软连接得到实际文件路径
+  let target_path = match @fs_ext.readlink_target(symlink_path) {
+    Some(s) => {
+      @log.debug("获取到的实际文件路径 \{s}")
+      // 如果目标路径是相对路径，拼接 bin 目录
+      if s.has_prefix("/") {
+        s
+      } else {
+        @fs_ext.join_path(node_bin_dir, s)
+      }
+    }
+    None => raise fail("无法解析软连接 \{symlink_path} 的目标")
+  }
+
+  @log.debug(
+    "NPM包 \{npm_pkg_name} 的实际运行文件路径 \{target_path}",
+  )
+
+  // 实际文件位于 bin 目录，上一级是包的根目录
+  guard @fs_ext.get_parent_dir(target_path, levels=2) is Some(pkg_root_dir) else {
+    raise fail("无法获取 NPM 包 \{npm_pkg_name} 的根目录")
+  }
+
+  // 读取 package.json 获取版本号
+  let pkg_json_path = @fs_ext.join_path(pkg_root_dir, "package.json")
+  if !@fs.exists(pkg_json_path) {
+    raise fail(
+      "NPM 包 \{npm_pkg_name} 的 package.json 不存在：\{pkg_json_path}",
+    )
+  }
+
+  let json = @fs.read_file(pkg_json_path).json()
+  guard json is Object(map) else {
+    raise fail("NPM 包 \{npm_pkg_name} 的 package.json 格式不对")
+  }
+  let version = match map.get("version") {
+    Some(String(v)) => v
+    _ =>
+      raise fail(
+        "NPM 包 \{npm_pkg_name} 的 package.json 中缺少 version 字段",
+      )
+  }
+
+  let target_path = @fs_ext.canonicalize_path(target_path)
+  Some({ path: target_path, version })
+}
+
+///|
+pub struct NpmPkgExe {
+  // 包的可执行文件路径
+  path : String
+  // 包的版本
+  version : String
+} derive(Debug)
+
+///|
 pub struct NodeDir {
   root : String
   lib : String
+  bin : String
 }
 
 ///|
@@ -293,5 +368,5 @@ pub fn Node::get_node_dir(exe_path : String) -> NodeDir raise {
   } else {
     @fs_ext.join_path(node_dir, "lib")
   }
-  { root: node_dir, lib: lib_dir }
+  { root: node_dir, lib: lib_dir, bin: node_bin_dir }
 }

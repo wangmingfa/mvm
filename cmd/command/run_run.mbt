@@ -5,17 +5,25 @@ pub async fn run_run(
   version : String,
   args : Array[String],
 ) -> Unit {
+  // 参数不能为空
+  if args.is_empty() {
+    raise fail(
+      "运行的命令不能为空。示例：mvm run node@18 -- node -v",
+    )
+  }
+
   // 解析版本号（支持 lts、latest、20、20.1、20.1.0 等格式）
   let os_info = @os.get_os_info()
   let target_version = @tools.get_target_version(os_info, tool, version)
 
-  // 如果第一个参数与工具名重复（如 mvm run node@18 -- node -v），跳过它
-  let tool_name = tool.to_string()
-  let args = if args.length() > 0 && args[0] == tool_name {
-    args[1:]
-  } else {
-    args
-  }
+  let (exec_program, exec_args) = (
+    args[0],
+    if args.length() > 1 {
+      args[1:]
+    } else {
+      []
+    },
+  )
 
   @log.debug("使用 \{tool}@\{target_version} 运行命令: \{args}")
 
@@ -34,14 +42,46 @@ pub async fn run_run(
     return
   }
 
-  let args_str = args.join(" ")
-  @log.info("运行：\{exe_path} \{args_str}")
+  // 处理exec_program
+  let exec_program_path = if exec_program == tool.to_string() {
+    // 要执行的命令和指定版本的工具相等，比如：
+    // mvm run node@18 -- node -v
+    exe_path
+  } else {
+    // 要执行的命令和指定版本的工具不相等，比如：
+    // mvm run node@18 -- npm -v
+    // 目前只考虑node内置的工具（npm、npx、corepack）以及npm安装的全局包
+    let node_exe = @tool_def.ToolExe::new(tool, exe_path, version)
+    if @tool_def.Tool::from_string_with_option_result(exec_program)
+      is Some(node_builtin_tool) {
+      // node内置的工具
+      let node_builtin_exe = @tool_def.Node::get_node_builtin_tool_path_and_version(
+        node_builtin_tool, node_exe,
+      )
+      guard node_builtin_exe is Some({ path, .. }) else {
+        raise fail("找不到要执行的程序 \{exec_program}")
+      }
+      path
+    } else {
+      // npm安装的全局包
+      let npm_pkg_exe = @tool_def.Node::get_npm_global_pkg_path_and_version(
+        exec_program, node_exe,
+      )
+      guard npm_pkg_exe is Some({ path, .. }) else {
+        raise fail("找不到要执行的程序 \{exec_program}")
+      }
+      path
+    }
+  }
+
+  let args_str = exec_args.join(" ")
+  @log.info("运行：\{exec_program_path} \{args_str}")
 
   if !@log.is_debug_log_level() {
     @log.clear_all_lines()
   }
 
-  let exit_code = @mvm_cmd.run(exe_path, args)
+  let exit_code = @mvm_cmd.run(exec_program_path, exec_args)
   if exit_code != 0 {
     @log.debug("\{tool} 退出码: \{exit_code}")
   }

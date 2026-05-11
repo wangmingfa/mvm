@@ -7,6 +7,7 @@ import {
   "username/mvm/os",
   "username/mvm/download",
   "username/mvm/fs_ext",
+  "username/mvm/cmd/tools/tool_def",
   "username/mvm/cmd/tools",
   "username/mvm/utils",
   "username/mvm/log",

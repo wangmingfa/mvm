@@ -239,10 +239,43 @@ pub fn symlink_status(symlink_file_path : String) -> SymlinkStatus {
 }
 
 ///|
+#borrow(path)
+extern "C" fn c_readlink_target(path : Bytes) -> Bytes = "readlink_target"
+
+///|
+/// 读取软连接的目标路径，如果不是软连接或读取失败返回 None
+pub fn readlink_target(path : String) -> String? {
+  let c_path = @ffi.string_to_c_bytes(path)
+  let result = c_readlink_target(c_path)
+  if result.length() == 0 {
+    return None
+  }
+  Some(@utf8.decode_lossy(result))
+}
+
+///|
 test "symlink_status" {
   match symlink_status("/Users/11048490/.mvm-test/bin/npm-pkg/vite") {
     SymlinkBroken => println("软连接失效")
     SymlinkNone => println("软连接不存在")
     SymlinkOk => println("软连接有效")
   }
+}
+
+///|
+test "readlink_target" {
+  let mvm_home = if @env.get_env_var("MVM_HOME") is Some(dir) {
+    dir
+  } else if @env.get_env_var("HOME") is Some(dir) {
+    dir
+  } else {
+    raise fail("找不到MVM_HOME")
+  }
+  let path = readlink_target("\{mvm_home}/bin/f_node")
+  debug_inspect(
+    path,
+    content=(
+      #|Some("b\"/Users/11048490/.mvm-test/bin/executor.sh\"")
+    ),
+  )
 }

@@ -12,6 +12,9 @@ async fn main {
     let command = get_command(@env.args()[1:])
     run(command)
   } catch {
-    e => @log.println_error(e)
+    e => {
+      @log.println_error(e)
+      @sys.exit(1)
+    }
   }
 }
