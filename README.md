@@ -82,7 +82,15 @@ mvm uninstall node@18.17.0
 mvm uninstall zig@0.12.0
 ```
 
-6. `mvm config`——查看/设置配置
+6. `mvm which`——查看工具可执行文件路径
+```bash
+# 查看当前使用的 node 的实际路径
+mvm which node
+mvm which bun
+mvm which zig
+```
+
+7. `mvm config`——查看/设置配置
 ```bash
 # 查看当前配置
 mvm config list

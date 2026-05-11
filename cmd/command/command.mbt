@@ -11,6 +11,7 @@ pub enum Command {
   Use(Tool, String)
   List(Tool?)
   Uninstall(Tool, String?)
+  Which(Tool)
   ConfigList
   ConfigSet(String, String)
   ConfigPreset(String)
@@ -30,6 +31,7 @@ pub impl Show for Command with to_string(s) {
     List(None) => "List(All)"
     Uninstall(tool, version) =>
       "Uninstall(\{tool.to_string()}, \{@utils.option_to_string(version)})"
+    Which(tool) => "Which(\{tool.to_string()})"
     ConfigList => "ConfigList"
     ConfigSet(key, value) => "ConfigSet(\{key}, \{value})"
     ConfigPreset(name) => "ConfigPreset(\{name})"
@@ -93,6 +95,9 @@ pub fn get_command(argv : ArrayView[String]) -> Command raise {
     ["use", options] => parse_with_version("use", options)
     ["uninstall", options] | ["un", options] =>
       parse_with_version("uninstall", options)
+    ["which"] => raise fail("请指定要查看的工具。示例：mvm which node")
+    ["which", tool] => Which(Tool::from_string(tool))
+    ["which", ..] => raise fail("which 命令只接受一个工具参数。示例：mvm which node")
     ["list"] | ["ls"] => List(None)
     ["list", tool] | ["ls", tool] => List(Some(Tool::from_string(tool)))
     ["config", "list"] | ["config", "ls"] | ["config", "l"] => ConfigList
