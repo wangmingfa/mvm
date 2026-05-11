@@ -14,9 +14,7 @@ pub async fn run_which(tool : @tools.Tool) -> Unit {
       // 通过已有的公共 API 获取可执行文件路径
       let tool_exe = @tools.get_tool_exe_path(tool)
       guard tool_exe is Some({ path: exe_path, .. }) else {
-        @log.error(
-          "无法获取 \{tool}@\{version} 的可执行文件路径",
-        )
+        @log.error("无法获取 \{tool}@\{version} 的可执行文件路径")
         return
       }
       let mvm_home = @tools.mvm_home()
@@ -28,22 +26,17 @@ pub async fn run_which(tool : @tools.Tool) -> Unit {
       let installed = @fs.exists(exe_path)
       let not_installed_label = @utils.yellow("未安装")
       if installed {
-        println(
-          "\{exe_path} (\{source_label}: \{config_path})",
-        )
+        println("\{exe_path} (\{source_label}: \{config_path})")
       } else {
         println(
           "\{exe_path} (\{source_label}: \{config_path}) - \{not_installed_label}",
         )
-        println(
-          "请使用 mvm install \{tool}@\{version} 安装该版本",
-        )
+        println("请使用 mvm install \{tool}@\{version} 安装该版本")
       }
     }
-    None => {
+    None =>
       @log.error(
         "未找到 \{tool} 的版本配置，请先使用 mvm use 或 mvm pin 指定版本",
       )
-    }
   }
 }

@@ -170,14 +170,20 @@ pub async fn _get_tool_exe_path(tool : Tool) -> ToolExe? {
     config.get_value(tool) is Some(version) else {
     return None
   }
+  let path = get_exe_path_for_version(tool, version)
+  Some(ToolExe::new(tool, path, version))
+}
+
+///|
+/// 根据指定的版本获取工具可执行文件路径（不依赖配置文件，直接使用传入的版本）
+pub fn get_exe_path_for_version(tool : Tool, version : String) -> String raise {
   let path = match tool {
     Node => Node::get_exe_path(version)
     Bun => Bun::get_exe_path(version)
     Zig => Zig::get_exe_path(version)
     _ => raise fail("不支持的工具：\{tool}")
   }
-  let path = @fs_ext.canonicalize_path(path)
-  Some(ToolExe::new(tool, path, version))
+  @fs_ext.canonicalize_path(path)
 }
 
 ///|

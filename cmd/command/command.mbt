@@ -12,6 +12,7 @@ pub enum Command {
   List(Tool?)
   Uninstall(Tool, String?)
   Which(Tool)
+  Run(Tool, String, Array[String])
   CacheClean
   ConfigList
   ConfigSet(String, String)
@@ -33,6 +34,7 @@ pub impl Show for Command with to_string(s) {
     Uninstall(tool, version) =>
       "Uninstall(\{tool.to_string()}, \{@utils.option_to_string(version)})"
     Which(tool) => "Which(\{tool.to_string()})"
+    Run(tool, version, args) => "Run(\{tool.to_string()}, \{version}, \{args})"
     CacheClean => "CacheClean"
     ConfigList => "ConfigList"
     ConfigSet(key, value) => "ConfigSet(\{key}, \{value})"
@@ -97,14 +99,38 @@ pub fn get_command(argv : ArrayView[String]) -> Command raise {
     ["use", options] => parse_with_version("use", options)
     ["uninstall", options] | ["un", options] =>
       parse_with_version("uninstall", options)
-    ["which"] => raise fail("请指定要查看的工具。示例：mvm which node")
+    ["which"] =>
+      raise fail("请指定要查看的工具。示例：mvm which node")
     ["which", tool] => Which(Tool::from_string(tool))
-    ["which", ..] => raise fail("which 命令只接受一个工具参数。示例：mvm which node")
+    ["which", ..] =>
+      raise fail(
+        "which 命令只接受一个工具参数。示例：mvm which node",
+      )
+    ["run"] =>
+      raise fail(
+        "请指定要运行的工具和版本。示例：mvm run node@18 -- node -v",
+      )
+    ["run", tool_version, "--", .. run_args] =>
+      match tool_version.split("@").to_array() {
+        [tool, version] => {
+          let t = Tool::from_string(tool.to_owned())
+          Run(t, version.to_owned(), run_args.to_owned())
+        }
+        _ =>
+          raise fail(
+            "无效的版本格式。示例：mvm run node@18 -- node -v",
+          )
+      }
+    ["run", ..] =>
+      raise fail(
+        "请使用 -- 分隔版本和命令。示例：mvm run node@18 -- node -v",
+      )
     ["list"] | ["ls"] => List(None)
     ["list", tool] | ["ls", tool] => List(Some(Tool::from_string(tool)))
     ["cache", "clean"] => CacheClean
     ["cache"] => raise fail("请使用 mvm cache clean 清理缓存")
-    ["cache", ..] => raise fail("不支持的 cache 子命令。请使用 mvm cache clean")
+    ["cache", ..] =>
+      raise fail("不支持的 cache 子命令。请使用 mvm cache clean")
     ["config", "list"] | ["config", "ls"] | ["config", "l"] => ConfigList
     ["config"] => raise fail("请使用 mvm config list 查看配置")
     ["config", "set", key, value] => ConfigSet(key, value)
