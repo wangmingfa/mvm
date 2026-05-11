@@ -12,6 +12,7 @@ pub enum Command {
   List(Tool?)
   Uninstall(Tool, String?)
   Which(Tool)
+  CacheClean
   ConfigList
   ConfigSet(String, String)
   ConfigPreset(String)
@@ -32,6 +33,7 @@ pub impl Show for Command with to_string(s) {
     Uninstall(tool, version) =>
       "Uninstall(\{tool.to_string()}, \{@utils.option_to_string(version)})"
     Which(tool) => "Which(\{tool.to_string()})"
+    CacheClean => "CacheClean"
     ConfigList => "ConfigList"
     ConfigSet(key, value) => "ConfigSet(\{key}, \{value})"
     ConfigPreset(name) => "ConfigPreset(\{name})"
@@ -100,6 +102,9 @@ pub fn get_command(argv : ArrayView[String]) -> Command raise {
     ["which", ..] => raise fail("which 命令只接受一个工具参数。示例：mvm which node")
     ["list"] | ["ls"] => List(None)
     ["list", tool] | ["ls", tool] => List(Some(Tool::from_string(tool)))
+    ["cache", "clean"] => CacheClean
+    ["cache"] => raise fail("请使用 mvm cache clean 清理缓存")
+    ["cache", ..] => raise fail("不支持的 cache 子命令。请使用 mvm cache clean")
     ["config", "list"] | ["config", "ls"] | ["config", "l"] => ConfigList
     ["config"] => raise fail("请使用 mvm config list 查看配置")
     ["config", "set", key, value] => ConfigSet(key, value)

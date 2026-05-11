@@ -11,6 +11,7 @@ pub async fn run(command : Command) -> Unit {
     List(tool_opt) => run_list(tool_opt)
     Uninstall(tool, version) => run_uninstall(tool, version)
     Which(tool) => run_which(tool)
+    CacheClean => run_cache_clean()
     ConfigList => run_config()
     ConfigSet(key, value) => run_config_set(key, value)
     ConfigPreset(name) => run_config_preset(name)

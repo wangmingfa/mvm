@@ -11,6 +11,7 @@ pub using @tool_def {
   tool_dir,
   version_dir,
   get_config,
+  cache_dir,
   temp_dir,
   get_global_config,
   save_global_config,
