@@ -23,9 +23,12 @@ fn[T : Show] log(prefix : String, loc? : String = "", msg : T) -> Unit {
   // 右边补齐空格，确保日志内容左侧对齐
   let pad_right = " ".repeat(7 - prefix.length())
   let prefix = "\{prefix}\{pad_right}"
-  let text = [time, prefix, loc, msg.to_string()]
-    .filter(v => !v.is_blank())
-    .join(" ")
+  let arr = if is_debug() || is_debug_log_level() {
+    [time, prefix, loc, msg.to_string()]
+  } else {
+    [msg.to_string()]
+  }
+  let text = arr.filter(v => !v.is_blank()).join(" ")
 
   // 记录行数
   let _ = add_log_lines_by_content(text)

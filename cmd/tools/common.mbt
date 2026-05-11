@@ -165,7 +165,7 @@ pub fn get_download_url(
 
 ///|
 /// 获取工具的运行路径，返回路径、版本和运行此命令需要的环境变量
-pub async fn _get_tool_exe_path(tool : Tool) -> ToolExe? {
+async fn _get_tool_exe_path(tool : Tool) -> ToolExe? {
   guard get_config(tool~) is Some((_, config)) &&
     config.get_value(tool) is Some(version) else {
     return None
