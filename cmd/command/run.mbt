@@ -12,5 +12,6 @@ pub async fn run(command : Command) -> Unit {
     Uninstall(tool, version) => run_uninstall(tool, version)
     ConfigList => run_config()
     ConfigSet(key, value) => run_config_set(key, value)
+    ConfigPreset(name) => run_config_preset(name)
   }
 }

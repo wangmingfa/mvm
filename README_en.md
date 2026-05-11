@@ -89,7 +89,10 @@ mvm config
 mvm config list
 mvm config ls
 
-# Set configuration
+# One-click setup for users in China (GitHub proxy + Node mirror)
+mvm config set china
+
+# Set individual configuration
 mvm config set node_mirror https://npm.taobao.org/mirrors/node
 mvm config set github_proxy https://cdn.gh-proxy.org/
 ```

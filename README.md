@@ -88,7 +88,10 @@ mvm uninstall zig@0.12.0
 mvm config list
 mvm config ls
 
-# 设置配置
+# 中国大陆用户一键配置（GitHub 代理 + Node 镜像）
+mvm config set china
+
+# 单独设置配置
 mvm config set node_mirror https://mirrors.aliyun.com/nodejs-release
 mvm config set github_proxy https://cdn.gh-proxy.org/$URL
 ```

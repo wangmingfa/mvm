@@ -13,6 +13,7 @@ pub enum Command {
   Uninstall(Tool, String?)
   ConfigList
   ConfigSet(String, String)
+  ConfigPreset(String)
 }
 
 ///|
@@ -31,6 +32,7 @@ pub impl Show for Command with to_string(s) {
       "Uninstall(\{tool.to_string()}, \{@utils.option_to_string(version)})"
     ConfigList => "ConfigList"
     ConfigSet(key, value) => "ConfigSet(\{key}, \{value})"
+    ConfigPreset(name) => "ConfigPreset(\{name})"
   }
 }
 
@@ -96,6 +98,7 @@ pub fn get_command(argv : ArrayView[String]) -> Command raise {
     ["config", "list"] | ["config", "ls"] | ["config", "l"] => ConfigList
     ["config"] => raise fail("请使用 mvm config list 查看配置")
     ["config", "set", key, value] => ConfigSet(key, value)
+    ["config", "set", preset] => ConfigPreset(preset)
     ["config", "set", ..] => {
       let url = "https://cdn.gh-proxy.org/" + "$" + "URL"
       raise fail(

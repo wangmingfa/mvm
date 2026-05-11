@@ -50,3 +50,42 @@ pub async fn run_config_set(key : String, value : String) -> Unit {
     }
   }
 }
+
+///|
+fn get_preset_config(name : String) -> @tools.GlobalConfig? {
+  match name.to_lower() {
+    "china" =>
+      Some({
+        github_proxy: Some("https://cdn.gh-proxy.org/$URL"),
+        node_mirror: Some("https://mirrors.aliyun.com/nodejs-release"),
+      })
+    _ => {
+      println("错误: 不支持的预设配置: \{name}")
+      println("支持的预设配置:")
+      println(
+        "  china - 中国大陆快速配置（GitHub 代理 + Node 镜像）",
+      )
+      None
+    }
+  }
+}
+
+///|
+/// 执行预设配置命令
+pub async fn run_config_preset(name : String) -> Unit {
+  match get_preset_config(name) {
+    Some(preset) => {
+      let config_path = @tools.save_global_config(preset)
+      println("已应用快速配置:")
+      println(preset.to_string(indent=2))
+      println("配置已保存到: \{config_path}")
+    }
+    _ => {
+      println("错误: 不支持的预设配置: \{name}")
+      println("支持的预设配置:")
+      println(
+        "  china - 中国大陆快速配置（GitHub 代理 + Node 镜像）",
+      )
+    }
+  }
+}

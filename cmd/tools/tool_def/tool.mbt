@@ -183,7 +183,7 @@ const GLOBAL_SETTINGS_FILE = "config.json"
 /// {
 ///   "github_proxy": "https://cdn.gh-proxy.org/$URL"
 /// }
-pub struct GlobalConfig {
+pub(all) struct GlobalConfig {
   github_proxy : String?
   node_mirror : String?
 } derive(FromJson, ToJson)
@@ -208,14 +208,13 @@ pub fn make_global_config(
 }
 
 ///|
-impl Show for GlobalConfig with output(s, logger) {
-  logger.write_string(s.to_string())
-}
-
-///|
-impl Show for GlobalConfig with to_string(s) {
+pub fn GlobalConfig::to_string(s : Self, indent? : Int = 0) -> String {
+  let indent_str = " ".repeat(indent)
+  let github_proxy = s.github_proxy.unwrap_or("")
+  let node_mirror = s.node_mirror.unwrap_or("")
   (
-    $|{github_proxy: \{@utils.option_to_string(s.github_proxy)}}
+    $|\{indent_str}github_proxy: \{github_proxy}
+    $|\{indent_str}node_mirror: \{node_mirror}
   )
 }
 
