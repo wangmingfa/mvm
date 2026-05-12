@@ -4,9 +4,35 @@
 #include <moonbit.h>
 
 #ifdef _WIN32
-  #define _WIN32_WINNT 0x0600
   #include <windows.h>
   #include <winioctl.h>
+
+  // REPARSE_DATA_BUFFER is only defined in ntifs.h (WDK), define it here
+  typedef struct _REPARSE_DATA_BUFFER {
+    ULONG  ReparseTag;
+    USHORT ReparseDataLength;
+    USHORT Reserved;
+    union {
+      struct {
+        USHORT SubstituteNameOffset;
+        USHORT SubstituteNameLength;
+        USHORT PrintNameOffset;
+        USHORT PrintNameLength;
+        ULONG  Flags;
+        WCHAR  PathBuffer[1];
+      } SymbolicLinkReparseBuffer;
+      struct {
+        USHORT SubstituteNameOffset;
+        USHORT SubstituteNameLength;
+        USHORT PrintNameOffset;
+        USHORT PrintNameLength;
+        WCHAR  PathBuffer[1];
+      } MountPointReparseBuffer;
+      struct {
+        UCHAR  DataBuffer[1];
+      } GenericReparseBuffer;
+    };
+  } REPARSE_DATA_BUFFER, *PREPARSE_DATA_BUFFER;
 #else
   #include <sys/stat.h>
   #include <unistd.h>
@@ -103,7 +129,7 @@ moonbit_bytes_t readlink_target(const char *path) {
     ];
     DWORD substitute_len = rdb->SymbolicLinkReparseBuffer.SubstituteNameLength / sizeof(WCHAR);
 
-    // 跳过 NT 路径前缀 \??\
+    /* 跳过 NT 路径前缀 \??\ */
     if (substitute_len > 4 &&
         substitute_name[0] == L'\\' &&
         substitute_name[1] == L'?' &&
