@@ -3,6 +3,7 @@ using @tools {type Tool}
 
 ///|
 pub enum Command {
+  Help
   Version
   Upgrade
   Executor(Array[String])
@@ -22,6 +23,7 @@ pub enum Command {
 ///|
 pub impl Show for Command with to_string(s) {
   match s {
+    Help => "Help"
     Version => "Version"
     Upgrade => "Upgrade"
     Executor(args) => "Executor(\{args})"
@@ -90,6 +92,7 @@ fn parse_with_version(command_type : String, options : String) -> Command raise 
 ///|
 pub fn get_command(argv : ArrayView[String]) -> Command raise {
   match argv {
+    ["--help"] | ["-h"] | [] => Help
     ["--version"] | ["-v"] => Version
     ["upgrade"] => Upgrade
     ["executor", .. args] => Executor(args.to_owned())
@@ -151,7 +154,6 @@ pub fn get_command(argv : ArrayView[String]) -> Command raise {
     ["config", subcommand, ..] =>
       raise fail("不支持的 config 子命令：\{subcommand}")
     [cmd] => raise fail("命令 '\{cmd}' 缺少参数")
-    [] => raise fail("请提供命令参数。示例：mvm install node@22")
     _ => {
       let msg = argv.join(" ")
       raise fail("无效的命令：\{msg}")

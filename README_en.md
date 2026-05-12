@@ -35,6 +35,13 @@ curl -fsSL https://raw.githubusercontent.com/wangmingfa/mvm/main/install.sh | ba
 
 ## Commands
 
+### Global Options
+
+- `mvm --help` / `mvm -h`——Show help information
+- `mvm --version` / `mvm -v`——Show version number
+
+> 💡 Running `mvm` without arguments also shows help information.
+
 1. `mvm install`——Install a version
 ```bash
 # Install latest stable
@@ -80,6 +87,12 @@ mvm list bun
 ```bash
 mvm uninstall node@18.17.0
 mvm uninstall zig@0.12.0
+```
+
+7. `mvm upgrade`——Upgrade mvm itself
+```bash
+# Upgrade mvm to the latest version
+mvm upgrade
 ```
 
 6. `mvm config`——View or set configuration

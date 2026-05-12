@@ -2,6 +2,7 @@
 /// 执行命令
 pub async fn run(command : Command) -> Unit {
   match command {
+    Help => run_help()
     Version => run_version()
     Upgrade => run_upgrade()
     Executor(args) => run_executor(args)

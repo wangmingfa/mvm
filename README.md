@@ -35,6 +35,13 @@ curl -fsSL https://raw.githubusercontent.com/wangmingfa/mvm/main/install.sh | ba
 
 ## 命令详解
 
+### 全局选项
+
+- `mvm --help` / `mvm -h`——显示帮助信息
+- `mvm --version` / `mvm -v`——显示版本号
+
+> 💡 直接运行 `mvm`（不带参数）也会显示帮助信息。
+
 1. `mvm install`——安装版本
 ```bash
 # 安装最新稳定版
@@ -88,6 +95,12 @@ mvm uninstall zig@0.12.0
 mvm which node
 mvm which bun
 mvm which zig
+```
+
+8. `mvm upgrade`——升级 mvm 自身
+```bash
+# 升级 mvm 到最新版本
+mvm upgrade
 ```
 
 7. `mvm config`——查看/设置配置
