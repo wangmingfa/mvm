@@ -216,9 +216,10 @@ pub async fn post_install(tool : Tool, target_dir : String) -> Unit {
       Bun => [@fs_ext.join_path(target_dir, "bun")]
       _ => []
     }
-    exe_files.insert(0, "+x")
+    // exe_files.insert(0, "+x")
     let msg = exe_files.join(",")
     @log.debug("增加可执行权限: \{msg}")
-    let _ = @process.run("chmod", exe_files)
+    // let _ = @process.run("chmod", exe_files)
+    @mvm_cmd.chmod_x(exe_files)
   }
 }

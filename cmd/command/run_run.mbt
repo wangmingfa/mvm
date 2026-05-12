@@ -5,6 +5,7 @@ pub async fn run_run(
   version : String,
   args : Array[String],
 ) -> Unit {
+  @log.debug("run_run参数 \{tool} \{version} \{args}")
   // 参数不能为空
   if args.is_empty() {
     raise fail(
@@ -14,7 +15,19 @@ pub async fn run_run(
 
   // 解析版本号（支持 lts、latest、20、20.1、20.1.0 等格式）
   let os_info = @os.get_os_info()
-  let target_version = @tools.get_target_version(os_info, tool, version)
+  let target_version = if version.is_blank() {
+    @log.debug("没有传入版本，从工作目录中获取合适版本")
+    // 如果没有传版本，则从当前工作目录获取合适的版本
+    guard @tools.get_config(tool~) is Some((_, config)) else {
+      raise fail("无法在找到 \{tool} 的运行版本")
+    }
+    guard config.get_value(tool) is Some(version) else {
+      raise fail("无法在找到 \{tool} 的运行版本")
+    }
+    version
+  } else {
+    @tools.get_target_version(os_info, tool, version)
+  }
 
   let (exec_program, exec_args) = (
     args[0],

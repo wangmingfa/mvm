@@ -127,3 +127,15 @@ pub async fn run(
   let (cmd, args) = get_cmd_and_args(cmd, args)
   @process.run(cmd, args, extra_env~)
 }
+
+///|
+/// 为文件添加可执行权限（仅MacOS/Linux生效，Windows无需处理）
+pub async fn chmod_x(file_paths : Array[String]) -> Unit {
+  let os = @os.get_os_name()
+  match os {
+    MacOS | Linux => {
+      let _ = @process.run("chmod", ["+x", ..file_paths])
+    }
+    _ => ()
+  }
+}

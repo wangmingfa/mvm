@@ -112,9 +112,15 @@ pub fn get_command(argv : ArrayView[String]) -> Command raise {
       )
     ["run", tool_version, "--", .. run_args] =>
       match tool_version.split("@").to_array() {
+        // 支持：node@18
         [tool, version] => {
           let t = Tool::from_string(tool.to_owned())
           Run(t, version.to_owned(), run_args.to_owned())
+        }
+        // 也支持不传版本号（自动根据运行目录获取版本号）：node
+        [tool] => {
+          let t = Tool::from_string(tool.to_owned())
+          Run(t, "", run_args.to_owned())
         }
         _ =>
           raise fail(

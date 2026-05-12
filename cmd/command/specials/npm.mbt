@@ -35,12 +35,12 @@ pub async fn before_npm_command(
 
 ///|
 pub async fn after_npm_command(
-  before_run_result : Map[String, String]?,
+  _before_run_result : Map[String, String]?,
   npm_exe_path : String,
   args : ArrayView[String],
 ) -> Unit {
   let install_cmds = ["install", "i"]
-  let uninstall_cmds = get_uninstall_cmds()
+  // let uninstall_cmds = get_uninstall_cmds()
 
   let global_flgas = get_global_flags()
   // 判断是否为npm的全局安装，如果是，获取args中所有安装的包名
@@ -57,11 +57,11 @@ pub async fn after_npm_command(
     handle_install_npm_global_package(npm_exe_path, pkgs)
   } else if global_uninstall {
     // 全局卸载
-    let pkgs = args.filter(arg => {
-      !uninstall_cmds.any(cmd => arg == cmd) &&
-      !global_flgas.any(flag => arg == flag)
-    })
-    handle_uninstall_npm_global_package(before_run_result, npm_exe_path, pkgs)
+    // let pkgs = args.filter(arg => {
+    //   !uninstall_cmds.any(cmd => arg == cmd) &&
+    //   !global_flgas.any(flag => arg == flag)
+    // })
+    // handle_uninstall_npm_global_package(before_run_result, npm_exe_path, pkgs)
   }
 }
 
@@ -128,39 +128,67 @@ async fn handle_install_npm_global_package(
   @log.debug("全局安装NPM包: \{pkgs}")
 
   let npm_pkg_home = @tool_def.mvm_npm_pkg_home()
-  walk_global_pkgs(npm_exe_path, pkgs, async fn(cmd_name, cmd_path) {
+  let os = @os.get_os_name()
+  walk_global_pkgs(npm_exe_path, pkgs, async fn(cmd_name, _cmd_path) {
     // 在mvm_bin/npm-pkg下建立软连接
-    let symlink_file_path = @fs_ext.join_path(npm_pkg_home, cmd_name)
-    // 如果文件存在，先删除
-    if @fs.exists(symlink_file_path) {
-      @fs.remove(symlink_file_path)
+    // let symlink_file_path = @fs_ext.join_path(npm_pkg_home, cmd_name)
+    // // 如果文件存在，先删除
+    // if @fs.exists(symlink_file_path) {
+    //   @fs.remove(symlink_file_path)
+    // }
+    // @fs.symlink(target=cmd_path, symlink_file_path)
+    match os {
+      MacOS | Linux => {
+        // 创建一个shell文件（不需要.sh后缀），里面执行mvm run node -- {cmd_name} "$@"
+        let shell_file_path = @fs_ext.join_path(npm_pkg_home, cmd_name)
+        let shell_content = "#!/bin/sh\nmvm run node -- \{cmd_name} \"$@\""
+        @fs.write_file(
+          shell_file_path,
+          shell_content,
+          create_mode=CreateOrTruncate,
+        )
+        // 添加可执行权限
+        @command.chmod_x([shell_file_path])
+        @log.debug("创建shell文件 \{shell_file_path}")
+      }
+      Windows => {
+        // 创建ps1、cmd文件，里面执行mvm run node -- {cmd_name} $args / %*
+        let ps1_file_path = @fs_ext.join_path(npm_pkg_home, "\{cmd_name}.ps1")
+        let cmd_file_path = @fs_ext.join_path(npm_pkg_home, "\{cmd_name}.cmd")
+        let ps1_content = "mvm run node -- \{cmd_name} $args"
+        let cmd_content = "@mvm run node -- \{cmd_name} %*"
+        @fs.write_file(ps1_file_path, ps1_content, create_mode=CreateOrTruncate)
+        @fs.write_file(cmd_file_path, cmd_content, create_mode=CreateOrTruncate)
+        @log.debug("创建ps1文件 \{ps1_file_path}")
+        @log.debug("创建cmd文件 \{cmd_file_path}")
+      }
+      _ => ()
     }
-    @fs.symlink(target=cmd_path, symlink_file_path)
     @log.debug("已在目录 \{npm_pkg_home} 安装全局命令 \{cmd_name}")
   })
 }
 
 ///|
-async fn handle_uninstall_npm_global_package(
-  before_run_result : Map[String, String]?,
-  npm_exe_path : String,
-  pkgs : ArrayView[String],
-) -> Unit {
-  // 全局卸载
-  @log.debug("NPM执行文件路径: \{npm_exe_path}")
-  @log.debug("全局卸载NPM包: \{pkgs}")
+// async fn handle_uninstall_npm_global_package(
+//   before_run_result : Map[String, String]?,
+//   npm_exe_path : String,
+//   pkgs : ArrayView[String],
+// ) -> Unit {
+// 全局卸载
+// @log.debug("NPM执行文件路径: \{npm_exe_path}")
+// @log.debug("全局卸载NPM包: \{pkgs}")
 
-  guard before_run_result is Some(before_run_result) else {
-    @log.info("没有需要删除的npm包软连接")
-    return
-  }
+// guard before_run_result is Some(before_run_result) else {
+//   @log.info("没有需要删除的npm包软连接")
+//   return
+// }
 
-  for pkg, sym_link_path in before_run_result {
-    @log.debug("删除软连接 \{pkg} : \{sym_link_path}")
-    if @fs_ext.symlink_status(sym_link_path) is SymlinkNone {
-      @log.debug("软连接不存在，无需删除")
-    } else {
-      @fs.remove(sym_link_path)
-    }
-  }
-}
+// for pkg, sym_link_path in before_run_result {
+//   @log.debug("删除软连接 \{pkg} : \{sym_link_path}")
+//   if @fs_ext.symlink_status(sym_link_path) is SymlinkNone {
+//     @log.debug("软连接不存在，无需删除")
+//   } else {
+//     @fs.remove(sym_link_path)
+//   }
+// }
+// }
