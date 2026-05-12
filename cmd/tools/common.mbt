@@ -1,5 +1,5 @@
 ///|
-using @tool_def {type Node, type Bun, type Zig, type ToolExe}
+using @tool_def {type Node, type Bun, type Zig, type Go, type ToolExe}
 
 ///|
 pub using @tool_def {
@@ -57,6 +57,7 @@ pub async fn get_target_version(
     Node => Node::get_target_version(os, version, version_count)
     Bun => Bun::get_target_version(os, version, version_count)
     Zig => Zig::get_target_version(os, version, version_count)
+    Go => Go::get_target_version(os, version, version_count)
     _ => raise fail("暂不支持该工具：\{tool}")
   }
 }
@@ -85,6 +86,24 @@ pub fn match_version(
         let next_s = target_version[len:len + 1]
         let _ = @string.parse_int(next_s) catch { _ => return true }
         // 如果下一位是数字，则匹配不通过
+        return false
+      }
+      false
+    }
+    Go => {
+      // Go 版本号不带 "v" 前缀（如 "1.23.4"）
+      let handle_version = if version.has_prefix("v") {
+        version[1:]
+      } else {
+        version
+      }
+      if handle_version == target_version {
+        return true
+      }
+      if target_version.has_prefix(handle_version) {
+        let len = handle_version.length()
+        let next_s = target_version[len:len + 1]
+        let _ = @string.parse_int(next_s) catch { _ => return true }
         return false
       }
       false
@@ -159,6 +178,7 @@ pub fn get_download_url(
     Node => (Node::get_download_url(os_info, version), 1)
     Bun => (Bun::get_download_url(os_info, version), 1)
     Zig => (Zig::get_download_url(os_info, version), 1)
+    Go => (Go::get_download_url(os_info, version), 1)
     _ => raise fail("无法获取 \{tool} 的下载链接")
   }
 }
@@ -181,6 +201,7 @@ pub fn get_exe_path_for_version(tool : Tool, version : String) -> String raise {
     Node => Node::get_exe_path(version)
     Bun => Bun::get_exe_path(version)
     Zig => Zig::get_exe_path(version)
+    Go => Go::get_exe_path(version)
     _ => raise fail("不支持的工具：\{tool}")
   }
   @fs_ext.canonicalize_path(path)
@@ -214,6 +235,10 @@ pub async fn post_install(tool : Tool, target_dir : String) -> Unit {
         })
       Zig => [@fs_ext.join_path(target_dir, "zig")]
       Bun => [@fs_ext.join_path(target_dir, "bun")]
+      Go =>
+        ["go", "gofmt"].map(name => {
+          @fs_ext.join_path(target_dir, "bin/\{name}")
+        })
       _ => []
     }
     // exe_files.insert(0, "+x")

@@ -106,11 +106,12 @@ pub(all) enum Tool {
   Corepack
   Bun
   Zig
+  Go
 } derive(Debug)
 
 ///|
 pub fn Tool::installable_tools() -> Array[Tool] {
-  [Node, Npm, Bun, Zig]
+  [Node, Npm, Bun, Zig, Go]
 }
 
 ///|
@@ -122,6 +123,7 @@ pub impl Show for Tool with to_string(s) {
     Corepack => "corepack"
     Bun => "bun"
     Zig => "zig"
+    Go => "go"
   }
 }
 
@@ -139,6 +141,7 @@ pub fn Tool::from_string(tool : String) -> Tool raise {
     "corepack" => Corepack
     "bun" => Bun
     "zig" => Zig
+    "go" => Go
     _ => raise fail("不支持的工具：\{tool}")
   }
 }
@@ -158,6 +161,7 @@ impl Eq for Tool with equal(a, b) {
     Corepack => b is Corepack
     Bun => b is Bun
     Zig => b is Zig
+    Go => b is Go
   }
 }
 
@@ -192,13 +196,15 @@ const GLOBAL_SETTINGS_FILE = "config.json"
 pub(all) struct GlobalConfig {
   github_proxy : String?
   node_mirror : String?
+  go_mirror : String?
 } derive(FromJson, ToJson)
 
 ///|
 pub fn make_global_config(
-  existing_config? : GlobalConfig = { github_proxy: None, node_mirror: None },
+  existing_config? : GlobalConfig = { github_proxy: None, node_mirror: None, go_mirror: None },
   github_proxy? : String? = None,
   node_mirror? : String? = None,
+  go_mirror? : String? = None,
 ) -> GlobalConfig {
   let github_proxy = if github_proxy is Some(v) {
     Some(v)
@@ -210,7 +216,12 @@ pub fn make_global_config(
   } else {
     existing_config.node_mirror
   }
-  { github_proxy, node_mirror }
+  let go_mirror = if go_mirror is Some(v) {
+    Some(v)
+  } else {
+    existing_config.go_mirror
+  }
+  { github_proxy, node_mirror, go_mirror }
 }
 
 ///|
@@ -218,9 +229,11 @@ pub fn GlobalConfig::to_string(s : Self, indent? : Int = 0) -> String {
   let indent_str = " ".repeat(indent)
   let github_proxy = s.github_proxy.unwrap_or("")
   let node_mirror = s.node_mirror.unwrap_or("")
+  let go_mirror = s.go_mirror.unwrap_or("")
   (
     $|\{indent_str}github_proxy: \{github_proxy}
     $|\{indent_str}node_mirror: \{node_mirror}
+    $|\{indent_str}go_mirror: \{go_mirror}
   )
 }
 
@@ -244,7 +257,7 @@ pub async fn get_global_config() -> (String, GlobalConfig) {
     }
     (config_path, config)
   } else {
-    (config_path, { github_proxy: None, node_mirror: None })
+    (config_path, { github_proxy: None, node_mirror: None, go_mirror: None })
   }
 }
 
@@ -303,6 +316,13 @@ pub fn apply_global_config(
     Some(mirror) if mirror != "" && ctx.tool == "node" => {
       @log.debug("使用 Node 镜像: \{mirror}")
       return url.replace(old=NODE_RELEASE_URL, new=mirror)
+    }
+    _ => ()
+  }
+  match config.go_mirror {
+    Some(mirror) if mirror != "" && ctx.tool == "go" => {
+      @log.debug("使用 Go 镜像: \{mirror}")
+      return url.replace(old=GO_RELEASE_URL, new=mirror)
     }
     _ => ()
   }
@@ -375,6 +395,7 @@ async fn get_config_inner(
           node: Some(volta_version),
           bun: None,
           zig: None,
+          go: None,
         }
         let volta_path = @fs_ext.join_path(dir, VOLTA_CONFIG_FILE)
         @log.debug(
@@ -417,6 +438,7 @@ pub struct Config {
   node : String?
   bun : String?
   zig : String?
+  go : String?
 } derive(FromJson, ToJson)
 
 ///|
@@ -427,7 +449,7 @@ impl Show for Config with output(s, logger) {
 ///|
 impl Show for Config with to_string(s) {
   (
-    $|{node: \{@utils.option_to_string(s.node)}, bun: \{@utils.option_to_string(s.bun)}, zig: \{@utils.option_to_string(s.zig)}}
+    $|{node: \{@utils.option_to_string(s.node)}, bun: \{@utils.option_to_string(s.bun)}, zig: \{@utils.option_to_string(s.zig)}, go: \{@utils.option_to_string(s.go)}}
   )
 }
 
@@ -437,6 +459,7 @@ pub fn Config::get_value(self : Self, tool : Tool) -> String? raise {
     Node => self.node
     Bun => self.bun
     Zig => self.zig
+    Go => self.go
     _ => raise fail("不支持获取 \{tool} 的值")
   }
 }
@@ -477,7 +500,7 @@ test "Config from_json" {
   inspect(
     config,
     content=(
-      #|{node: Some("v20.1.1"), npm: None, bun: None, zig: None}
+      #|{node: Some("v20.1.1"), bun: None, zig: None, go: None}
     ),
   )
 }

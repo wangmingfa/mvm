@@ -17,6 +17,12 @@ pub async fn run_config() -> Unit {
     Some(mirror) => println("  node_mirror: \{mirror}")
     None => println("  node_mirror: (未设置)")
   }
+  println("")
+  println("Go 镜像配置:")
+  match config.go_mirror {
+    Some(mirror) => println("  go_mirror: \{mirror}")
+    None => println("  go_mirror: (未设置)")
+  }
 }
 
 ///|
@@ -42,11 +48,21 @@ pub async fn run_config_set(key : String, value : String) -> Unit {
       println("配置已保存到: \{config_path}")
       println("设置 \{key} = \{value}")
     }
+    "go_mirror" => {
+      let new_config = @tools.make_global_config(
+        existing_config~,
+        go_mirror=Some(value),
+      )
+      let config_path = @tools.save_global_config(new_config)
+      println("配置已保存到: \{config_path}")
+      println("设置 \{key} = \{value}")
+    }
     _ => {
       println("错误: 不支持的配置项: \{key}")
       println("支持的配置项:")
       println("  github_proxy - GitHub 代理地址")
       println("  node_mirror - Node 镜像地址")
+      println("  go_mirror - Go 镜像地址")
     }
   }
 }
@@ -58,12 +74,13 @@ fn get_preset_config(name : String) -> @tools.GlobalConfig? {
       Some({
         github_proxy: Some("https://cdn.gh-proxy.org/$URL"),
         node_mirror: Some("https://mirrors.aliyun.com/nodejs-release"),
+        go_mirror: None,
       })
     _ => {
       println("错误: 不支持的预设配置: \{name}")
       println("支持的预设配置:")
       println(
-        "  china - 中国大陆快速配置（GitHub 代理 + Node 镜像）",
+        "  china - 中国大陆快速配置（GitHub 代理 + Node 镜像 + Go 镜像）",
       )
       None
     }
@@ -84,7 +101,7 @@ pub async fn run_config_preset(name : String) -> Unit {
       println("错误: 不支持的预设配置: \{name}")
       println("支持的预设配置:")
       println(
-        "  china - 中国大陆快速配置（GitHub 代理 + Node 镜像）",
+        "  china - 中国大陆快速配置（GitHub 代理 + Node 镜像 + Go 镜像）",
       )
     }
   }
