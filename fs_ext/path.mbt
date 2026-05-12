@@ -13,7 +13,10 @@ fn Path::to_string(self : Self) -> String {
 }
 
 ///|
-pub fn[T : Show] join_path(current : T, path_to_join : T) -> String {
+pub fn[T1 : Show, T2 : Show] join_path(
+  current : T1,
+  path_to_join : T2,
+) -> String {
   let mut path = "\{current}/\{path_to_join}"
   while true {
     let mut continue_loop = false
@@ -42,6 +45,34 @@ test "join_path" {
     join_path("/home/wmf/code/data.txt", "../../"),
     content=(
       #|/home/wmf
+    ),
+  )
+}
+
+///|
+pub fn[T : Show] join_paths(paths : ArrayView[T]) -> String {
+  if paths.is_empty() {
+    return ""
+  }
+  if paths.length() == 1 {
+    return canonicalize_path(paths[0].to_string())
+  }
+  let rest = paths[1:].map(v => v.to_string()).join("/")
+  join_path(paths[0], rest)
+}
+
+///|
+test "join_paths" {
+  inspect(
+    join_paths(["/home/wmf/code/data.txt", "../", "hello"]),
+    content=(
+      #|/home/wmf/code/hello
+    ),
+  )
+  inspect(
+    join_paths(["/home/wmf/code/data.txt", "../", "", "world", "", ""]),
+    content=(
+      #|/home/wmf/code/world
     ),
   )
 }

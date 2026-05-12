@@ -277,39 +277,48 @@ pub async fn Node::get_npm_global_pkg_path_and_version(
   node_tool_exe : ToolExe,
 ) -> NpmPkgExe? {
   // 在 node 的 bin 目录下查找与包名同名的软连接
-  let { bin: node_bin_dir, .. } = Node::get_node_dir(node_tool_exe.path)
+  let node_dir = Node::get_node_dir(node_tool_exe.path)
 
-  @log.debug("node的bin目录 \{node_bin_dir}")
+  @log.debug("node目录 \{node_dir.to_string()}")
 
-  let symlink_path = @fs_ext.join_path(node_bin_dir, npm_pkg_name)
-  if !@fs.exists(symlink_path) {
-    raise fail("NPM 包 \{npm_pkg_name} 未安装，路径：\{symlink_path}")
-  }
+  let bin_file_path = node_dir.get_bin_file_path(npm_pkg_name)
 
-  @log.debug("NPM包 \{npm_pkg_name} 的运行文件路径 \{symlink_path}")
-
-  // 解析软连接得到实际文件路径
-  let target_path = match @fs_ext.readlink_target(symlink_path) {
-    Some(s) => {
-      @log.debug("获取到的实际文件路径 \{s}")
-      // 如果目标路径是相对路径，拼接 bin 目录
-      if s.has_prefix("/") {
-        s
-      } else {
-        @fs_ext.join_path(node_bin_dir, s)
+  let target_path = match @os.get_os_name() {
+    MacOS | Linux => {
+      // MacOS和linux使用的是软连接
+      let symlink_path = bin_file_path
+      if !@fs.exists(symlink_path) {
+        raise fail("NPM 包 \{npm_pkg_name} 未安装")
       }
+
+      @log.debug("NPM包 \{npm_pkg_name} 的运行文件路径 \{symlink_path}")
+
+      // 解析软连接得到实际文件路径
+      let target_path = match @fs_ext.readlink_target(symlink_path) {
+        Some(s) => {
+          @log.debug("获取到的实际文件路径 \{s}")
+          // 如果目标路径是相对路径，拼接 bin 目录
+          if s.has_prefix("/") {
+            s
+          } else {
+            node_dir.join_with_bin([s])
+          }
+        }
+        None => raise fail("无法解析软连接 \{symlink_path} 的目标")
+      }
+      target_path
     }
-    None => raise fail("无法解析软连接 \{symlink_path} 的目标")
+    Windows =>
+      // windows下是直接运行的node的bin目录下的xxx.ps1
+      bin_file_path
+    _ => raise fail("不支持的操作系统")
   }
 
   @log.debug(
     "NPM包 \{npm_pkg_name} 的实际运行文件路径 \{target_path}",
   )
 
-  // 实际文件位于 bin 目录，上一级是包的根目录
-  guard @fs_ext.get_parent_dir(target_path, levels=2) is Some(pkg_root_dir) else {
-    raise fail("无法获取 NPM 包 \{npm_pkg_name} 的根目录")
-  }
+  let pkg_root_dir = node_dir.get_pkg_root_dir(npm_pkg_name)
 
   // 读取 package.json 获取版本号
   let pkg_json_path = @fs_ext.join_path(pkg_root_dir, "package.json")
@@ -344,10 +353,18 @@ pub struct NpmPkgExe {
 } derive(Debug)
 
 ///|
+/// 在MacOS、Linux下：root下面有lib和bin目录
+/// 在windows下，这三个个相等
 pub struct NodeDir {
   root : String
   lib : String
   bin : String
+}
+
+///|
+fn NodeDir::to_string(self : Self) -> String {
+  let { root, lib, bin } = self
+  "root: \{root}, lib: \{lib}, bin: \{bin}"
 }
 
 ///|
@@ -369,4 +386,23 @@ pub fn Node::get_node_dir(exe_path : String) -> NodeDir raise {
     @fs_ext.join_path(node_dir, "lib")
   }
   { root: node_dir, lib: lib_dir, bin: node_bin_dir }
+}
+
+///|
+/// 获取某个包的根目录，可以为npm、corepack以及npm安装的全局包
+pub fn NodeDir::get_pkg_root_dir(self : Self, pkg_name : String) -> String {
+  @fs_ext.join_paths([self.lib, "node_modules", pkg_name])
+}
+
+///|
+/// 获取文件的二进制目录，返回bin目录下的文件路径
+pub fn NodeDir::get_bin_file_path(self : Self, file_name : String) -> String {
+  let os = @os.get_os_name()
+  let ext = if os is Windows { ".ps1" } else { "" }
+  @fs_ext.join_paths([self.bin, file_name, ext])
+}
+
+///|
+pub fn NodeDir::join_with_bin(self : Self, paths : ArrayView[String]) -> String {
+  @fs_ext.join_paths([self.bin, ..paths])
 }

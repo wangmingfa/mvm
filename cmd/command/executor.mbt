@@ -25,13 +25,7 @@ async fn run_executor(args : Array[String]) -> Unit {
 
   let exe_args = args[arg_start_index + 1:]
 
-  let tool = @tools.Tool::from_string(tool_name.to_owned()) catch {
-    // 处理手动安装的第三方包，比如npm install -g安装的包
-    _ => {
-      @specials.run_3rd_party_executor(tool_name, exe_args)
-      return
-    }
-  }
+  let tool = @tools.Tool::from_string(tool_name.to_owned())
 
   @log.debug("工具名称 \{tool_name}")
   let args_str = exe_args.join(" ")

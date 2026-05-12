@@ -129,17 +129,16 @@ if [ "$ONLINE" = true ]; then
   rm -rf "${TMP_DIR}"
 else
   # 本地构建模式
-  BUILD_TMP=$(mktemp)
-  moon build --release 2>&1 | tee "$BUILD_TMP"
-  BUILD_CODE=${PIPESTATUS[0]}
-  BUILD_LINES=$(wc -l < "$BUILD_TMP")
-  rm -f "$BUILD_TMP"
-  if [ "$BUILD_CODE" -ne 0 ]; then
-    echo "构建失败，请检查错误信息" >&2
-    exit "$BUILD_CODE"
+  # 记录脚本开始位置
+  tput sc
+  if moon build --release; then
+    # 回到开始位置
+    tput rc
+    # 清除脚本产生的内容
+    tput ed
+  else
+    exit 1
   fi
-  # 上移 BUILD_LINES 行并清除到屏幕末尾
-  printf "\033[%dA\033[J" "$BUILD_LINES"
 
   # 复制可执行文件
   BUILD_DIR="_build/native/release/build/cmd"
