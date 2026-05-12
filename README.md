@@ -6,7 +6,7 @@ mvm（Multi Version Manager）——One Tool to Manage Them All
 
 再也不用为不同语言安装不同的版本管理器而头疼了。
 
-mvm 是一款现代化的多语言版本管理工具，支持 Node.js、Bun、Zig 以及更多语言。只需一条命令，你就可以在项目之间自由切换任意语言的版本，干净、高效、毫不妥协。
+mvm 是一款现代化的多语言版本管理工具，支持 Node.js、Bun、Zig、Go 以及更多语言。只需一条命令，你就可以在项目之间自由切换任意语言的版本，干净、高效、毫不妥协。
 
 简单、统一、极快 —— 这就是 mvm。
 
@@ -48,6 +48,7 @@ curl -fsSL https://raw.githubusercontent.com/wangmingfa/mvm/main/install.sh | ba
 mvm install node
 mvm install bun
 mvm install zig
+mvm install go
 
 # 安装指定版本
 mvm install node@20
@@ -56,6 +57,7 @@ mvm install node@latest
 mvm install node@20.18.0
 mvm install bun@1.1.0
 mvm install zig@0.13.0
+mvm install go@1.23
 ```
 
 2. `mvm use`——设置全局版本
@@ -71,6 +73,7 @@ cd my-project
 mvm pin node@20.18.0
 mvm pin bun@1.2.3
 mvm pin zig@0.15.2
+mvm pin go@1.23.4
 ```
 
 4. `mvm list`——查看版本
@@ -81,12 +84,14 @@ mvm list
 # 查看特定语言
 mvm list node
 mvm list bun
+mvm list go
 ```
 
 5. `mvm uninstall`——卸载版本
 ```bash
 mvm uninstall node@18.17.0
 mvm uninstall zig@0.12.0
+mvm uninstall go@1.21.0
 ```
 
 6. `mvm which`——查看工具可执行文件路径
@@ -95,6 +100,7 @@ mvm uninstall zig@0.12.0
 mvm which node
 mvm which bun
 mvm which zig
+mvm which go
 ```
 
 8. `mvm upgrade`——升级 mvm 自身
@@ -109,11 +115,12 @@ mvm upgrade
 mvm config list
 mvm config ls
 
-# 中国大陆用户一键配置（GitHub 代理 + Node 镜像）
+# 中国大陆用户一键配置（GitHub 代理 + Node 镜像 + Go 镜像）
 mvm config set china
 
 # 单独设置配置
 mvm config set node_mirror https://mirrors.aliyun.com/nodejs-release
+mvm config set go_mirror https://mirrors.aliyun.com/golang
 mvm config set github_proxy https://cdn.gh-proxy.org/$URL
 ```
 

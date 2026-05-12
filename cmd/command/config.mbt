@@ -68,13 +68,14 @@ pub async fn run_config_set(key : String, value : String) -> Unit {
 }
 
 ///|
+/// 预设配置
 fn get_preset_config(name : String) -> @tools.GlobalConfig? {
   match name.to_lower() {
     "china" =>
       Some({
         github_proxy: Some("https://cdn.gh-proxy.org/$URL"),
         node_mirror: Some("https://mirrors.aliyun.com/nodejs-release"),
-        go_mirror: None,
+        go_mirror: Some("https://mirrors.aliyun.com/golang"),
       })
     _ => {
       println("错误: 不支持的预设配置: \{name}")

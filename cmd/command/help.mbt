@@ -1,7 +1,9 @@
 ///|
 /// 显示帮助信息
 pub fn run_help() -> Unit {
-  println("mvm (Multi Version Manager) \{VERSION} —— One Tool to Manage Them All")
+  println(
+    "mvm (Multi Version Manager) \{VERSION} —— One Tool to Manage Them All",
+  )
   println("")
   println("用法:")
   println("  mvm <命令> [参数]")
@@ -13,7 +15,9 @@ pub fn run_help() -> Unit {
   println("  uninstall, un 卸载指定版本        mvm uninstall node@18")
   println("  list, ls      查看已安装版本      mvm list node")
   println("  which         查看工具路径        mvm which node")
-  println("  run           临时运行指定版本    mvm run node@18 -- node -v")
+  println(
+    "  run           临时运行指定版本    mvm run node@18 -- node -v",
+  )
   println("  upgrade       升级 mvm 自身       mvm upgrade")
   println("  cache clean   清理缓存            mvm cache clean")
   println("  config        查看/设置配置       mvm config list")

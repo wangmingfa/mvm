@@ -22,7 +22,7 @@ done
 PREFIX="f_"
 
 # 支持的工具列表
-TOOLS=("node" "npm" "npx" "corepack" "zig" "bun")
+TOOLS=("node" "npm" "npx" "corepack" "zig" "bun" "go")
 # === CONFIG_END ===
 
 # 确定 PREFIX（--online 或 --no-prefix 时清空前缀）

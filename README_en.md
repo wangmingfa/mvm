@@ -6,7 +6,7 @@
 
 No more headaches from installing different version managers for different languages.
 
-mvm is a modern multi-language version management tool that supports Node.js, Bun, Zig, and more. With just one command, you can freely switch between any language versions across projects — clean, efficient, and uncompromising.
+mvm is a modern multi-language version management tool that supports Node.js, Bun, Zig, Go, and more. With just one command, you can freely switch between any language versions across projects — clean, efficient, and uncompromising.
 
 Simple, unified, and blazing fast —— that's mvm.
 
@@ -48,6 +48,7 @@ curl -fsSL https://raw.githubusercontent.com/wangmingfa/mvm/main/install.sh | ba
 mvm install node
 mvm install bun
 mvm install zig
+mvm install go
 
 # Install specific version
 mvm install node@20
@@ -56,6 +57,7 @@ mvm install node@latest
 mvm install node@20.18.0
 mvm install bun@1.1.0
 mvm install zig@0.13.0
+mvm install go@1.23
 ```
 
 2. `mvm use`——Set global version
@@ -71,6 +73,7 @@ cd my-project
 mvm pin node@20.18.0
 mvm pin bun@1.2.3
 mvm pin zig@0.15.2
+mvm pin go@1.23.4
 ```
 
 4. `mvm list`——List versions
@@ -81,12 +84,14 @@ mvm list
 # List specific language
 mvm list node
 mvm list bun
+mvm list go
 ```
 
 5. `mvm uninstall`——Uninstall a version
 ```bash
 mvm uninstall node@18.17.0
 mvm uninstall zig@0.12.0
+mvm uninstall go@1.21.0
 ```
 
 7. `mvm upgrade`——Upgrade mvm itself
@@ -102,11 +107,12 @@ mvm config
 mvm config list
 mvm config ls
 
-# One-click setup for users in China (GitHub proxy + Node mirror)
+# One-click setup for users in China (GitHub proxy + Node mirror + Go mirror)
 mvm config set china
 
 # Set individual configuration
 mvm config set node_mirror https://npm.taobao.org/mirrors/node
+mvm config set go_mirror https://mirrors.aliyun.com/golang
 mvm config set github_proxy https://cdn.gh-proxy.org/
 ```
 
