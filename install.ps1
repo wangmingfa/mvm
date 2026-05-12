@@ -35,8 +35,10 @@ New-Item -ItemType Directory -Force -Path $BIN_DIR | Out-Null
 foreach ($tool in $TOOLS) {
     $toolPath = Join-Path $BIN_DIR $tool
     $prefixedToolPath = Join-Path $BIN_DIR ($PREFIX + $tool)
-    if (Test-Path $toolPath) { Remove-Item $toolPath -Force }
-    if (Test-Path $prefixedToolPath) { Remove-Item $prefixedToolPath -Force }
+    foreach ($ext in @("", ".ps1", ".cmd")) {
+        if (Test-Path ($toolPath + $ext)) { Remove-Item ($toolPath + $ext) -Force }
+        if (Test-Path ($prefixedToolPath + $ext)) { Remove-Item ($prefixedToolPath + $ext) -Force }
+    }
 }
 
 $DISPLAY_TOOLS = @()
@@ -47,12 +49,22 @@ foreach ($tool in $TOOLS) {
 $executorPath = Join-Path $BIN_DIR "executor.ps1"
 
 foreach ($tool in $DISPLAY_TOOLS) {
-    $toolScriptPath = Join-Path $BIN_DIR ($tool + ".ps1")
-    $content = @"
+    # .ps1 shim — PowerShell 直接调用
+    $ps1Path = Join-Path $BIN_DIR ($tool + ".ps1")
+    $ps1Content = @"
 #!/usr/bin/env pwsh
 & "$executorPath" $tool `$args
 "@
-    Set-Content -Path $toolScriptPath -Value $content -Encoding UTF8
+    Set-Content -Path $ps1Path -Value $ps1Content -Encoding UTF8
+
+    # .cmd shim — cmd.exe 调用（npm postinstall 等场景）
+    # 直接调用 mvm.exe executor，避免 pwsh 中间层
+    # 注意：必须使用绝对路径，不能用 %~dp0，因为 cross-spawn/execa 等库
+    # 会直接读取 .cmd 内容执行，不通过 cmd.exe 批处理机制，%~dp0 会回退到 cwd
+    $mvmExeAbsPath = Join-Path $BIN_DIR "mvm.exe"
+    $cmdPath = Join-Path $BIN_DIR ($tool + ".cmd")
+    $cmdContent = "@echo off`r`n`"$mvmExeAbsPath`" executor $tool %*"
+    Set-Content -Path $cmdPath -Value $cmdContent -Encoding ASCII
 }
 
 if ($ONLINE) {
@@ -186,6 +198,7 @@ Write-Host "  - mvm.exe         (主命令)"
 Write-Host "  - executor.ps1    (工具执行脚本)"
 Write-Host "  - npm-pkg 目录    (npm 全局包安装路径：$NPM_DIR)"
 Write-Host "  工具脚本：$($DISPLAY_TOOLS -join ', ')"
+Write-Host "  (.ps1 for PowerShell, .cmd for cmd.exe/npm postinstall)"
 Write-Host ""
 Write-Host "如果 mvm 命令无效，请重启终端或执行：" -ForegroundColor Yellow
 Write-Host '   $env:PATH = [Environment]::GetEnvironmentVariable("PATH","User") + ";" + $env:PATH' -ForegroundColor Cyan
