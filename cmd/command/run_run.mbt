@@ -13,22 +13,6 @@ pub async fn run_run(
     )
   }
 
-  // 解析版本号（支持 lts、latest、20、20.1、20.1.0 等格式）
-  let os_info = @os.get_os_info()
-  let target_version = if version.is_blank() {
-    @log.debug("没有传入版本，从工作目录中获取合适版本")
-    // 如果没有传版本，则从当前工作目录获取合适的版本
-    guard @tools.get_config(tool~) is Some((_, config)) else {
-      raise fail("无法在找到 \{tool} 的运行版本")
-    }
-    guard config.get_value(tool) is Some(version) else {
-      raise fail("无法在找到 \{tool} 的运行版本")
-    }
-    version
-  } else {
-    @tools.get_target_version(os_info, tool, version)
-  }
-
   let (exec_program, exec_args) = (
     args[0],
     if args.length() > 1 {
@@ -37,6 +21,28 @@ pub async fn run_run(
       []
     },
   )
+
+  // 解析版本号（支持 lts、latest、20、20.1、20.1.0 等格式）
+  let os_info = @os.get_os_info()
+  let target_version = if version.is_blank() {
+    @log.debug("没有传入版本，从工作目录中获取合适版本")
+    // 如果没有传版本，则从当前工作目录获取合适的版本
+    guard @tools.get_config(tool~) is Some((_, config)) &&
+      config.get_value(tool) is Some(version) else {
+      if tool is Node {
+        if ["npm", "corepack", "npx"].any(v => v == exec_program) {
+          raise fail("请先安装 \{tool}")
+        }
+        raise fail(
+          "此NPM包未安装，请确认当前工作目录是否有可用的Node.js",
+        )
+      }
+      raise fail("未安装 \{exec_program}")
+    }
+    version
+  } else {
+    @tools.get_target_version(os_info, tool, version)
+  }
 
   @log.debug("使用 \{tool}@\{target_version} 运行命令: \{args}")
 

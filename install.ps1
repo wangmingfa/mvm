@@ -124,18 +124,29 @@ if ($ONLINE) {
     Start-Process -FilePath "cmd.exe" -ArgumentList "/c `"$UPDATE_BAT`"" -WindowStyle Hidden
     # 脚本退出 → mvm.exe 退出 → 文件锁释放 → update.bat 完成替换
 } else {
-    $BUILD_TMP = [System.IO.Path]::GetTempFileName()
-    & moon build --release 2>&1 | Tee-Object -FilePath $BUILD_TMP
-    if ($LASTEXITCODE -ne 0) {
-        Remove-Item $BUILD_TMP -Force -ErrorAction SilentlyContinue
-        Write-Error "构建失败，请检查错误信息"
-        exit $LASTEXITCODE
+    # $BUILD_TMP = [System.IO.Path]::GetTempFileName()
+    # & moon build --release 2>&1 | Tee-Object -FilePath $BUILD_TMP
+    # if ($LASTEXITCODE -ne 0) {
+    #     Remove-Item $BUILD_TMP -Force -ErrorAction SilentlyContinue
+    #     Write-Error "构建失败，请检查错误信息"
+    #     exit $LASTEXITCODE
+    # }
+    # $buildLines = (Get-Content $BUILD_TMP | Measure-Object -Line).Lines
+    # Remove-Item $BUILD_TMP -Force -ErrorAction SilentlyContinue
+    # # 上移 buildLines 行并清除到屏幕末尾
+    # if ($buildLines -gt 0) {
+    #     [Console]::Write("`e[${buildLines}A`e[J")
+    # }
+
+    moon build --release
+    $exit = $LASTEXITCODE
+
+    if ($exit -eq 0) {
+        # 清空前面的日志
+        Clear-Host
     }
-    $buildLines = (Get-Content $BUILD_TMP | Measure-Object -Line).Lines
-    Remove-Item $BUILD_TMP -Force -ErrorAction SilentlyContinue
-    # 上移 buildLines 行并清除到屏幕末尾
-    if ($buildLines -gt 0) {
-        [Console]::Write("`e[${buildLines}A`e[J")
+    else {
+        exit $exit
     }
 
     $BUILD_DIR = "_build/native/release/build/cmd/main"

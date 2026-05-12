@@ -399,7 +399,7 @@ pub fn NodeDir::get_pkg_root_dir(self : Self, pkg_name : String) -> String {
 pub fn NodeDir::get_bin_file_path(self : Self, file_name : String) -> String {
   let os = @os.get_os_name()
   let ext = if os is Windows { ".ps1" } else { "" }
-  @fs_ext.join_paths([self.bin, file_name, ext])
+  @fs_ext.join_paths([self.bin, file_name + ext])
 }
 
 ///|
