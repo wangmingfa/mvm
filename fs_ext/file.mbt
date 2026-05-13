@@ -279,3 +279,10 @@ test "readlink_target" {
     ),
   )
 }
+
+///|
+pub async fn remove_if_exists(file_path : String) -> Unit {
+  if @fs.exists(file_path) {
+    @fs.remove(file_path)
+  }
+}

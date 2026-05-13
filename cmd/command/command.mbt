@@ -1,7 +1,4 @@
 ///|
-using @tools {type Tool}
-
-///|
 pub enum Command {
   Help
   Version

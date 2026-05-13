@@ -25,7 +25,7 @@ async fn run_executor(args : Array[String]) -> Unit {
   let tool = @tools.Tool::from_string(tool_name.to_owned())
 
   @log.debug("工具名称 \{tool_name}")
-  let args_str = exe_args.join(" ")
+  let args_str = @mvm_cmd.join_args(exe_args)
 
   let (tool_exe_path, envs) = while true {
     let tool_exe = @tools.get_tool_exe_path(tool)
@@ -66,9 +66,6 @@ async fn run_executor(args : Array[String]) -> Unit {
   }
 
   let before_run_result = before_run(tool, tool_exe_path, exe_args)
-
-  let cmd = "\{tool_exe_path} \{args_str}"
-  @log.debug("运行：\{cmd}")
 
   if !@log.is_debug_log_level() {
     // 非debug日志级别，清除之前的内容

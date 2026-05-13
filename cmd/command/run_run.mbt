@@ -93,9 +93,6 @@ pub async fn run_run(
     }
   }
 
-  let args_str = exec_args.join(" ")
-  @log.info("运行：\{exec_program_path} \{args_str}")
-
   if !@log.is_debug_log_level() {
     @log.clear_all_lines()
   }

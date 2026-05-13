@@ -6,10 +6,10 @@ async fn main {
   guard @env.current_dir() is Some(_dir) else {
     raise fail("无法获取当前目录")
   }
-  let args = @env.args()[1:]
-  @log.debug("参数: \{args}")
+  let args = @env.args()
+  @log.debug("运行: \{@utils.yellow(args)}")
   try {
-    let command = get_command(@env.args()[1:])
+    let command = get_command(args[1:])
     run(command)
   } catch {
     e => {

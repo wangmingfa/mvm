@@ -6,7 +6,7 @@ pub async fn run_setup(use_prefix : Bool) -> Unit {
   let os = @os.get_os_name()
   let bin_dir = @tool_def.mvm_bin_home()
   let npm_dir = @tool_def.mvm_npm_pkg_home()
-  let tools = @tool_def.Tool::all_tools()
+  let tools = Tool::all_tools()
 
   // 确保 bin 目录和 npm-pkg 目录存在
   @fs_ext.ensure_dir(bin_dir)
@@ -23,11 +23,11 @@ pub async fn run_setup(use_prefix : Bool) -> Unit {
 async fn setup_unix(
   bin_dir : String,
   npm_dir : String,
-  tools : Array[@tool_def.Tool],
+  tools : Array[Tool],
   prefix_str : String,
 ) -> Unit {
   // 清理旧的软连接
-  cleanup_old_symlinks(bin_dir, tools, prefix_str)
+  cleanup_old_symlinks(bin_dir, tools)
 
   // 创建新的软连接
   create_symlinks(bin_dir, tools, prefix_str)
@@ -40,28 +40,33 @@ async fn setup_unix(
 }
 
 ///|
-async fn cleanup_old_symlinks(
+async fn remove_tools(
   bin_dir : String,
-  tools : Array[@tool_def.Tool],
-  prefix_str : String,
+  tools : Array[Tool],
+  exts? : Array[String] = [""],
 ) -> Unit {
   for tool in tools {
     let tool_name = tool.to_string()
-    // 删除不带前缀的软连接
-    let unprefixed = @fs_ext.join_path(bin_dir, tool_name)
-    let _ = @fs.remove(unprefixed) catch { _ => () }
-    // 删除带当前前缀的软连接
-    if prefix_str != "" {
-      let prefixed = @fs_ext.join_path(bin_dir, prefix_str + tool_name)
-      let _ = @fs.remove(prefixed) catch { _ => () }
+    for prefix in ["", TOOL_PREFIX] {
+      for ext in exts {
+        let prefixed = @fs_ext.join_path(bin_dir, prefix + tool_name + ext)
+        let _ = @fs_ext.remove_if_exists(prefixed) catch {
+          e => @log.warn("无法删除 \{prefixed} \{e}")
+        }
+      }
     }
   }
 }
 
 ///|
+async fn cleanup_old_symlinks(bin_dir : String, tools : Array[Tool]) -> Unit {
+  remove_tools(bin_dir, tools)
+}
+
+///|
 async fn create_symlinks(
   bin_dir : String,
-  tools : Array[@tool_def.Tool],
+  tools : Array[Tool],
   prefix_str : String,
 ) -> Unit {
   let executor_path = @fs_ext.join_path(bin_dir, "executor.sh")
@@ -130,7 +135,7 @@ async fn configure_path_unix(bin_dir : String, npm_dir : String) -> Unit {
 fn print_success_unix(
   bin_dir : String,
   npm_dir : String,
-  tools : Array[@tool_def.Tool],
+  tools : Array[Tool],
   prefix_str : String,
 ) -> Unit {
   let display_names = tools.map(tool => prefix_str + tool.to_string())
@@ -151,11 +156,11 @@ fn print_success_unix(
 async fn setup_windows(
   bin_dir : String,
   npm_dir : String,
-  tools : Array[@tool_def.Tool],
+  tools : Array[Tool],
   prefix_str : String,
 ) -> Unit {
   // 清理旧的 shim 文件
-  cleanup_old_shims(bin_dir, tools, prefix_str)
+  cleanup_old_shims(bin_dir, tools)
 
   // 创建新的 shim 文件
   create_shims(bin_dir, tools, prefix_str)
@@ -168,28 +173,14 @@ async fn setup_windows(
 }
 
 ///|
-async fn cleanup_old_shims(
-  bin_dir : String,
-  tools : Array[@tool_def.Tool],
-  prefix_str : String,
-) -> Unit {
-  for tool in tools {
-    let tool_name = tool.to_string()
-    for ext in ["", ".ps1", ".cmd"] {
-      let unprefixed = @fs_ext.join_path(bin_dir, tool_name + ext)
-      let _ = @fs.remove(unprefixed) catch { _ => () }
-      if prefix_str != "" {
-        let prefixed = @fs_ext.join_path(bin_dir, prefix_str + tool_name + ext)
-        let _ = @fs.remove(prefixed) catch { _ => () }
-      }
-    }
-  }
+async fn cleanup_old_shims(bin_dir : String, tools : Array[Tool]) -> Unit {
+  remove_tools(bin_dir, tools, exts=["", ".ps1", ".cmd"])
 }
 
 ///|
 async fn create_shims(
   bin_dir : String,
-  tools : Array[@tool_def.Tool],
+  tools : Array[Tool],
   prefix_str : String,
 ) -> Unit {
   let executor_path = @fs_ext.join_path(bin_dir, "executor.ps1")
@@ -243,7 +234,7 @@ async fn configure_path_windows(bin_dir : String, npm_dir : String) -> Unit {
 fn print_success_windows(
   bin_dir : String,
   npm_dir : String,
-  tools : Array[@tool_def.Tool],
+  tools : Array[Tool],
   prefix_str : String,
 ) -> Unit {
   let display_names = tools.map(tool => prefix_str + tool.to_string())

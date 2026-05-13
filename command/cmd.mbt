@@ -105,7 +105,7 @@ pub fn get_cmd_and_args(
   // 在windows下，需要使用powershell -Command
   let os = @os.get_os_name()
   match os {
-    Windows => ("powershell", ["-Command", cmd + " " + args.join(" ")])
+    Windows => ("powershell", ["-Command", cmd + " " + join_args(args)])
     _ => (cmd, args)
   }
 }
@@ -125,6 +125,8 @@ pub async fn run(
   extra_env? : Map[String, String] = {},
 ) -> Int {
   let (cmd, args) = get_cmd_and_args(cmd, args)
+  let arg_str = join_args(args)
+  @log.debug("运行: \{cmd} \{arg_str}")
   @process.run(cmd, args, extra_env~)
 }
 
@@ -138,4 +140,10 @@ pub async fn chmod_x(file_paths : Array[String]) -> Unit {
     }
     _ => ()
   }
+}
+
+///|
+pub fn join_args(args : ArrayView[String]) -> String {
+  // 如果有空格，则使用引号包裹
+  args.map(v => if v.contains(" ") { "\"\{v}\"" } else { v }).join(" ")
 }

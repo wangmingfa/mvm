@@ -4,6 +4,7 @@ import {
   "moonbitlang/x/sys",
   "moonbitlang/core/env",
   "username/mvm/log",
+  "username/mvm/utils",
 }
 
 options(
