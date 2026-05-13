@@ -107,7 +107,9 @@ async fn walk_global_pkgs(
     }
     let pkg_root_dir = @fs_ext.join_path(pkg_package_json_file_path, "../")
     for cmd_name, cmd_path in bin {
-      @log.debug("NPM包的bin配置: \{cmd_name} \{cmd_path}")
+      @log.debug(
+        "NPM包的bin配置: \{cmd_name}\n\{cmd_path.stringify(indent=2)}",
+      )
       guard cmd_path is String(cmd_path) else {
         @log.error("NPM包的bin配置 \{cmd_name} 有问题")
         continue
@@ -125,7 +127,7 @@ async fn handle_install_npm_global_package(
 ) -> Unit {
   // 全局安装
   @log.debug("NPM执行文件路径: \{npm_exe_path}")
-  @log.debug("全局安装NPM包: \{pkgs}")
+  @log.debug("全局安装NPM包: \{to_repr(pkgs)}")
 
   let npm_pkg_home = @tool_def.mvm_npm_pkg_home()
   let os = @os.get_os_name()

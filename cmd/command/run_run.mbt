@@ -5,7 +5,7 @@ pub async fn run_run(
   version : String,
   args : Array[String],
 ) -> Unit {
-  @log.debug("run_run参数 \{tool} \{version} \{args}")
+  @log.debug("run_run参数 \{tool} \{version} \{to_repr(args)}")
   // 参数不能为空
   if args.is_empty() {
     raise fail(
@@ -37,14 +37,15 @@ pub async fn run_run(
           "此NPM包未安装，请确认当前工作目录是否有可用的Node.js",
         )
       }
-      raise fail("未安装 \{exec_program}")
+      let install_cmd = @utils.yellow("mvm install \{exec_program}")
+      raise fail("未安装 \{exec_program}，请使用 \{install_cmd} 安装")
     }
     version
   } else {
     @tools.get_target_version(os_info, tool, version)
   }
 
-  @log.debug("使用 \{tool}@\{target_version} 运行命令: \{args}")
+  @log.debug("使用 \{tool}@\{target_version} 运行命令: \{to_repr(args)}")
 
   // 检查是否已安装，未安装则自动安装
   if !@tools.is_installed(tool, target_version) {

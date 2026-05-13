@@ -206,9 +206,9 @@ async test "move dir" {
     dest_path,
     include_root=true,
   )
-  inspect(
+  debug_inspect(
     src_dir_and_files.remove_prefix(src_root_dir),
-    content=dest_dir_and_files.remove_prefix(dest_path).to_string(),
+    content=dest_dir_and_files.remove_prefix(dest_path),
   )
   // 删除临时文件
   @fs.rmdir(dest_path, recursive=true)

@@ -12,7 +12,7 @@ pub fn remove_prefix(arr : Array[String], prefix : String) -> Array[String] {
 ///|
 test "remove_prefix" {
   let arr = ["abc_1", "abc_2", "ccc_3"]
-  inspect(
+  debug_inspect(
     remove_prefix(arr, "abc_"),
     content=(
       #|["1", "2", "ccc_3"]

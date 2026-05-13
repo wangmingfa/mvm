@@ -2,7 +2,7 @@
 
 ///|
 async fn run_executor(args : Array[String]) -> Unit {
-  @log.debug("executor参数: \{args}")
+  @log.debug("executor参数: \{to_repr(args)}")
   // 兼容开发环境和生产环境
   // 开发环境：从下标1开始，因为需要传入具体的工具名称
   // 生产环境：从下标0开始，工具名称已在软连接的名称上面
@@ -43,7 +43,7 @@ async fn run_executor(args : Array[String]) -> Unit {
     }
 
     @log.debug(
-      "使用 \{tool} 的 \{version} 版本运行命令，额外环境变量：\{envs}",
+      "使用 \{tool} 的 \{version} 版本运行命令，额外环境变量：\{to_repr(envs)}",
     )
 
     if @fs.exists(tool_exe_path) {

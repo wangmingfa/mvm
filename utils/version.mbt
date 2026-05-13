@@ -16,25 +16,25 @@ pub fn parse_version(version : String) -> FixedArray[Int] raise {
 
 ///|
 test "parse_version" {
-  inspect(
+  debug_inspect(
     parse_version("v2.3.2"),
     content=(
       #|[2, 3, 2]
     ),
   )
-  inspect(
+  debug_inspect(
     parse_version("v21.3.20"),
     content=(
       #|[21, 3, 20]
     ),
   )
-  inspect(
+  debug_inspect(
     parse_version("v2.3111.2"),
     content=(
       #|[2, 3111, 2]
     ),
   )
-  inspect(
+  debug_inspect(
     parse_version("v1.2.3-dev-alpha"),
     content=(
       #|[1, 2, 3]

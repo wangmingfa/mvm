@@ -25,7 +25,7 @@ pub impl Show for Command with to_string(s) {
     Version => "Version"
     Upgrade => "Upgrade"
     Setup(use_prefix) => "Setup(\{use_prefix})"
-    Executor(args) => "Executor(\{args})"
+    Executor(args) => "Executor(\{to_repr(args)})"
     Install(tool, version) =>
       "Install(\{tool.to_string()}, \{@utils.option_to_string(version)})"
     Pin(tool, version) => "Pin(\{tool.to_string()}, \{version})"
@@ -35,7 +35,8 @@ pub impl Show for Command with to_string(s) {
     Uninstall(tool, version) =>
       "Uninstall(\{tool.to_string()}, \{@utils.option_to_string(version)})"
     Which(tool) => "Which(\{tool.to_string()})"
-    Run(tool, version, args) => "Run(\{tool.to_string()}, \{version}, \{args})"
+    Run(tool, version, args) =>
+      "Run(\{tool.to_string()}, \{version}, \{to_repr(args)})"
     CacheClean => "CacheClean"
     ConfigList => "ConfigList"
     ConfigSet(key, value) => "ConfigSet(\{key}, \{value})"
