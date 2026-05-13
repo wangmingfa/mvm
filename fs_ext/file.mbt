@@ -160,7 +160,7 @@ async test "get_all_sub_dir_or_file_path" {
     dest_path,
     include_root=true,
   )
-  assert_eq(tmp_dir_and_files, validate_dir_and_fiels)
+  @debug.assert_eq(tmp_dir_and_files, validate_dir_and_fiels)
 }
 
 ///|
@@ -208,7 +208,7 @@ async test "move dir" {
   )
   debug_inspect(
     src_dir_and_files.remove_prefix(src_root_dir),
-    content=dest_dir_and_files.remove_prefix(dest_path),
+    content=to_repr(dest_dir_and_files.remove_prefix(dest_path)).to_string(),
   )
   // 删除临时文件
   @fs.rmdir(dest_path, recursive=true)
