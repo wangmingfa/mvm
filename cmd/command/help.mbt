@@ -18,6 +18,7 @@ pub fn run_help() -> Unit {
   println(
     "  run           临时运行指定版本    mvm run node@18 -- node -v",
   )
+  println("  setup         初始化工具脚本和PATH  mvm setup [-p]")
   println("  upgrade       升级 mvm 自身       mvm upgrade")
   println("  cache clean   清理缓存            mvm cache clean")
   println("  config        查看/设置配置       mvm config list")

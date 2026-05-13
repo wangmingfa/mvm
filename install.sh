@@ -17,44 +17,12 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-# === CONFIG_START ===
-# 工具名前缀
-PREFIX="f_"
-
-# 支持的工具列表
-TOOLS=("node" "npm" "npx" "corepack" "zig" "bun" "go")
-# === CONFIG_END ===
-
-# 确定 PREFIX（--online 或 --no-prefix 时清空前缀）
-if [ "$ONLINE" = true ]; then
-  PREFIX=""
-elif [ "$NO_PREFIX" = true ]; then
-  PREFIX=""
-fi
-
 # 确定 MVM_HOME 目录（有环境变量则直接使用，否则使用 $HOME/.mvm）
 MVM_HOME="${MVM_HOME:-$HOME/.mvm}"
 
 # 确定 bin 目录
 BIN_DIR="${MVM_HOME}/bin"
 mkdir -p "${BIN_DIR}"
-
-# 清理旧的工具软连接（原始名和带当前前缀的）
-for tool in "${TOOLS[@]}"; do
-  rm -f "${BIN_DIR}/${tool}"
-  rm -f "${BIN_DIR}/${PREFIX}${tool}"
-done
-
-# 构建显示用的工具名列表
-DISPLAY_TOOLS=()
-for tool in "${TOOLS[@]}"; do
-  DISPLAY_TOOLS+=("${PREFIX}${tool}")
-done
-
-# 创建工具软连接（动态拼接 PREFIX）
-for tool in "${DISPLAY_TOOLS[@]}"; do
-  ln -sf "${BIN_DIR}/executor.sh" "${BIN_DIR}/${tool}"
-done
 
 if [ "$ONLINE" = true ]; then
   # --online 模式：从 GitHub 下载最新 release
@@ -146,46 +114,10 @@ else
   cp "executor.sh" "${BIN_DIR}/executor.sh"
 fi
 
-# 配置 PATH：自动识别 shell 配置文件，避免重复添加
-detect_shell_profile() {
-  case "$SHELL" in
-    */zsh)  echo "$HOME/.zshrc" ;;
-    */bash)
-      if [[ "$(uname -s)" == "Darwin" ]]; then
-        echo "$HOME/.bash_profile"
-      else
-        echo "$HOME/.bashrc"
-      fi
-      ;;
-    *)      echo "$HOME/.profile" ;;
-  esac
-}
-
-NPM_DIR="${BIN_DIR}/npm-pkg"
-mkdir -p "${NPM_DIR}"
-
-SHELL_PROFILE=$(detect_shell_profile)
-touch "$SHELL_PROFILE"
-
-PATH_ENTRIES=("${BIN_DIR}" "${NPM_DIR}")
-for entry in "${PATH_ENTRIES[@]}"; do
-  if ! grep -qF "export PATH=\"${entry}:" "$SHELL_PROFILE" 2>/dev/null && \
-     ! grep -qF ":${entry}:" "$SHELL_PROFILE" 2>/dev/null; then
-    echo "" >> "$SHELL_PROFILE"
-    echo "export PATH=\"${entry}:\$PATH\"" >> "$SHELL_PROFILE"
-  fi
-done
-
-YELLOW_BOLD='\033[1;33m'
-CYAN_BOLD='\033[1;36m'
-RESET='\033[0m'
-
-echo ""
-echo "安装完成！可执行文件已安装到 ${BIN_DIR}"
-echo "  - mvm         (主命令)"
-echo "  - executor.sh (工具执行脚本)"
-echo "  - npm-pkg 目录    (npm 全局包安装路径：${NPM_DIR})"
-echo "  工具软连接：${DISPLAY_TOOLS[*]}"
-echo ""
-echo -e "${YELLOW_BOLD}如果 mvm 命令无效，请重启终端或执行：${RESET}"
-echo -e "   ${CYAN_BOLD}source ${SHELL_PROFILE}${RESET}"
+# 执行 setup（创建工具软连接、配置 PATH 等）
+# 默认无前缀；本地构建模式（非 --online 且非 --no-prefix）使用 f_ 前缀
+if [ "$ONLINE" = true ] || [ "$NO_PREFIX" = true ]; then
+  "${BIN_DIR}/mvm" setup
+else
+  "${BIN_DIR}/mvm" setup -p
+fi

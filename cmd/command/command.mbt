@@ -6,6 +6,7 @@ pub enum Command {
   Help
   Version
   Upgrade
+  Setup(Bool)
   Executor(Array[String])
   Install(Tool, String?)
   Pin(Tool, String)
@@ -26,6 +27,7 @@ pub impl Show for Command with to_string(s) {
     Help => "Help"
     Version => "Version"
     Upgrade => "Upgrade"
+    Setup(use_prefix) => "Setup(\{use_prefix})"
     Executor(args) => "Executor(\{args})"
     Install(tool, version) =>
       "Install(\{tool.to_string()}, \{@utils.option_to_string(version)})"
@@ -95,6 +97,9 @@ pub fn get_command(argv : ArrayView[String]) -> Command raise {
     ["--help"] | ["-h"] | [] => Help
     ["--version"] | ["-v"] => Version
     ["upgrade"] => Upgrade
+    ["setup"] => Setup(false)
+    ["setup", "--prefix"] => Setup(true)
+    ["setup", "-p"] => Setup(true)
     ["executor", .. args] => Executor(args.to_owned())
     ["install", options] | ["i", options] =>
       parse_with_version("install", options)

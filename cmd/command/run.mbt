@@ -5,6 +5,7 @@ pub async fn run(command : Command) -> Unit {
     Help => run_help()
     Version => run_version()
     Upgrade => run_upgrade()
+    Setup(use_prefix) => run_setup(use_prefix)
     Executor(args) => run_executor(args)
     Install(tool, version) => run_install(tool, version)
     Pin(tool, version) => run_pin(tool, version)

@@ -10,17 +10,8 @@ $GITHUB_REPO = "wangmingfa/mvm"
 $ONLINE = $online.IsPresent -or ("--online" -in $args)
 $NO_PREFIX = $noPrefix.IsPresent -or ("--no-prefix" -in $args) -or ("-np" -in $args)
 
-# === CONFIG_START ===
-# 工具名前缀
-$PREFIX = "f_"
-
-# 支持的工具列表
-$TOOLS = @("node", "npm", "npx", "corepack", "zig", "bun", "go")
-# === CONFIG_END ===
-
-if ($ONLINE -or $NO_PREFIX) {
-    $PREFIX = ""
-}
+# 确定 setup 参数（默认无前缀；本地构建模式使用 f_ 前缀）
+$SETUP_ARGS = if ($ONLINE -or $NO_PREFIX) { @() } else { @("-p") }
 
 if ($env:MVM_HOME) {
     $MVM_HOME = $env:MVM_HOME
@@ -31,41 +22,6 @@ if ($env:MVM_HOME) {
 $BIN_DIR = Join-Path $MVM_HOME "bin"
 
 New-Item -ItemType Directory -Force -Path $BIN_DIR | Out-Null
-
-foreach ($tool in $TOOLS) {
-    $toolPath = Join-Path $BIN_DIR $tool
-    $prefixedToolPath = Join-Path $BIN_DIR ($PREFIX + $tool)
-    foreach ($ext in @("", ".ps1", ".cmd")) {
-        if (Test-Path ($toolPath + $ext)) { Remove-Item ($toolPath + $ext) -Force }
-        if (Test-Path ($prefixedToolPath + $ext)) { Remove-Item ($prefixedToolPath + $ext) -Force }
-    }
-}
-
-$DISPLAY_TOOLS = @()
-foreach ($tool in $TOOLS) {
-    $DISPLAY_TOOLS += $PREFIX + $tool
-}
-
-$executorPath = Join-Path $BIN_DIR "executor.ps1"
-
-foreach ($tool in $DISPLAY_TOOLS) {
-    # .ps1 shim — PowerShell 直接调用
-    $ps1Path = Join-Path $BIN_DIR ($tool + ".ps1")
-    $ps1Content = @"
-#!/usr/bin/env pwsh
-& "$executorPath" $tool `$args
-"@
-    Set-Content -Path $ps1Path -Value $ps1Content -Encoding UTF8
-
-    # .cmd shim — cmd.exe 调用（npm postinstall 等场景）
-    # 直接调用 mvm.exe executor，避免 pwsh 中间层
-    # 注意：必须使用绝对路径，不能用 %~dp0，因为 cross-spawn/execa 等库
-    # 会直接读取 .cmd 内容执行，不通过 cmd.exe 批处理机制，%~dp0 会回退到 cwd
-    $mvmExeAbsPath = Join-Path $BIN_DIR "mvm.exe"
-    $cmdPath = Join-Path $BIN_DIR ($tool + ".cmd")
-    $cmdContent = "@echo off`r`n`"$mvmExeAbsPath`" executor $tool %*"
-    Set-Content -Path $cmdPath -Value $cmdContent -Encoding ASCII
-}
 
 if ($ONLINE) {
     Write-Host "正在从 GitHub 下载最新 release..."
@@ -115,41 +71,46 @@ if ($ONLINE) {
     New-Item -ItemType Directory -Force -Path $EXTRACT_DIR | Out-Null
     Expand-Archive -Path $ARCHIVE_PATH -DestinationPath $EXTRACT_DIR -Force
 
-    # mvm.exe 当前正在运行（文件锁），无法直接覆盖。
-    # 生成 update.bat：等 mvm.exe 退出后再执行文件替换。
-    $UPDATE_BAT = Join-Path $TMP_DIR "update.bat"
     $MVM_DEST = Join-Path $BIN_DIR "mvm.exe"
     $MVM_SRC  = Join-Path $EXTRACT_DIR "mvm.exe"
 
-    # 构建 bat 内容：等待 2 秒（等 mvm.exe 退出释放锁），然后逐文件复制
-    $batLines = @(
-        "@echo off",
-        "timeout /t 2 /nobreak >nul",
-        "copy /Y `"$MVM_SRC`" `"$MVM_DEST`"",
-        "if exist `"$(Join-Path $EXTRACT_DIR 'executor.ps1')`" copy /Y `"$(Join-Path $EXTRACT_DIR 'executor.ps1')`" `"$(Join-Path $BIN_DIR 'executor.ps1')`"",
-        "rmdir /s /q `"$TMP_DIR`"",
-        "echo 升级完成！"
-    )
-    $batLines -join "`r`n" | Set-Content -Path $UPDATE_BAT -Encoding ASCII
+    # 尝试直接复制（新安装时 mvm.exe 不存在，不会被锁）
+    $copySuccess = $false
+    try {
+        Copy-Item -Path $MVM_SRC -Destination $MVM_DEST -Force -ErrorAction Stop
+        $executorSrc = Join-Path $EXTRACT_DIR "executor.ps1"
+        if (Test-Path $executorSrc) {
+            Copy-Item -Path $executorSrc -Destination (Join-Path $BIN_DIR "executor.ps1") -Force
+        }
+        $copySuccess = $true
+    } catch {
+        # mvm.exe 正在运行（文件锁），需要通过 update.bat 替换
+    }
 
-    Write-Host "正在后台启动更新程序，mvm 退出后将自动完成替换..."
-    Start-Process -FilePath "cmd.exe" -ArgumentList "/c `"$UPDATE_BAT`"" -WindowStyle Hidden
-    # 脚本退出 → mvm.exe 退出 → 文件锁释放 → update.bat 完成替换
+    if ($copySuccess) {
+        # 新安装，直接复制成功，清理临时文件并执行 setup
+        Remove-Item -Path $TMP_DIR -Recurse -Force -ErrorAction SilentlyContinue
+        & "$MVM_DEST" setup @SETUP_ARGS
+    } else {
+        # mvm.exe 被锁，生成 update.bat：等 mvm.exe 退出后再执行文件替换和 setup
+        $UPDATE_BAT = Join-Path $TMP_DIR "update.bat"
+        $SETUP_CMD = "`"$MVM_DEST`" setup " + ($SETUP_ARGS -join " ")
+        $batLines = @(
+            "@echo off",
+            "timeout /t 2 /nobreak >nul",
+            "copy /Y `"$MVM_SRC`" `"$MVM_DEST`"",
+            "if exist `"$(Join-Path $EXTRACT_DIR 'executor.ps1')`" copy /Y `"$(Join-Path $EXTRACT_DIR 'executor.ps1')`" `"$(Join-Path $BIN_DIR 'executor.ps1')`"",
+            $SETUP_CMD,
+            "rmdir /s /q `"$TMP_DIR`"",
+            "echo 升级完成！"
+        )
+        $batLines -join "`r`n" | Set-Content -Path $UPDATE_BAT -Encoding ASCII
+
+        Write-Host "正在后台启动更新程序，mvm 退出后将自动完成替换和设置..."
+        Start-Process -FilePath "cmd.exe" -ArgumentList "/c `"$UPDATE_BAT`"" -WindowStyle Hidden
+    }
 } else {
-    # $BUILD_TMP = [System.IO.Path]::GetTempFileName()
-    # & moon build --release 2>&1 | Tee-Object -FilePath $BUILD_TMP
-    # if ($LASTEXITCODE -ne 0) {
-    #     Remove-Item $BUILD_TMP -Force -ErrorAction SilentlyContinue
-    #     Write-Error "构建失败，请检查错误信息"
-    #     exit $LASTEXITCODE
-    # }
-    # $buildLines = (Get-Content $BUILD_TMP | Measure-Object -Line).Lines
-    # Remove-Item $BUILD_TMP -Force -ErrorAction SilentlyContinue
-    # # 上移 buildLines 行并清除到屏幕末尾
-    # if ($buildLines -gt 0) {
-    #     [Console]::Write("`e[${buildLines}A`e[J")
-    # }
-
+    # 本地构建模式
     moon build --release
     $exit = $LASTEXITCODE
 
@@ -169,36 +130,10 @@ if ($ONLINE) {
         exit 1
     }
     
+    $executorPath = Join-Path $BIN_DIR "executor.ps1"
     Copy-Item -Path $MVM_EXE -Destination (Join-Path $BIN_DIR "mvm.exe") -Force
     Copy-Item -Path "executor.ps1" -Destination $executorPath -Force
+
+    # 执行 setup（创建工具脚本、配置 PATH 等）
+    & (Join-Path $BIN_DIR "mvm.exe") setup @SETUP_ARGS
 }
-
-$NPM_DIR = Join-Path $BIN_DIR "npm-pkg"
-New-Item -ItemType Directory -Force -Path $NPM_DIR | Out-Null
-
-$PATH_ENTRIES = @($BIN_DIR, $NPM_DIR)
-$CURRENT_PATH = [Environment]::GetEnvironmentVariable("PATH", "User")
-$PATH_MODIFIED = $false
-
-foreach ($entry in $PATH_ENTRIES) {
-    $escapedEntry = [regex]::Escape($entry)
-    if ($CURRENT_PATH -notmatch $escapedEntry) {
-        $CURRENT_PATH = "$entry;$CURRENT_PATH"
-        $PATH_MODIFIED = $true
-    }
-}
-
-if ($PATH_MODIFIED) {
-    [Environment]::SetEnvironmentVariable("PATH", $CURRENT_PATH, "User")
-}
-
-Write-Host ""
-Write-Host "安装完成！可执行文件已安装到 $BIN_DIR"
-Write-Host "  - mvm.exe         (主命令)"
-Write-Host "  - executor.ps1    (工具执行脚本)"
-Write-Host "  - npm-pkg 目录    (npm 全局包安装路径：$NPM_DIR)"
-Write-Host "  工具脚本：$($DISPLAY_TOOLS -join ', ')"
-Write-Host "  (.ps1 for PowerShell, .cmd for cmd.exe/npm postinstall)"
-Write-Host ""
-Write-Host "如果 mvm 命令无效，请重启终端或执行：" -ForegroundColor Yellow
-Write-Host '   $env:PATH = [Environment]::GetEnvironmentVariable("PATH","User") + ";" + $env:PATH' -ForegroundColor Cyan

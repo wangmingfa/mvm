@@ -115,6 +115,12 @@ pub fn Tool::installable_tools() -> Array[Tool] {
 }
 
 ///|
+/// 所有工具列表（包含 Node 内置工具），用于创建 wrapper 脚本
+pub fn Tool::all_tools() -> Array[Tool] {
+  [Node, Npm, Npx, Corepack, Bun, Zig, Go]
+}
+
+///|
 pub impl Show for Tool with to_string(s) {
   match s {
     Node => "node"

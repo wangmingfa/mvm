@@ -1,9 +1,6 @@
 // 工具名前缀（与 install.sh、executor.sh 保持一致）
 
 ///|
-const PREFIX = "f_"
-
-///|
 async fn run_executor(args : Array[String]) -> Unit {
   @log.debug("executor参数: \{args}")
   // 兼容开发环境和生产环境
@@ -17,8 +14,8 @@ async fn run_executor(args : Array[String]) -> Unit {
   let exe_name = @fs_ext.get_path_name(exe_name)
   guard exe_name.split(".").next() is Some(tool_name)
   // 前缀硬编码，与 install.sh、executor.sh 保持一致
-  let tool_name = if tool_name.has_prefix(PREFIX) {
-    tool_name[PREFIX.length():]
+  let tool_name = if tool_name.has_prefix(TOOL_PREFIX) {
+    tool_name[TOOL_PREFIX.length():]
   } else {
     tool_name
   }
