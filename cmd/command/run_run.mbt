@@ -62,25 +62,25 @@ pub async fn run_run(
   }
 
   // 处理exec_program
-  let exec_program_path = if exec_program == tool.to_string() {
+  let (exec_program_path, envs) = if exec_program == tool.to_string() {
     // 要执行的命令和指定版本的工具相等，比如：
     // mvm run node@18 -- node -v
-    exe_path
+    (exe_path, {})
   } else {
     // 要执行的命令和指定版本的工具不相等，比如：
     // mvm run node@18 -- npm -v
     // 目前只考虑node内置的工具（npm、npx、corepack）以及npm安装的全局包
-    let node_exe = @tool_def.ToolExe::new(tool, exe_path, version)
+    let node_exe = @tool_def.ToolExe::new(tool, exe_path, target_version)
     if @tool_def.Tool::from_string_with_option_result(exec_program)
       is Some(node_builtin_tool) {
       // node内置的工具
       let node_builtin_exe = @tool_def.Node::get_node_builtin_tool_path_and_version(
         node_builtin_tool, node_exe,
       )
-      guard node_builtin_exe is Some({ path, .. }) else {
+      guard node_builtin_exe is Some({ path, envs, .. }) else {
         raise fail("找不到要执行的程序 \{exec_program}")
       }
-      path
+      (path, envs)
     } else {
       // npm安装的全局包
       let npm_pkg_exe = @tool_def.Node::get_npm_global_pkg_path_and_version(
@@ -89,16 +89,29 @@ pub async fn run_run(
       guard npm_pkg_exe is Some({ path, .. }) else {
         raise fail("找不到要执行的程序 \{exec_program}")
       }
-      path
+      (path, {})
     }
+  }
+
+  let exec_tool = @tools.Tool::from_string_with_option_result(exec_program)
+  let before_run_result = if exec_tool is Some(exec_tool) {
+    before_run(exec_tool, exec_program_path, exec_args) catch {
+      _ => None
+    }
+  } else {
+    None
   }
 
   if !@log.is_debug_log_level() {
     @log.clear_all_lines()
   }
 
-  let exit_code = @mvm_cmd.run(exec_program_path, exec_args)
+  let exit_code = @mvm_cmd.run(exec_program_path, exec_args, extra_env=envs)
   if exit_code != 0 {
     @log.debug("\{tool} 退出码: \{exit_code}")
+  } else if exec_tool is Some(exec_tool) {
+    // 运行成功之后的处理
+    // 比如使用npm安装了全局包
+    after_run(before_run_result, exec_tool, exec_program_path, exec_args)
   }
 }

@@ -16,19 +16,12 @@ run_mvm() {
   $CMD "$@"
 }
 
-if [ "$SCRIPT_NAME" = "executor.sh" ]; then
-  # 直接运行：./executor.sh node -v
-  if [ $# -eq 0 ]; then
-    echo "错误：缺少参数。示例：./executor.sh node -v"
-    exit 1
-  fi
-  run_mvm executor "$@"
-  exit_code=$?
-else
-  # 兼容软连接的方式（软连接到当前文件），比如：node -v
-  # node实际上是软连接到当前文件的
-  run_mvm executor "$SCRIPT_NAME" "$@"
-  exit_code=$?
+# 运行：./executor.sh node -v
+if [ $# -eq 0 ]; then
+  echo "错误：缺少参数。示例：./executor.sh node -v"
+  exit 1
 fi
+run_mvm executor "$@"
+exit_code=$?
 
 exit $exit_code

@@ -73,8 +73,6 @@ if ($ONLINE) {
 
     $MVM_DEST = Join-Path $BIN_DIR "mvm.exe"
     $MVM_SRC  = Join-Path $EXTRACT_DIR "mvm.exe"
-    $EXECUTOR_SRC = Join-Path $EXTRACT_DIR "executor.ps1"
-    $EXECUTOR_DEST = Join-Path $BIN_DIR "executor.ps1"
 
     # 生成 update.bat：统一处理文件复制、setup、清理
     # 新安装时 mvm.exe 不存在 → 直接复制
@@ -112,7 +110,6 @@ if ($ONLINE) {
         "pause",
         "exit /b 1",
         ":setup",
-        "if exist `"$EXECUTOR_SRC`" copy /Y `"$EXECUTOR_SRC`" `"$EXECUTOR_DEST`"",
         $SETUP_CMD,
         "if errorlevel 1 echo setup 不可用，请稍后重试更新 shims",
         "rmdir /s /q `"$TMP_DIR`"",
@@ -144,9 +141,7 @@ if ($ONLINE) {
         exit 1
     }
     
-    $executorPath = Join-Path $BIN_DIR "executor.ps1"
     Copy-Item -Path $MVM_EXE -Destination (Join-Path $BIN_DIR "mvm.exe") -Force
-    Copy-Item -Path "executor.ps1" -Destination $executorPath -Force
 
     # 执行 setup（创建工具脚本、配置 PATH 等）
     if ($USE_PREFIX) { & (Join-Path $BIN_DIR "mvm.exe") setup '-p' } else { & (Join-Path $BIN_DIR "mvm.exe") setup }

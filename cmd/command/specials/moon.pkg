@@ -1,8 +1,8 @@
 import {
   "moonbitlang/async/fs",
-  "username/mvm/command",
   "username/mvm/log",
   "username/mvm/fs_ext",
   "username/mvm/os",
+  "username/mvm/cmd/tools",
   "username/mvm/cmd/tools/tool_def",
 }

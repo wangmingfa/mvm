@@ -183,8 +183,7 @@ jobs:
           VERSION=${{ github.ref_name }}
           mkdir -p stage
           cp ${{ matrix.artifact_path }} stage/mvm
-          cp executor.sh stage/executor.sh
-          tar czf mvm-${VERSION}-${{ matrix.os_name }}-${ARCH}.tar.gz -C stage mvm executor.sh
+          tar czf mvm-${VERSION}-${{ matrix.os_name }}-${ARCH}.tar.gz -C stage mvm
           ls -lh mvm-*.tar.gz
 
       - name: Package artifact (Windows)
@@ -195,7 +194,6 @@ jobs:
           $ARCH = $Env:ARCH
           New-Item -ItemType Directory -Force -Path stage | Out-Null
           Copy-Item "${{ matrix.artifact_path }}" -Destination "stage\mvm.exe"
-          Copy-Item "executor.ps1" -Destination "stage\executor.ps1"
           Compress-Archive -Path "stage\*" -DestinationPath "mvm-${VERSION}-windows-${ARCH}.zip"
           Get-Item mvm-*.zip
 

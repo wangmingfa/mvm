@@ -28,8 +28,11 @@ pub fn mvm_bin_home() -> String raise {
 }
 
 ///|
+pub const NPM_PKG = "npm-pkg"
+
+///|
 pub fn mvm_npm_pkg_home() -> String raise {
-  @fs_ext.join_path(mvm_bin_home(), "npm-pkg")
+  @fs_ext.join_path(mvm_bin_home(), NPM_PKG)
 }
 
 ///|
@@ -177,6 +180,15 @@ pub fn Tool::is_node_builtin_tools(tool : Tool) -> Bool {
 }
 
 ///|
+pub fn Tool::get_belonging_tools(tool : Tool) -> Tool {
+  if Tool::is_node_builtin_tools(tool) {
+    Node
+  } else {
+    tool
+  }
+}
+
+///|
 const CONFIG_FILE = "mvm.json"
 
 ///|
@@ -207,7 +219,11 @@ pub(all) struct GlobalConfig {
 
 ///|
 pub fn make_global_config(
-  existing_config? : GlobalConfig = { github_proxy: None, node_mirror: None, go_mirror: None },
+  existing_config? : GlobalConfig = {
+    github_proxy: None,
+    node_mirror: None,
+    go_mirror: None,
+  },
   github_proxy? : String? = None,
   node_mirror? : String? = None,
   go_mirror? : String? = None,

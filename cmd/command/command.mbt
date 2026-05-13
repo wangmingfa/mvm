@@ -129,7 +129,7 @@ pub fn get_command(argv : ArrayView[String]) -> Command raise {
         }
         _ =>
           raise fail(
-            "无效的版本格式。示例：mvm run node@18 -- node -v",
+            "无效的版本格式 \{tool_version}。示例：mvm run node@18 -- node -v",
           )
       }
     ["run", ..] =>

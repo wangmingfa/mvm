@@ -20,26 +20,6 @@ pub async fn run_setup(use_prefix : Bool) -> Unit {
 }
 
 ///|
-async fn setup_unix(
-  bin_dir : String,
-  npm_dir : String,
-  tools : Array[Tool],
-  prefix_str : String,
-) -> Unit {
-  // 清理旧的软连接
-  cleanup_old_symlinks(bin_dir, tools)
-
-  // 创建新的软连接
-  create_symlinks(bin_dir, tools, prefix_str)
-
-  // 配置 PATH
-  configure_path_unix(bin_dir, npm_dir)
-
-  // 打印成功消息
-  print_success_unix(bin_dir, npm_dir, tools, prefix_str)
-}
-
-///|
 async fn remove_tools(
   bin_dir : String,
   tools : Array[Tool],
@@ -59,32 +39,56 @@ async fn remove_tools(
 }
 
 ///|
-async fn cleanup_old_symlinks(bin_dir : String, tools : Array[Tool]) -> Unit {
-  remove_tools(bin_dir, tools)
+async fn cleanup_tool_shims(bin_dir : String, tools : Array[Tool]) -> Unit {
+  for ext in [".sh", ".ps1"] {
+    let executor_path = @fs_ext.join_path(bin_dir, "executor\{ext}")
+    @fs_ext.remove_if_exists(executor_path)
+  }
+  remove_tools(bin_dir, tools, exts=["", ".ps1", ".cmd"])
 }
 
 ///|
-async fn create_symlinks(
+async fn create_tool_shims(tools : Array[Tool], prefix_str : String) -> Unit {
+  let os = @os.get_os_name()
+  for tool in tools {
+    let belonging_tool = @tools.Tool::get_belonging_tools(tool)
+    let cmd_name = tool.to_string()
+    match os {
+      MacOS | Linux =>
+        @tools.create_tool_cmd_unix(
+          belonging_tool,
+          cmd_name,
+          file_name=prefix_str + cmd_name,
+        )
+      Windows =>
+        @tools.create_tool_cmd_windows(
+          belonging_tool,
+          cmd_name,
+          file_name=prefix_str + cmd_name,
+        )
+      _ => ()
+    }
+  }
+}
+
+///|
+async fn setup_unix(
   bin_dir : String,
+  npm_dir : String,
   tools : Array[Tool],
   prefix_str : String,
 ) -> Unit {
-  let executor_path = @fs_ext.join_path(bin_dir, "executor.sh")
-  if !@fs.exists(executor_path) {
-    @log.warn("executor.sh 不存在，工具软连接可能无法正常工作")
-  }
+  // 清理旧的工具
+  cleanup_tool_shims(bin_dir, tools)
 
-  for tool in tools {
-    let display_name = prefix_str + tool.to_string()
-    let wrapper_path = @fs_ext.join_path(bin_dir, display_name)
-    let _ = @process.run("ln", ["-sf", executor_path, wrapper_path])
-    @log.debug("创建软连接：\{wrapper_path} -> \{executor_path}")
-  }
-  // 添加可执行权限
-  let wrapper_paths = tools.map(tool => {
-    @fs_ext.join_path(bin_dir, prefix_str + tool.to_string())
-  })
-  @mvm_cmd.chmod_x([executor_path, ..wrapper_paths])
+  // 创建新的工具
+  create_tool_shims(tools, prefix_str)
+
+  // 配置 PATH
+  configure_path_unix(bin_dir, npm_dir)
+
+  // 打印成功消息
+  print_success_unix(bin_dir, npm_dir, tools, prefix_str)
 }
 
 ///|
@@ -148,8 +152,10 @@ fn print_success_unix(
   println("  - npm-pkg 目录    (npm 全局包安装路径：\{npm_dir})")
   println("  工具软连接：\{tools_str}")
   println("")
-  println("如果 mvm 命令无效，请重启终端或执行：")
-  println("   source \{profile_path}")
+  println(
+    @utils.yellow("如果 mvm 命令无效，请重启终端或执行："),
+  )
+  println(@utils.yellow("   source \{profile_path}"))
 }
 
 ///|
@@ -160,47 +166,16 @@ async fn setup_windows(
   prefix_str : String,
 ) -> Unit {
   // 清理旧的 shim 文件
-  cleanup_old_shims(bin_dir, tools)
+  cleanup_tool_shims(bin_dir, tools)
 
   // 创建新的 shim 文件
-  create_shims(bin_dir, tools, prefix_str)
+  create_tool_shims(tools, prefix_str)
 
   // 配置 PATH
   configure_path_windows(bin_dir, npm_dir)
 
   // 打印成功消息
   print_success_windows(bin_dir, npm_dir, tools, prefix_str)
-}
-
-///|
-async fn cleanup_old_shims(bin_dir : String, tools : Array[Tool]) -> Unit {
-  remove_tools(bin_dir, tools, exts=["", ".ps1", ".cmd"])
-}
-
-///|
-async fn create_shims(
-  bin_dir : String,
-  tools : Array[Tool],
-  prefix_str : String,
-) -> Unit {
-  let executor_path = @fs_ext.join_path(bin_dir, "executor.ps1")
-  let mvm_exe_path = @fs_ext.join_path(bin_dir, "mvm.exe")
-
-  for tool in tools {
-    let display_name = prefix_str + tool.to_string()
-
-    // 创建 .ps1 shim — PowerShell 直接调用
-    let ps1_path = @fs_ext.join_path(bin_dir, display_name + ".ps1")
-    let ps1_content = "#!/usr/bin/env pwsh\n& \"\{executor_path}\" \{display_name} $args"
-    @fs.write_file(ps1_path, ps1_content, create_mode=CreateOrTruncate)
-
-    // 创建 .cmd shim — cmd.exe 调用（npm postinstall 等场景）
-    let cmd_path = @fs_ext.join_path(bin_dir, display_name + ".cmd")
-    let cmd_content = "@echo off\r\n\"\{mvm_exe_path}\" executor \{display_name} %*"
-    @fs.write_file(cmd_path, cmd_content, create_mode=CreateOrTruncate)
-
-    @log.debug("创建 shim 文件：\{ps1_path}, \{cmd_path}")
-  }
 }
 
 ///|
@@ -247,7 +222,9 @@ fn print_success_windows(
   println("  工具脚本：\{tools_str}")
   println("  (.ps1 for PowerShell, .cmd for cmd.exe/npm postinstall)")
   println("")
-  println("如果 mvm 命令无效，请重启终端或执行：")
+  println(
+    @utils.yellow("如果 mvm 命令无效，请重启终端或执行："),
+  )
   let path_hint = "$env:PATH = [Environment]::GetEnvironmentVariable(\"PATH\",\"User\") + \";\" + $env:PATH"
-  println("   \{path_hint}")
+  println(@utils.yellow("   \{path_hint}"))
 }

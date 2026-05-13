@@ -111,7 +111,6 @@ else
   # 复制可执行文件
   BUILD_DIR="_build/native/release/build/cmd"
   cp "${BUILD_DIR}/main/main.exe" "${BIN_DIR}/mvm"
-  cp "executor.sh" "${BIN_DIR}/executor.sh"
 fi
 
 # 执行 setup（创建工具软连接、配置 PATH 等）

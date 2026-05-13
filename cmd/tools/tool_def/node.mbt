@@ -288,7 +288,9 @@ pub async fn Node::get_npm_global_pkg_path_and_version(
       // MacOS和linux使用的是软连接
       let symlink_path = bin_file_path
       if !@fs.exists(symlink_path) {
-        raise fail("NPM 包 \{npm_pkg_name} 未安装")
+        raise fail(
+          "NPM 包 \{npm_pkg_name} 在 node@\{node_tool_exe.version} 未安装",
+        )
       }
 
       @log.debug("NPM包 \{npm_pkg_name} 的运行文件路径 \{symlink_path}")
@@ -323,8 +325,11 @@ pub async fn Node::get_npm_global_pkg_path_and_version(
   // 读取 package.json 获取版本号
   let pkg_json_path = @fs_ext.join_path(pkg_root_dir, "package.json")
   if !@fs.exists(pkg_json_path) {
-    raise fail(
+    @log.debug(
       "NPM 包 \{npm_pkg_name} 的 package.json 不存在：\{pkg_json_path}",
+    )
+    raise fail(
+      "NPM 包 \{npm_pkg_name} 在 node@\{node_tool_exe.version} 未安装",
     )
   }
 

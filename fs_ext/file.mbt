@@ -283,6 +283,13 @@ test "readlink_target" {
 ///|
 pub async fn remove_if_exists(file_path : String) -> Unit {
   if @fs.exists(file_path) {
+    // 文件
     @fs.remove(file_path)
+  } else {
+    // 软连接
+    match symlink_status(file_path) {
+      SymlinkBroken | SymlinkOk => @fs.remove(file_path)
+      _ => ()
+    }
   }
 }

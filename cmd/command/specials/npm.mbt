@@ -138,30 +138,10 @@ async fn handle_install_npm_global_package(
     // }
     // @fs.symlink(target=cmd_path, symlink_file_path)
     match os {
-      MacOS | Linux => {
-        // 创建一个shell文件（不需要.sh后缀），里面执行mvm run node -- {cmd_name} "$@"
-        let shell_file_path = @fs_ext.join_path(npm_pkg_home, cmd_name)
-        let shell_content = "#!/bin/sh\nmvm run node -- \{cmd_name} \"$@\""
-        @fs.write_file(
-          shell_file_path,
-          shell_content,
-          create_mode=CreateOrTruncate,
-        )
-        // 添加可执行权限
-        @command.chmod_x([shell_file_path])
-        @log.debug("创建shell文件 \{shell_file_path}")
-      }
-      Windows => {
-        // 创建ps1、cmd文件，里面执行mvm run node -- {cmd_name} $args / %*
-        let ps1_file_path = @fs_ext.join_path(npm_pkg_home, "\{cmd_name}.ps1")
-        let cmd_file_path = @fs_ext.join_path(npm_pkg_home, "\{cmd_name}.cmd")
-        let ps1_content = "mvm run node -- \{cmd_name} $args"
-        let cmd_content = "@mvm run node -- \{cmd_name} %*"
-        @fs.write_file(ps1_file_path, ps1_content, create_mode=CreateOrTruncate)
-        @fs.write_file(cmd_file_path, cmd_content, create_mode=CreateOrTruncate)
-        @log.debug("创建ps1文件 \{ps1_file_path}")
-        @log.debug("创建cmd文件 \{cmd_file_path}")
-      }
+      MacOS | Linux =>
+        @tools.create_tool_cmd_unix(Node, cmd_name, cmd_dir=@tools.NPM_PKG)
+      Windows =>
+        @tools.create_tool_cmd_windows(Node, cmd_name, cmd_dir=@tools.NPM_PKG)
       _ => ()
     }
     @log.debug("已在目录 \{npm_pkg_home} 安装全局命令 \{cmd_name}")

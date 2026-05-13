@@ -73,7 +73,9 @@ fn Go::_get_proper_version(
   version_count : Int,
   json : Json,
 ) -> String raise {
-  guard json is Array(versions) else { raise fail("Go版本信息格式不对") }
+  guard json is Array(versions) else {
+    raise fail("Go版本信息格式不对")
+  }
 
   // 收集所有稳定版本
   let stable_versions : Array[(String, Json)] = []
@@ -88,9 +90,11 @@ fn Go::_get_proper_version(
   }
 
   // 按版本号倒序排序
-  stable_versions.sort_by(
-    (a, b) => @utils.compare_version(b.0, a.0) catch { _ => 0 },
-  )
+  stable_versions.sort_by((a, b) => {
+    @utils.compare_version(b.0, a.0) catch {
+      _ => 0
+    }
+  })
   guard stable_versions.length() > 0 else { raise fail("Go版本信息为空") }
 
   match version {
@@ -178,7 +182,9 @@ fn Go::_check_os_compatiable(
     guard file_map.get("os") is Some(String(file_os)) else { continue }
     guard file_map.get("arch") is Some(String(file_arch)) else { continue }
     guard file_map.get("kind") is Some(String(kind)) else { continue }
-    if kind != "archive" { continue }
+    if kind != "archive" {
+      continue
+    }
     if file_os == expected_os && file_arch == expected_arch {
       break true
     }
@@ -221,6 +227,6 @@ pub fn Go::get_exe_path(version : String) -> String raise {
   let os = @os.get_os_name()
   let suffix = if os is Windows { ".exe" } else { "" }
   [version_dir(Tool::Go, version), "bin", "go\{suffix}"]
-    .filter(v => !v.is_blank())
-    .join("/")
+  .filter(v => !v.is_blank())
+  .join("/")
 }
