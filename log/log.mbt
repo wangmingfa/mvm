@@ -23,7 +23,7 @@ fn[T : Debug] log(prefix : String, loc? : String = "", msg : T) -> Unit {
   // 右边补齐空格，确保日志内容左侧对齐
   let pad_right = " ".repeat(7 - prefix.length())
   let prefix = "\{prefix}\{pad_right}"
-  let msg_str = to_repr(msg).to_string()
+  let msg_str = @utils.debug_to_string(msg)
   let arr = if is_debug() || is_debug_log_level() {
     // 只有debug模式，或者开了debug日志时，才显示日志时间、日志类型，以及代码位置
     [time, prefix, loc, msg_str]
