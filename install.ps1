@@ -81,6 +81,7 @@ if ($ONLINE) {
     $UPDATE_BAT = Join-Path $TMP_DIR "update.bat"
     $batLines = @(
         "@echo off",
+        "chcp 65001 >nul",
         "if not exist `"$MVM_DEST`" (",
         "    echo 正在安装 mvm...",
         "    copy /Y `"$MVM_SRC`" `"$MVM_DEST`"",
@@ -116,7 +117,7 @@ if ($ONLINE) {
         "echo 完成！",
         "pause"
     )
-    $batLines -join "`r`n" | Set-Content -Path $UPDATE_BAT -Encoding ASCII
+    $batLines -join "`r`n" | Set-Content -Path $UPDATE_BAT -Encoding UTF8
 
     Write-Host "正在启动安装程序..."
     Start-Process -FilePath "cmd.exe" -ArgumentList "/c `"$UPDATE_BAT`""

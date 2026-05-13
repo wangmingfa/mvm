@@ -1,4 +1,3 @@
-$ScriptName = Split-Path -Leaf $MyInvocation.MyCommand.Definition
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Definition
 $mvmPath = Join-Path $ScriptDir "mvm.exe"
 
