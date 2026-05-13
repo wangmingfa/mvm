@@ -94,13 +94,18 @@ mvm uninstall zig@0.12.0
 mvm uninstall go@1.21.0
 ```
 
+6. `mvm setup`——Initialize tool scripts and PATH
+```bash
+mvm setup
+```
+
 7. `mvm upgrade`——Upgrade mvm itself
 ```bash
 # Upgrade mvm to the latest version
 mvm upgrade
 ```
 
-6. `mvm config`——View or set configuration
+8. `mvm config`——View or set configuration
 ```bash
 # View current configuration
 mvm config

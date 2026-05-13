@@ -103,13 +103,18 @@ mvm which zig
 mvm which go
 ```
 
+7. `mvm setup`——初始化工具脚本和 PATH
+```bash
+mvm setup
+```
+
 8. `mvm upgrade`——升级 mvm 自身
 ```bash
 # 升级 mvm 到最新版本
 mvm upgrade
 ```
 
-7. `mvm config`——查看/设置配置
+9. `mvm config`——查看/设置配置
 ```bash
 # 查看当前配置
 mvm config list
