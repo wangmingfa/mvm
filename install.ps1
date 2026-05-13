@@ -10,8 +10,8 @@ $GITHUB_REPO = "wangmingfa/mvm"
 $ONLINE = $online.IsPresent -or ("--online" -in $args)
 $NO_PREFIX = $noPrefix.IsPresent -or ("--no-prefix" -in $args) -or ("-np" -in $args)
 
-# 确定 setup 参数（默认无前缀；本地构建模式使用 f_ 前缀）
-$SETUP_ARGS = if ($ONLINE -or $NO_PREFIX) { @() } else { @("-p") }
+# 确定 setup 是否使用前缀模式（默认无前缀；本地构建模式使用 f_ 前缀）
+$USE_PREFIX = -not ($ONLINE -or $NO_PREFIX)
 
 if ($env:MVM_HOME) {
     $MVM_HOME = $env:MVM_HOME
@@ -90,11 +90,11 @@ if ($ONLINE) {
     if ($copySuccess) {
         # 新安装，直接复制成功，清理临时文件并执行 setup
         Remove-Item -Path $TMP_DIR -Recurse -Force -ErrorAction SilentlyContinue
-        & "$MVM_DEST" setup @SETUP_ARGS
+        if ($USE_PREFIX) { & "$MVM_DEST" setup '-p' } else { & "$MVM_DEST" setup }
     } else {
         # mvm.exe 被锁，生成 update.bat：等 mvm.exe 退出后再执行文件替换和 setup
         $UPDATE_BAT = Join-Path $TMP_DIR "update.bat"
-        $SETUP_CMD = "`"$MVM_DEST`" setup " + ($SETUP_ARGS -join " ")
+        $SETUP_CMD = if ($USE_PREFIX) { "`"$MVM_DEST`" setup -p" } else { "`"$MVM_DEST`" setup" }
         $batLines = @(
             "@echo off",
             "timeout /t 2 /nobreak >nul",
@@ -135,5 +135,5 @@ if ($ONLINE) {
     Copy-Item -Path "executor.ps1" -Destination $executorPath -Force
 
     # 执行 setup（创建工具脚本、配置 PATH 等）
-    & (Join-Path $BIN_DIR "mvm.exe") setup @SETUP_ARGS
+    if ($USE_PREFIX) { & (Join-Path $BIN_DIR "mvm.exe") setup '-p' } else { & (Join-Path $BIN_DIR "mvm.exe") setup }
 }
