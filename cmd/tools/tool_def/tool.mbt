@@ -349,7 +349,7 @@ pub fn apply_global_config(
     _ => ()
   }
   match config.github_proxy {
-    Some(proxy) if proxy != "" => {
+    Some(proxy) if proxy != "" && url.has_prefix("https://github.com/") => {
       @log.debug("使用 GitHub 代理: \{proxy}")
       return replace_url(proxy, ctx)
     }

@@ -24,7 +24,7 @@ pub async fn Go::get_target_version(
 ) -> String {
   // 去除可能存在的 "go" 前缀（用户可能输入 go1.23 或 1.23）
   let version = if version.has_prefix("go") {
-    version[3:].to_owned()
+    version[2:].to_owned()
   } else {
     version
   }
@@ -85,7 +85,7 @@ fn Go::_get_proper_version(
     guard stable_json.stringify() == "true" else { continue }
     guard map.get("version") is Some(String(ver)) else { continue }
     // 去除 "go" 前缀得到纯版本号（如 "go1.23.4" -> "1.23.4"）
-    let clean_ver = if ver.has_prefix("go") { ver[3:].to_owned() } else { ver }
+    let clean_ver = if ver.has_prefix("go") { ver[2:].to_owned() } else { ver }
     stable_versions.push((clean_ver, item))
   }
 

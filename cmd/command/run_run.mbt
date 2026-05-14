@@ -37,8 +37,10 @@ pub async fn run_run(
           "此NPM包未安装，请确认当前工作目录是否有可用的Node.js",
         )
       }
-      let install_cmd = @utils.yellow("mvm install \{exec_program}")
-      raise fail("未安装 \{exec_program}，请使用 \{install_cmd} 安装")
+      let use_cmd = @utils.yellow("mvm use \{exec_program}@{version}")
+      raise fail(
+        "未指定 \{exec_program} 的版本，请使用 \{use_cmd} 安装",
+      )
     }
     version
   } else {
