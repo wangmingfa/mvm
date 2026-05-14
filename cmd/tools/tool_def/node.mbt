@@ -33,29 +33,13 @@ pub async fn Node::get_target_version(
   version : String,
   version_count : Int,
 ) -> String {
-  if version_count == 3 {
-    // 从缓存中获取
-    let cache_file_content = read_cache_file_content(NODE_INDEX_CACHE_FILE)
-    if cache_file_content is Some(content) {
-      let json = @json.parse(content)
-      let target_version = Node::_get_proper_version(
-        os, version, version_count, json,
-      ) catch {
-        _ => ""
-      }
-      if !target_version.is_blank() {
-        return target_version
-      }
-    }
-  }
-  // 从https://nodejs.org/dist/index.json中解析，将version转换为为具体的x.y.z版本号
-  let (res, data) = @http.get(NODE_INDEX_URL)
-  guard res.code is (200..<300) else {
-    raise fail("无法获取到Node.js版本信息：\{res.reason}")
-  }
-  let json = data.json()
-  write_cache_file_content(NODE_INDEX_CACHE_FILE, json.stringify(indent=2))
-  Node::_get_proper_version(os, version, version_count, json)
+  get_target_version_with_cache(
+    NODE_INDEX_CACHE_FILE,
+    NODE_INDEX_URL,
+    "Node.js",
+    os, version, version_count,
+    Node::_get_proper_version,
+  )
 }
 
 ///|
@@ -157,16 +141,7 @@ fn Node::_check_os_compatiable(
   ].join("-")
   let { version, files, .. } = nodeJsInfo
   if files.all(v => !v.has_prefix(file_prefix)) {
-    let variables = {
-      "version": () => version,
-      "os.name": () => os.name.to_string(),
-      "os.arch": () => os.arch.to_string(),
-    }
-    let mut msg = error_msg_tpl
-    for key, value in variables {
-      msg = msg.replace_all(old="{\{key}}", new=@utils.yellow(value()))
-    }
-    raise fail(msg)
+    raise fail(format_os_compat_error(error_msg_tpl, version, os))
   }
   version
 }

@@ -22,29 +22,13 @@ pub async fn Zig::get_target_version(
   version : String,
   version_count : Int,
 ) -> String {
-  if version_count == 3 {
-    // 从缓存中获取
-    let cache_file_content = read_cache_file_content(ZIG_INDEX_CACHE_FILE)
-    if cache_file_content is Some(content) {
-      let json = @json.parse(content)
-      let target_version = Zig::_get_proper_version(
-        os, version, version_count, json,
-      ) catch {
-        _ => ""
-      }
-      if !target_version.is_blank() {
-        return target_version
-      }
-    }
-  }
-  // 从远程获取版本索引
-  let (res, data) = @http.get(ZIG_INDEX_URL)
-  guard res.code is (200..<300) else {
-    raise fail("无法获取到Zig版本信息：\{res.reason}")
-  }
-  let json = data.json()
-  write_cache_file_content(ZIG_INDEX_CACHE_FILE, json.stringify(indent=2))
-  Zig::_get_proper_version(os, version, version_count, json)
+  get_target_version_with_cache(
+    ZIG_INDEX_CACHE_FILE,
+    ZIG_INDEX_URL,
+    "Zig",
+    os, version, version_count,
+    Zig::_get_proper_version,
+  )
 }
 
 ///|
@@ -130,16 +114,7 @@ fn Zig::_check_os_compatiable(
   }
   @log.debug("检查兼容性 \{version_release_key}")
   if !map.contains(version_release_key) {
-    let variables = {
-      "version": () => version,
-      "os.name": () => os.name.to_string(),
-      "os.arch": () => os.arch.to_string(),
-    }
-    let mut msg = error_msg_tpl
-    for key, value in variables {
-      msg = msg.replace_all(old="{\{key}}", new=@utils.yellow(value()))
-    }
-    raise fail(msg)
+    raise fail(format_os_compat_error(error_msg_tpl, version, os))
   }
   version
 }

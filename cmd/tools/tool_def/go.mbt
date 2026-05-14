@@ -42,28 +42,13 @@ pub async fn Go::get_target_version(
     _ => 0
   }
 
-  if version_count == 3 {
-    let cache_file_content = read_cache_file_content(GO_INDEX_CACHE_FILE)
-    if cache_file_content is Some(content) {
-      let json = @json.parse(content)
-      let target_version = Go::_get_proper_version(
-        os, version, version_count, json,
-      ) catch {
-        _ => ""
-      }
-      if !target_version.is_blank() {
-        return target_version
-      }
-    }
-  }
-  // 从远程获取版本索引
-  let (res, data) = @http.get(GO_INDEX_URL)
-  guard res.code is (200..<300) else {
-    raise fail("无法获取到Go版本信息：\{res.reason}")
-  }
-  let json = data.json()
-  write_cache_file_content(GO_INDEX_CACHE_FILE, json.stringify(indent=2))
-  Go::_get_proper_version(os, version, version_count, json)
+  get_target_version_with_cache(
+    GO_INDEX_CACHE_FILE,
+    GO_INDEX_URL,
+    "Go",
+    os, version, version_count,
+    Go::_get_proper_version,
+  )
 }
 
 ///|
@@ -193,16 +178,7 @@ fn Go::_check_os_compatiable(
   }
 
   if !found {
-    let variables = {
-      "version": () => version,
-      "os.name": () => os.name.to_string(),
-      "os.arch": () => os.arch.to_string(),
-    }
-    let mut msg = error_msg_tpl
-    for key, value in variables {
-      msg = msg.replace_all(old="{\{key}}", new=@utils.yellow(value()))
-    }
-    raise fail(msg)
+    raise fail(format_os_compat_error(error_msg_tpl, version, os))
   }
   version
 }

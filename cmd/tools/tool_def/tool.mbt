@@ -637,3 +637,54 @@ pub fn ToolExe::new_node_builtin_tool(
     dependent_tool_exe=Some(node_tool_exe),
   )
 }
+
+///|
+/// Format OS compatibility error message with template variables
+/// Supported variables: {version}, {os.name}, {os.arch}
+pub fn format_os_compat_error(
+  error_msg_tpl : String,
+  version : String,
+  os : @os.OsInfo,
+) -> String {
+  error_msg_tpl
+    .replace_all(old="{version}", new=@utils.yellow(version))
+    .replace_all(old="{os.name}", new=@utils.yellow(os.name.to_string()))
+    .replace_all(old="{os.arch}", new=@utils.yellow(os.arch.to_string()))
+}
+
+///|
+/// Shared helper: resolve tool version with cache-first strategy
+/// 1. If version_count == 3, try reading from cache and parsing
+/// 2. If cache miss or parse result is blank, fetch from remote
+/// 3. Save the remote response to cache
+/// 4. Parse with the provided function
+pub async fn get_target_version_with_cache(
+  cache_file : String,
+  url : String,
+  tool_name : String,
+  os : @os.OsInfo,
+  version : String,
+  version_count : Int,
+  parse_fn : (@os.OsInfo, String, Int, Json) -> String raise,
+  headers? : Map[String, String] = {},
+) -> String {
+  if version_count == 3 {
+    let cache_file_content = read_cache_file_content(cache_file)
+    if cache_file_content is Some(content) {
+      let json = @json.parse(content)
+      let target_version = parse_fn(os, version, version_count, json) catch {
+        _ => ""
+      }
+      if !target_version.is_blank() {
+        return target_version
+      }
+    }
+  }
+  let (res, data) = @http.get(url, headers~)
+  guard res.code is (200..<300) else {
+    raise fail("无法获取到\{tool_name}版本信息：\{res.reason}")
+  }
+  let json = data.json()
+  write_cache_file_content(cache_file, json.stringify(indent=2))
+  parse_fn(os, version, version_count, json)
+}
