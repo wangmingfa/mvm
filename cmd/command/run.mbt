@@ -1,6 +1,17 @@
 ///|
+fn should_print_logo(command : Command) -> Bool {
+  match command {
+    Executor(_) | Run(_, _, _) => false
+    _ => true
+  }
+}
+
+///|
 /// 执行命令
 pub async fn run(command : Command) -> Unit {
+  if should_print_logo(command) {
+    @utils.print_logo()
+  }
   match command {
     Help => run_help()
     Version => run_version()

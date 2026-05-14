@@ -14,6 +14,25 @@ const BLUE = "\u{001B}[34m"
 const RESET = "\u{001B}[0m"
 
 ///|
+const CYAN = "\u{001B}[36m"
+
+///|
+/// MVM logo
+const LOGO =
+  #| ███╗   ███╗██╗   ██╗███╗   ███╗
+  #| ████╗ ████║██║   ██║████╗ ████║
+  #| ██╔████╔██║██║   ██║██╔████╔██║
+  #| ██║╚██╔╝██║╚██╗ ██╔╝██║╚██╔╝██║
+  #| ██║ ╚═╝ ██║ ╚████╔╝ ██║ ╚═╝ ██║
+  #| ╚═╝     ╚═╝  ╚═══╝  ╚═╝     ╚═╝
+
+///|
+/// 打印 MVM logo
+pub fn print_logo() -> Unit {
+  println(styled(CYAN, LOGO))
+}
+
+///|
 /// 用指定颜色包裹文本，自动处理嵌套颜色（内层颜色结束后自动恢复外层颜色）
 pub fn[T : ToStr] styled(color : String, msg : T) -> String {
   let content = msg.to_str()

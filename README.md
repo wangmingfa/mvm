@@ -1,8 +1,21 @@
+<div align="center">
+
+```
+███╗   ███╗██╗   ██╗███╗   ███╗
+████╗ ████║██║   ██║████╗ ████║
+██╔████╔██║██║   ██║██╔████╔██║
+██║╚██╔╝██║╚██╗ ██╔╝██║╚██╔╝██║
+██║ ╚═╝ ██║ ╚████╔╝ ██║ ╚═╝ ██║
+╚═╝     ╚═╝  ╚═══╝  ╚═╝     ╚═╝
+```
+
 # wangmingfa/mvm
 
 **🌐 [English](README_en.md) | 中文**
 
 mvm（Multi Version Manager）——One Tool to Manage Them All
+
+</div>
 
 再也不用为不同语言安装不同的版本管理器而头疼了。
 
@@ -116,18 +129,30 @@ mvm which zig
 mvm which go
 ```
 
-8. `mvm setup`——初始化工具脚本和 PATH
+8. `mvm run`——临时运行指定版本
+```bash
+# 使用指定版本临时运行命令
+mvm run node@18 -- node -v
+mvm run node@20 -- npm install
+mvm run node@lts -- node -e "console.log(1)"
+
+# 不指定版本，使用当前目录的版本
+mvm run node -- npm -v
+mvm run bun -- bun run dev
+```
+
+9. `mvm setup`——初始化工具脚本和 PATH
 ```bash
 mvm setup
 ```
 
-9. `mvm upgrade`——升级 mvm 自身
+10. `mvm upgrade`——升级 mvm 自身
 ```bash
 # 升级 mvm 到最新版本
 mvm upgrade
 ```
 
-10. `mvm config`——查看/设置配置
+11. `mvm config`——查看/设置配置
 ```bash
 # 查看当前配置
 mvm config list

@@ -1,8 +1,21 @@
+<div align="center">
+
+```
+███╗   ███╗██╗   ██╗███╗   ███╗
+████╗ ████║██║   ██║████╗ ████║
+██╔████╔██║██║   ██║██╔████╔██║
+██║╚██╔╝██║╚██╗ ██╔╝██║╚██╔╝██║
+██║ ╚═╝ ██║ ╚████╔╝ ██║ ╚═╝ ██║
+╚═╝     ╚═╝  ╚═══╝  ╚═╝     ╚═╝
+```
+
 # wangmingfa/mvm
 
 **🌐 English | [中文](README.md)**
 
 **mvm** (Multi Version Manager) —— One Tool to Manage Them All
+
+</div>
 
 No more headaches from installing different version managers for different languages.
 
@@ -107,18 +120,38 @@ mvm uninstall zig@0.12.0
 mvm uninstall go@1.21.0
 ```
 
-7. `mvm setup`——Initialize tool scripts and PATH
+7. `mvm which`——View tool executable path
+```bash
+mvm which node
+mvm which bun
+mvm which zig
+mvm which go
+```
+
+8. `mvm run`——Temporarily run with a specific version
+```bash
+# Run a command with a specific version
+mvm run node@18 -- node -v
+mvm run node@20 -- npm install
+mvm run node@lts -- node -e "console.log(1)"
+
+# Without version, use the current directory's version
+mvm run node -- npm -v
+mvm run bun -- bun run dev
+```
+
+9. `mvm setup`——Initialize tool scripts and PATH
 ```bash
 mvm setup
 ```
 
-8. `mvm upgrade`——Upgrade mvm itself
+10. `mvm upgrade`——Upgrade mvm itself
 ```bash
 # Upgrade mvm to the latest version
 mvm upgrade
 ```
 
-9. `mvm config`——View or set configuration
+11. `mvm config`——View or set configuration
 ```bash
 # View current configuration
 mvm config
