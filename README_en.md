@@ -62,11 +62,24 @@ mvm install go@1.23
 
 2. `mvm use`——Set global version
 ```bash
+# Specify version
 mvm use node@20
 mvm use node@20.18.0
+
+# Without version, auto-select the latest
+mvm use node
+mvm use bun
+mvm use go
 ```
 
-3. `mvm pin`——Project-level version lock (strongly recommended)
+3. `mvm unuse`——Remove global version setting
+```bash
+mvm unuse node
+mvm unuse bun
+mvm unuse go
+```
+
+4. `mvm pin`——Project-level version lock (strongly recommended)
 ```bash
 # Enter project directory
 cd my-project
@@ -76,7 +89,7 @@ mvm pin zig@0.15.2
 mvm pin go@1.23.4
 ```
 
-4. `mvm list`——List versions
+5. `mvm list`——List versions
 ```bash
 # List all
 mvm list
@@ -87,25 +100,25 @@ mvm list bun
 mvm list go
 ```
 
-5. `mvm uninstall`——Uninstall a version
+6. `mvm uninstall`——Uninstall a version
 ```bash
 mvm uninstall node@18.17.0
 mvm uninstall zig@0.12.0
 mvm uninstall go@1.21.0
 ```
 
-6. `mvm setup`——Initialize tool scripts and PATH
+7. `mvm setup`——Initialize tool scripts and PATH
 ```bash
 mvm setup
 ```
 
-7. `mvm upgrade`——Upgrade mvm itself
+8. `mvm upgrade`——Upgrade mvm itself
 ```bash
 # Upgrade mvm to the latest version
 mvm upgrade
 ```
 
-8. `mvm config`——View or set configuration
+9. `mvm config`——View or set configuration
 ```bash
 # View current configuration
 mvm config

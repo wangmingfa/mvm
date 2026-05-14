@@ -7,7 +7,8 @@ pub enum Command {
   Executor(Array[String])
   Install(Tool, String?)
   Pin(Tool, String)
-  Use(Tool, String)
+  Use(Tool, String?)
+  Unuse(Tool)
   List(Tool?)
   Uninstall(Tool, String?)
   Which(Tool)
@@ -29,7 +30,9 @@ pub impl Show for Command with to_string(s) {
     Install(tool, version) =>
       "Install(\{tool.to_string()}, \{@utils.option_to_string(version)})"
     Pin(tool, version) => "Pin(\{tool.to_string()}, \{version})"
-    Use(tool, version) => "Use(\{tool.to_string()}, \{version})"
+    Use(tool, version) =>
+      "Use(\{tool.to_string()}, \{@utils.option_to_string(version)})"
+    Unuse(tool) => "Unuse(\{tool.to_string()})"
     List(Some(tool)) => "List(\{tool.to_string()})"
     List(None) => "List(All)"
     Uninstall(tool, version) =>
@@ -64,12 +67,7 @@ fn Command::new_with_version(
       }
       Pin(t, version)
     }
-    "use" => {
-      guard version is Some(version) else {
-        raise fail("use参数无效。示例：mvm use node@20")
-      }
-      Use(t, version)
-    }
+    "use" => Use(t, version)
     "uninstall" => Uninstall(t, version)
     _ => raise fail("无效的命令类型：\{command_type}")
   }
@@ -103,6 +101,13 @@ pub fn get_command(argv : ArrayView[String]) -> Command raise {
       parse_with_version("install", options)
     ["pin", options] => parse_with_version("pin", options)
     ["use", options] => parse_with_version("use", options)
+    ["unuse"] =>
+      raise fail("请指定要移除的工具。示例：mvm unuse node")
+    ["unuse", tool] => Unuse(Tool::from_string(tool))
+    ["unuse", ..] =>
+      raise fail(
+        "unuse 命令只接受一个工具参数。示例：mvm unuse node",
+      )
     ["uninstall", options] | ["un", options] =>
       parse_with_version("uninstall", options)
     ["which"] =>

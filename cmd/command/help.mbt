@@ -10,7 +10,9 @@ pub fn run_help() -> Unit {
   println("")
   println("命令:")
   println("  install, i    安装指定版本        mvm install node@20")
-  println("  use           设置全局版本        mvm use node@20")
+  println(
+    "  use           设置全局版本        mvm use node@20 / mvm use node",
+  )
   println("  pin           项目级版本锁定      mvm pin node@20")
   println("  uninstall, un 卸载指定版本        mvm uninstall node@18")
   println("  list, ls      查看已安装版本      mvm list node")
@@ -18,6 +20,7 @@ pub fn run_help() -> Unit {
   println(
     "  run           临时运行指定版本    mvm run node@18 -- node -v",
   )
+  println("  unuse         移除全局版本设置    mvm unuse node")
   println("  setup         初始化工具脚本和PATH  mvm setup [-p]")
   println("  upgrade       升级 mvm 自身       mvm upgrade")
   println("  cache clean   清理缓存            mvm cache clean")

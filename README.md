@@ -62,11 +62,24 @@ mvm install go@1.23
 
 2. `mvm use`——设置全局版本
 ```bash
+# 指定版本
 mvm use node@20
 mvm use node@20.18.0
+
+# 不指定版本，自动使用最新版
+mvm use node
+mvm use bun
+mvm use go
 ```
 
-3. `mvm pin`——项目级版本锁定（强烈推荐）
+3. `mvm unuse`——移除全局版本设置
+```bash
+mvm unuse node
+mvm unuse bun
+mvm unuse go
+```
+
+4. `mvm pin`——项目级版本锁定（强烈推荐）
 ```bash
 # 进入项目目录
 cd my-project
@@ -76,7 +89,7 @@ mvm pin zig@0.15.2
 mvm pin go@1.23.4
 ```
 
-4. `mvm list`——查看版本
+5. `mvm list`——查看版本
 ```bash
 # 查看所有
 mvm list
@@ -87,14 +100,14 @@ mvm list bun
 mvm list go
 ```
 
-5. `mvm uninstall`——卸载版本
+6. `mvm uninstall`——卸载版本
 ```bash
 mvm uninstall node@18.17.0
 mvm uninstall zig@0.12.0
 mvm uninstall go@1.21.0
 ```
 
-6. `mvm which`——查看工具可执行文件路径
+7. `mvm which`——查看工具可执行文件路径
 ```bash
 # 查看当前使用的 node 的实际路径
 mvm which node
@@ -103,18 +116,18 @@ mvm which zig
 mvm which go
 ```
 
-7. `mvm setup`——初始化工具脚本和 PATH
+8. `mvm setup`——初始化工具脚本和 PATH
 ```bash
 mvm setup
 ```
 
-8. `mvm upgrade`——升级 mvm 自身
+9. `mvm upgrade`——升级 mvm 自身
 ```bash
 # 升级 mvm 到最新版本
 mvm upgrade
 ```
 
-9. `mvm config`——查看/设置配置
+10. `mvm config`——查看/设置配置
 ```bash
 # 查看当前配置
 mvm config list

@@ -574,6 +574,29 @@ pub async fn write_global_config(tool : Tool, version : String) -> String {
 }
 
 ///|
+/// 移除全局配置中指定工具的版本
+pub async fn remove_global_config(tool : Tool) -> String {
+  let config_file_path = get_global_config_path()
+  if !@fs.exists(config_file_path) {
+    raise fail("\{tool} 未设置全局版本")
+  }
+  let json = @fs.read_file(config_file_path).json() catch {
+    _ => raise fail("文件 \{config_file_path} 不是有效的json格式")
+  }
+  guard json is Object(map) else {
+    raise fail("文件 \{config_file_path} 格式不对")
+  }
+  let key = tool.to_string()
+  if !map.contains(key) {
+    raise fail("\{tool} 未设置全局版本")
+  }
+  map.remove(key)
+  let content = Json::object(map).stringify(indent=2)
+  @fs.write_file(config_file_path, content, create_mode=CreateOrTruncate)
+  config_file_path
+}
+
+///|
 pub struct ToolExe {
   tool : Tool
   // 工具的可执行文件路径

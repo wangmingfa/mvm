@@ -1,6 +1,7 @@
 ///|
-/// 执行临时切换命令
-pub async fn run_use(tool : @tools.Tool, version : String) -> Unit {
+/// 执行全局版本设置命令
+pub async fn run_use(tool : @tools.Tool, version : String?) -> Unit {
+  let version = if version is Some(version) { version } else { "" }
   let os = @os.get_os_info()
   let version = @tools.get_target_version(os, tool, version)
 

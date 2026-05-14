@@ -5,6 +5,7 @@ using @tool_def {type Node, type Bun, type Zig, type Go, type ToolExe}
 pub using @tool_def {
   type Tool,
   write_global_config,
+  remove_global_config,
   write_project_config,
   mvm_home,
   is_installed,

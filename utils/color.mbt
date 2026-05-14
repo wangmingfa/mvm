@@ -17,7 +17,11 @@ const RESET = "\u{001B}[0m"
 /// 用指定颜色包裹文本，自动处理嵌套颜色（内层颜色结束后自动恢复外层颜色）
 pub fn[T : ToStr] styled(color : String, msg : T) -> String {
   let content = msg.to_str()
-  let patched = content.replace(old=RESET, new=color)
+  let patched = content
+    .split(RESET)
+    .map(fn(v) { v.to_owned() })
+    .collect()
+    .join(color)
   "\{color}\{patched}\{RESET}"
 }
 
@@ -46,6 +50,23 @@ pub fn[T : ToStr] blue(msg : T) -> String {
 }
 
 ///|
+pub fn to_debug_string(msg : String) -> String {
+  let mut result = msg
+  for
+    item in [
+      (RED, "RED"),
+      (GREEN, "GREEN"),
+      (YELLOW, "YELLOW"),
+      (BLUE, "BLUE"),
+      (RESET, "RESET"),
+    ] {
+    let (color, str) = item
+    result = result.replace_all(old=color, new="<\{str}>")
+  }
+  to_repr(result).to_string()
+}
+
+///|
 test "red" {
   println(red("这是红色文字"))
 }
@@ -68,7 +89,11 @@ test "blue" {
 ///|
 /// 嵌套颜色：红色文字中插入蓝色，后面的文字自动保持红色
 test "nested color" {
-  println(red("红色开头" + blue("蓝色中间") + "红色结尾"))
+  let msg = red(
+    "红色1" + blue("蓝色1") + "红色2" + blue("蓝色2") + "红色3",
+  )
+  println(msg)
+  println(to_debug_string(msg))
 }
 
 ///|
