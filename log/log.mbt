@@ -1,5 +1,5 @@
 ///|
-using @utils {red, green, yellow}
+using @utils {red, green, yellow, trait ToStr}
 
 ///|
 let log_line_count : Ref[Int] = Ref(0)
@@ -17,13 +17,13 @@ pub fn add_log_lines_by_content(content : String) -> Int {
 }
 
 ///|
-fn[T : Debug] log(prefix : String, loc? : String = "", msg : T) -> Unit {
+fn[T : ToStr] log(prefix : String, loc? : String = "", msg : T) -> Unit {
   let time = @utils.get_date_str() catch { _ => "" }
   let prefix = if prefix.is_blank() { prefix } else { "[\{prefix}]" }
   // 右边补齐空格，确保日志内容左侧对齐
   let pad_right = " ".repeat(7 - prefix.length())
   let prefix = "\{prefix}\{pad_right}"
-  let msg_str = @utils.debug_to_string(msg)
+  let msg_str = msg.to_str()
   let arr = if is_debug() || is_debug_log_level() {
     // 只有debug模式，或者开了debug日志时，才显示日志时间、日志类型，以及代码位置
     [time, prefix, loc, msg_str]
@@ -77,13 +77,13 @@ fn get_loc_msg(loc : SourceLoc) -> String {
 
 ///|
 #callsite(autofill(loc))
-pub fn[T : Debug] success(msg : T, loc~ : SourceLoc) -> Unit {
+pub fn[T : ToStr] success(msg : T, loc~ : SourceLoc) -> Unit {
   log("INFO", loc=get_loc_msg(loc), green(msg))
 }
 
 ///|
 #callsite(autofill(loc))
-pub fn[T : Debug] error(msg : T, loc~ : SourceLoc) -> Unit {
+pub fn[T : ToStr] error(msg : T, loc~ : SourceLoc) -> Unit {
   if match_log_level(Error) {
     log("ERROR", loc=get_loc_msg(loc), red(msg))
   }
@@ -91,7 +91,7 @@ pub fn[T : Debug] error(msg : T, loc~ : SourceLoc) -> Unit {
 
 ///|
 #callsite(autofill(loc))
-pub fn[T : Debug] warn(msg : T, loc~ : SourceLoc) -> Unit {
+pub fn[T : ToStr] warn(msg : T, loc~ : SourceLoc) -> Unit {
   if match_log_level(Warn) {
     log("WARN", loc=get_loc_msg(loc), yellow(msg))
   }
@@ -99,7 +99,7 @@ pub fn[T : Debug] warn(msg : T, loc~ : SourceLoc) -> Unit {
 
 ///|
 #callsite(autofill(loc))
-pub fn[T : Debug] info(msg : T, loc~ : SourceLoc) -> Unit {
+pub fn[T : ToStr] info(msg : T, loc~ : SourceLoc) -> Unit {
   if match_log_level(Info) {
     log("INFO", loc=get_loc_msg(loc), msg)
   }
@@ -107,7 +107,7 @@ pub fn[T : Debug] info(msg : T, loc~ : SourceLoc) -> Unit {
 
 ///|
 #callsite(autofill(loc))
-pub fn[T : Debug] debug(msg : T, loc~ : SourceLoc) -> Unit {
+pub fn[T : ToStr] debug(msg : T, loc~ : SourceLoc) -> Unit {
   if match_log_level(Debug) {
     log("DEBUG", loc=get_loc_msg(loc), msg)
   }

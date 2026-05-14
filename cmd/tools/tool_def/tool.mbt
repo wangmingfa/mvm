@@ -113,18 +113,7 @@ pub(all) enum Tool {
 } derive(Debug)
 
 ///|
-pub fn Tool::installable_tools() -> Array[Tool] {
-  [Node, Npm, Bun, Zig, Go]
-}
-
-///|
-/// 所有工具列表（包含 Node 内置工具），用于创建 wrapper 脚本
-pub fn Tool::all_tools() -> Array[Tool] {
-  [Node, Npm, Npx, Corepack, Bun, Zig, Go]
-}
-
-///|
-pub impl Show for Tool with to_string(s) {
+pub impl @utils.ToStr for Tool with to_str(s) {
   match s {
     Node => "node"
     Npm => "npm"
@@ -137,8 +126,19 @@ pub impl Show for Tool with to_string(s) {
 }
 
 ///|
+pub fn Tool::installable_tools() -> Array[Tool] {
+  [Node, Npm, Bun, Zig, Go]
+}
+
+///|
+/// 所有工具列表（包含 Node 内置工具），用于创建 wrapper 脚本
+pub fn Tool::all_tools() -> Array[Tool] {
+  [Node, Npm, Npx, Corepack, Bun, Zig, Go]
+}
+
+///|
 pub impl Show for Tool with output(s, logger) {
-  logger.write_string(s.to_string())
+  logger.write_string(s.to_str())
 }
 
 ///|

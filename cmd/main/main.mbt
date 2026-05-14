@@ -7,7 +7,8 @@ async fn main {
     raise fail("无法获取当前目录")
   }
   let args = @env.args()
-  @log.debug("运行: \{@utils.yellow(args)}")
+  let arg_str = @utils.yellow(args)
+  @log.debug("运行: \{arg_str}")
   try {
     let command = get_command(args[1:])
     run(command)
