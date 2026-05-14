@@ -12,6 +12,7 @@ pub enum Command {
   List(Tool?)
   Uninstall(Tool, String?)
   Which(Tool)
+  Current(Tool?)
   Run(Tool, String, Array[String])
   CacheClean
   ConfigList
@@ -38,6 +39,8 @@ pub impl Show for Command with to_string(s) {
     Uninstall(tool, version) =>
       "Uninstall(\{tool.to_string()}, \{@utils.option_to_string(version)})"
     Which(tool) => "Which(\{tool.to_string()})"
+    Current(Some(tool)) => "Current(\{tool.to_string()})"
+    Current(None) => "Current(All)"
     Run(tool, version, args) =>
       "Run(\{tool.to_string()}, \{version}, \{to_repr(args)})"
     CacheClean => "CacheClean"
@@ -116,6 +119,12 @@ pub fn get_command(argv : ArrayView[String]) -> Command raise {
     ["which", ..] =>
       raise fail(
         "which 命令只接受一个工具参数。示例：mvm which node",
+      )
+    ["current"] => Current(None)
+    ["current", tool] => Current(Some(Tool::from_string(tool)))
+    ["current", ..] =>
+      raise fail(
+        "current 命令只接受一个工具参数。示例：mvm current node",
       )
     ["run"] =>
       raise fail(

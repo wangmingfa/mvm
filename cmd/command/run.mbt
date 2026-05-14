@@ -25,6 +25,7 @@ pub async fn run(command : Command) -> Unit {
     List(tool_opt) => run_list(tool_opt)
     Uninstall(tool, version) => run_uninstall(tool, version)
     Which(tool) => run_which(tool)
+    Current(tool_opt) => run_current(tool_opt)
     Run(tool, version, args) => run_run(tool, version, args)
     CacheClean => run_cache_clean()
     ConfigList => run_config()

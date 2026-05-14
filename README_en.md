@@ -113,14 +113,25 @@ mvm list bun
 mvm list go
 ```
 
-6. `mvm uninstall`——Uninstall a version
+6. `mvm current`——Show currently active version
+```bash
+# Show all tools' current versions
+mvm current
+
+# Show specific tool's current version
+mvm current node
+mvm current bun
+mvm current go
+```
+
+7. `mvm uninstall`——Uninstall a version
 ```bash
 mvm uninstall node@18.17.0
 mvm uninstall zig@0.12.0
 mvm uninstall go@1.21.0
 ```
 
-7. `mvm which`——View tool executable path
+8. `mvm which`——View tool executable path
 ```bash
 mvm which node
 mvm which bun
@@ -128,7 +139,7 @@ mvm which zig
 mvm which go
 ```
 
-8. `mvm run`——Temporarily run with a specific version
+9. `mvm run`——Temporarily run with a specific version
 ```bash
 # Run a command with a specific version
 mvm run node@18 -- node -v
@@ -140,18 +151,18 @@ mvm run node -- npm -v
 mvm run bun -- bun run dev
 ```
 
-9. `mvm setup`——Initialize tool scripts and PATH
+10. `mvm setup`——Initialize tool scripts and PATH
 ```bash
 mvm setup
 ```
 
-10. `mvm upgrade`——Upgrade mvm itself
+11. `mvm upgrade`——Upgrade mvm itself
 ```bash
 # Upgrade mvm to the latest version
 mvm upgrade
 ```
 
-11. `mvm config`——View or set configuration
+12. `mvm config`——View or set configuration
 ```bash
 # View current configuration
 mvm config
