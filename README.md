@@ -29,13 +29,13 @@ mvm 是一款现代化的多语言版本管理工具，支持 Node.js、Bun、Zi
 
 **macOS / Linux**
 ```bash
-curl -fsSL https://raw.githubusercontent.com/wangmingfa/mvm/main/install.sh | bash -s -- --online
+curl -fsSL https://raw.githubusercontent.com/wangmingfa/mvm/main/scripts/install_online.sh | bash
 ```
 
 **Windows（PowerShell）**
 
 ```powershell
-& ([scriptblock]::Create((irm https://raw.githubusercontent.com/wangmingfa/mvm/main/install.ps1))) --online
+powershell -c "irm https://raw.githubusercontent.com/wangmingfa/mvm/main/scripts/install_online.ps1|iex"
 ```
 
 > **提示：** 如果脚本执行时遇到中文乱码导致报错，请按照 [此文档](https://wangmingfa.github.io/docs/#/windows/powershell/garbled-text) 进行操作。
@@ -205,11 +205,11 @@ mvm 兼容 Volta 的项目配置。如果项目目录下存在 Volta 的 `packag
 # 等同生产：mvm install node@20
 moon run cmd/main install node@20
 # 调试模式运行，等同生产：mvm install node
-MVM_LOG_LEVEL=debug ./debug.sh install node
+MVM_LOG_LEVEL=debug ./scripts/debug.sh install node
 ```
 
 ```powershell
-$env:MVM_LOG_LEVEL="debug"; ./debug.ps1 install node
+$env:MVM_LOG_LEVEL="debug"; ./scripts/debug.ps1 install node
 ```
 
 2. 本地构建产物测试
@@ -217,27 +217,27 @@ $env:MVM_LOG_LEVEL="debug"; ./debug.ps1 install node
 # 安装mvm，会自动将构建产物拷贝到$MVM_HOME
 # 默认情况下，为了不与本地已经安装好的node、bun、npm、zig等冲突，会增加f_前缀。
 # 比如: f_node -v
-./install.sh
+./scripts/install.sh
 # 不需要前缀
-./install.sh -np
+./scripts/install.sh -np
 ```
 
 3. 发布新版本
 ```bash
 # 交互模式（上下键选择版本类型）
-./bump-tag.sh
+./scripts/bump-tag.sh
 
 # 自动模式（默认 patch）
-./bump-tag.sh -y
+./scripts/bump-tag.sh -y
 
 # 直接指定版本类型
-./bump-tag.sh major
-./bump-tag.sh minor
-./bump-tag.sh patch
+./scripts/bump-tag.sh major
+./scripts/bump-tag.sh minor
+./scripts/bump-tag.sh patch
 
 # 删除并重新发布当前 tag（用于更新已发布的 tag）
-./bump-tag.sh -d
-./bump-tag.sh -yd  # 自动模式
+./scripts/bump-tag.sh -d
+./scripts/bump-tag.sh -yd  # 自动模式
 ```
 
 ## Skills 子模块

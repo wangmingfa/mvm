@@ -29,13 +29,13 @@ Simple, unified, and blazing fast —— that's mvm.
 
 **macOS / Linux**
 ```bash
-curl -fsSL https://raw.githubusercontent.com/wangmingfa/mvm/main/install.sh | bash -s -- --online
+curl -fsSL https://raw.githubusercontent.com/wangmingfa/mvm/main/scripts/install_online.sh | bash
 ```
 
 **Windows (PowerShell)**
 
 ```powershell
-& ([scriptblock]::Create((irm https://raw.githubusercontent.com/wangmingfa/mvm/main/install.ps1))) --online
+powershell -c "irm https://raw.githubusercontent.com/wangmingfa/mvm/main/scripts/install_online.ps1|iex"
 ```
 
 > **Note:** If you encounter garbled Chinese characters causing errors, follow [this guide](https://wangmingfa.github.io/docs/#/windows/powershell/garbled-text) to fix it.
@@ -205,11 +205,11 @@ mvm is compatible with Volta's project configuration. If a Volta `package.json` 
 # Equivalent to production: mvm install node@20
 moon run cmd/main install node@20
 # Debug mode, equivalent to production: mvm install node
-MVM_LOG_LEVEL=debug ./debug.sh install node
+MVM_LOG_LEVEL=debug ./scripts/debug.sh install node
 ```
 
 ```powershell
-$env:MVM_LOG_LEVEL="debug"; ./debug.ps1 install node
+$env:MVM_LOG_LEVEL="debug"; ./scripts/debug.ps1 install node
 ```
 
 2. Test local build
@@ -217,27 +217,27 @@ $env:MVM_LOG_LEVEL="debug"; ./debug.ps1 install node
 # Install mvm, automatically copies build artifacts to $MVM_HOME
 # By default, to avoid conflicts with locally installed node, bun, npm, zig, etc., a f_ prefix is added.
 # Example: f_node -v
-./install.sh
+./scripts/install.sh
 # Without prefix
-./install.sh -np
+./scripts/install.sh -np
 ```
 
 3. Release new version
 ```bash
 # Interactive mode (up/down keys to select version type)
-./bump-tag.sh
+./scripts/bump-tag.sh
 
 # Auto mode (default patch)
-./bump-tag.sh -y
+./scripts/bump-tag.sh -y
 
 # Specify version type directly
-./bump-tag.sh major
-./bump-tag.sh minor
-./bump-tag.sh patch
+./scripts/bump-tag.sh major
+./scripts/bump-tag.sh minor
+./scripts/bump-tag.sh patch
 
 # Delete and re-release current tag (to update an existing tag)
-./bump-tag.sh -d
-./bump-tag.sh -yd  # auto mode
+./scripts/bump-tag.sh -d
+./scripts/bump-tag.sh -yd  # auto mode
 ```
 
 ## Skills Submodule
