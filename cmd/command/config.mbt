@@ -83,7 +83,14 @@ pub async fn run_config_set(key : String, value : String) -> Unit {
       println("设置 logo = \{label}")
     }
     _ => {
-      println("错误: 不支持的配置项: \{key}")
+      println(
+        @utils.colored_spans([
+          (Red, "错误: "),
+          (Yellow, "不支持的配置项 "),
+          (Cyan, key),
+        ]),
+      )
+      // println(@utils.red("错误: 不支持的配置项 \{@utils.yellow(key)}"))
       println("支持的配置项:")
       println("  logo - 是否显示启动 logo（true/false）")
       println("  github_proxy - GitHub 代理地址")

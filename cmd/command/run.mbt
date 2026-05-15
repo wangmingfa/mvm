@@ -4,10 +4,9 @@ fn should_print_logo(command : Command, config : @tools.GlobalConfig) -> Bool {
   // Executor 和 Run 是工具直接调用，不需要打印 logo
   match command {
     Executor(_) | Run(_, _, _) => false
-    _ => {
+    _ =>
       // config.logo 为 Some(false) 时隐藏 logo，其他情况（None 或 Some(true））显示
       config.logo != Some(false)
-    }
   }
 }
 

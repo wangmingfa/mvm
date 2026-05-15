@@ -1,20 +1,28 @@
 ///|
-const RED = "\u{001B}[31m"
-
-///|
-const GREEN = "\u{001B}[32m"
-
-///|
-const YELLOW = "\u{001B}[33m"
-
-///|
-const BLUE = "\u{001B}[34m"
-
-///|
+/// 重置
 const RESET = "\u{001B}[0m"
 
 ///|
-const CYAN = "\u{001B}[36m"
+pub(all) enum Color {
+  Default
+  Red
+  Green
+  Yellow
+  Blue
+  Cyan
+}
+
+///|
+fn Color::to_cololr_str(self : Self) -> String {
+  match self {
+    Default => ""
+    Red => "\u{001B}[31m"
+    Green => "\u{001B}[32m"
+    Yellow => "\u{001B}[33m"
+    Blue => "\u{001B}[34m"
+    Cyan => "\u{001B}[36m"
+  }
+}
 
 ///|
 /// MVM logo
@@ -29,12 +37,13 @@ const LOGO =
 ///|
 /// 打印 MVM logo
 pub fn print_logo() -> Unit {
-  println(styled(CYAN, LOGO))
+  println(styled(Cyan, LOGO))
 }
 
 ///|
 /// 用指定颜色包裹文本，自动处理嵌套颜色（内层颜色结束后自动恢复外层颜色）
-pub fn[T : ToStr] styled(color : String, msg : T) -> String {
+pub fn[T : ToStr] styled(color : Color, msg : T) -> String {
+  let color = color.to_cololr_str()
   let content = msg.to_str()
   let patched = content
     .split(RESET)
@@ -46,63 +55,92 @@ pub fn[T : ToStr] styled(color : String, msg : T) -> String {
 
 ///|
 /// 红色文字
+pub fn[T : ToStr] default(msg : T) -> String {
+  styled(Default, msg)
+}
+
+///|
 pub fn[T : ToStr] red(msg : T) -> String {
-  styled(RED, msg)
+  styled(Red, msg)
 }
 
 ///|
 /// 绿色文字
 pub fn[T : ToStr] green(msg : T) -> String {
-  styled(GREEN, msg)
+  styled(Green, msg)
 }
 
 ///|
 /// 黄色文字
 pub fn[T : ToStr] yellow(msg : T) -> String {
-  styled(YELLOW, msg)
+  styled(Yellow, msg)
 }
 
 ///|
 /// 蓝色文字
 pub fn[T : ToStr] blue(msg : T) -> String {
-  styled(BLUE, msg)
+  styled(Blue, msg)
+}
+
+///|
+/// 青色文字
+pub fn[T : ToStr] cyan(msg : T) -> String {
+  styled(Cyan, msg)
+}
+
+///|
+/// 带颜色的文本片段列表
+/// 适合在一次打印中，拼接多个带颜色文本
+pub fn[T : ToStr] colored_spans(
+  spans : Array[(Color, T)],
+  joiner? : String = "",
+) -> String {
+  spans
+  .map(span => {
+    let (color, msg) = span
+    styled(color, msg)
+  })
+  .join(joiner)
 }
 
 ///|
 pub fn to_debug_string(msg : String) -> String {
   let mut result = msg
   for
-    item in [
-      (RED, "RED"),
-      (GREEN, "GREEN"),
-      (YELLOW, "YELLOW"),
-      (BLUE, "BLUE"),
-      (RESET, "RESET"),
-    ] {
+    item in [(Red, "RED"), (Green, "GREEN"), (Yellow, "YELLOW"), (Blue, "BLUE")] {
     let (color, str) = item
+    let color = color.to_cololr_str()
     result = result.replace_all(old=color, new="<\{str}>")
   }
+  result = result.replace_all(old=RESET, new="<RESET>")
   to_repr(result).to_string()
 }
 
 ///|
-test "red" {
+test "color" {
+  println(default("这是默认颜色文字"))
   println(red("这是红色文字"))
-}
-
-///|
-test "green" {
   println(green("这是绿色文字"))
-}
-
-///|
-test "yellow" {
   println(yellow("这是黄色文字"))
-}
-
-///|
-test "blue" {
   println(blue("这是蓝色文字"))
+  println(cyan("这是青色文字"))
+  println(default("这是默认颜色文字"))
+  let spans = [
+    (Red, "红色1"),
+    (Default, "默认颜色1"),
+    (Red, "红色2"),
+    (Green, "绿色1"),
+    (Blue, "蓝色1"),
+    (Green, "绿色2"),
+    (Green, "绿色3"),
+    (Blue, "蓝色2"),
+    (Cyan, "青色1"),
+    (Red, "红色"),
+    (Default, "默认颜色2"),
+  ]
+  println(colored_spans(spans))
+  println(colored_spans(spans, joiner=" | "))
+  println(colored_spans(spans, joiner="\n"))
 }
 
 ///|
