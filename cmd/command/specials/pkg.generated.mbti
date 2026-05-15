@@ -6,8 +6,6 @@ pub async fn after_npm_command(Map[String, String]?, String, ArrayView[String]) 
 
 pub async fn before_npm_command(String, ArrayView[String]) -> Map[String, String]?
 
-pub fn run_3rd_party_executor(StringView, ArrayView[String]) -> Unit raise
-
 // Errors
 
 // Types and methods

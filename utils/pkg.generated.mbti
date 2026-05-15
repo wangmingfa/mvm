@@ -6,9 +6,19 @@ import {
 }
 
 // Values
-pub fn[T : Show] blue(T) -> String
+pub fn[T : Show] array_to_string(Array[T]) -> String
+
+pub fn[T : ToStr] blue(T) -> String
+
+pub fn[T : ToStr] colored_spans(Array[(Color, T)], joiner? : String) -> String
 
 pub fn compare_version(String, String) -> Int raise
+
+pub fn[T : ToStr] cyan(T) -> String
+
+pub fn[T : ToStr] default(T) -> String
+
+pub fn display_width(String) -> Int
 
 pub fn get_date(milliseconds? : Int64) -> @time.PlainDateTime raise
 
@@ -24,23 +34,45 @@ pub fn get_readable_time(Int64) -> String
 
 pub fn get_speed_with_readable_unit(Int64, Int64) -> (String, Int64)
 
-pub fn[T : Show] green(T) -> String
+pub fn[T : ToStr] green(T) -> String
 
 pub fn[T : Show] option_to_string(T?) -> String
 
+pub fn pad_right(String, Int) -> String
+
 pub fn parse_version(String) -> FixedArray[Int] raise
 
-pub fn[T : Show] red(T) -> String
+pub fn print_logo() -> Unit
 
-pub fn[T : Show] styled(String, T) -> String
+pub fn[T : ToStr] red(T) -> String
 
-pub fn[T : Show] yellow(T) -> String
+pub fn[T : Show] show_to_string(T) -> String
+
+pub fn[T : ToStr] styled(Color, T) -> String
+
+pub fn to_debug_string(String) -> String
+
+pub fn[T : ToStr] yellow(T) -> String
 
 // Errors
 
 // Types and methods
+pub(all) enum Color {
+  Default
+  Red
+  Green
+  Yellow
+  Blue
+  Cyan
+}
 
 // Type aliases
 
 // Traits
+pub(open) trait ToStr {
+  to_str(Self) -> String
+}
+pub impl ToStr for String
+pub impl[T : ToStr] ToStr for Array[T]
+pub impl ToStr for StringView
 

@@ -48,6 +48,8 @@ pub fn run_help() -> Unit {
   let options = [
     ("--help, -h", "显示帮助信息"),
     ("--version, -v", "显示版本号"),
+    ("--skip-verify", "跳过 SHA256 校验（安装时使用）"),
+    ("--no-cache", "不使用缓存，强制重新下载（安装时使用）"),
   ]
   let mut max_opt_w = 0
   for opt_item in options {
@@ -66,6 +68,8 @@ pub fn run_help() -> Unit {
   println("示例:")
   let examples = [
     ("mvm install node@lts", "安装 Node.js LTS 版本"),
+    ("mvm install bun@1 --skip-verify", "跳过校验安装 Bun"),
+    ("mvm install node@20 --no-cache", "不使用缓存重新安装 Node.js"),
     ("mvm pin node@20.18.0", "在项目中锁定 Node.js 版本"),
     ("mvm config set china", "一键配置中国大陆镜像"),
     ("mvm config set logo false", "关闭启动 logo 显示"),

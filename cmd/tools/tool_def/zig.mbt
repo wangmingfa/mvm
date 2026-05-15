@@ -26,7 +26,9 @@ pub async fn Zig::get_target_version(
     ZIG_INDEX_CACHE_FILE,
     ZIG_INDEX_URL,
     "Zig",
-    os, version, version_count,
+    os,
+    version,
+    version_count,
     Zig::_get_proper_version,
   )
 }
@@ -120,10 +122,13 @@ fn Zig::_check_os_compatiable(
 }
 
 ///|
-pub fn Zig::get_download_url(
+
+///|
+/// 获取 Zig 的下载信息（URL 和 headers）
+pub fn Zig::get_download_info(
   os_info : @os.OsInfo,
   version : String,
-) -> String raise {
+) -> DownloadInfo raise {
   let version_release_key = Zig::_get_version_release_key()
   let ext = match os_info.name {
     Windows => "zip"
@@ -131,7 +136,70 @@ pub fn Zig::get_download_url(
     MacOS => "tar.xz"
     name => raise fail("不支持的操作系统：\{name}")
   }
-  "\{ZIG_RELEASE_URL}/\{version}/zig-\{version_release_key}-\{version}.\{ext}"
+  let url = "\{ZIG_RELEASE_URL}/\{version}/zig-\{version_release_key}-\{version}.\{ext}"
+  { url, headers: {}, root_path_depth: 1 }
+}
+
+///|
+/// 获取 Zig 的预期 SHA256 校验值
+/// 从缓存的 zig_index.json 中提取对应平台版本的 shasum 字段
+pub async fn Zig::get_expected_checksum(
+  os_info : @os.OsInfo,
+  version : String,
+) -> String? {
+  // 构建平台键（如 "x86_64-macos"）
+  let version_release_key = [
+    match os_info.arch {
+      Aarch64 => "aarch64"
+      X86_64 => "x86_64"
+      X86 => "x86"
+      _ => return None
+    },
+    match os_info.name {
+      Windows => "windows"
+      MacOS => "macos"
+      Linux => "linux"
+      _ => return None
+    },
+  ].join("-")
+
+  // 从缓存读取索引 JSON
+  let cached_content = read_cache_file_content(ZIG_INDEX_CACHE_FILE)
+  guard cached_content is Some(content) else {
+    @log.warn("Zig 索引缓存不存在，无法获取校验值")
+    return None
+  }
+  let json = @json.parse(content) catch {
+    _ => {
+      @log.warn("Zig 索引缓存格式错误，无法获取校验值")
+      return None
+    }
+  }
+  guard json is Object(map) else { return None }
+
+  // 查找版本对应的 JSON 值
+  guard map.get(version) is Some(version_json) else {
+    @log.warn("Zig 版本 \{version} 不在索引中，无法获取校验值")
+    return None
+  }
+  guard version_json is Object(version_map) else { return None }
+
+  // 查找平台键对应的 shasum
+  guard version_map.get(version_release_key) is Some(platform_json) else {
+    @log.warn(
+      "Zig 版本 \{version} 不包含 \{version_release_key} 平台信息，无法获取校验值",
+    )
+    return None
+  }
+  guard platform_json is Object(platform_map) else { return None }
+
+  match platform_map.get("shasum") {
+    Some(String(hash)) => Some(hash)
+    _ => {
+      @log.warn("Zig \{version}/\{version_release_key} 缺少 shasum 字段")
+      None
+    }
+  }
 }
 
 ///|

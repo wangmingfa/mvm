@@ -58,7 +58,7 @@ pub async fn run_run(
   // 检查是否已安装，未安装则自动安装
   if !@tools.is_installed(tool, target_version) {
     @log.info("\{tool}@\{target_version} 未安装，正在自动安装...")
-    run_install(tool, Some(target_version))
+    run_install(tool, Some(target_version), false, false)
   }
 
   // 获取可执行文件路径
@@ -122,5 +122,30 @@ pub async fn run_run(
     // 运行成功之后的处理
     // 比如使用npm安装了全局包
     after_run(before_run_result, exec_tool, exec_program_path, exec_args)
+  }
+}
+
+///|
+async fn before_run(
+  exec_tool : @tools.Tool,
+  exec_program_path : String,
+  exec_args : ArrayView[String],
+) -> Map[String, String]? {
+  match exec_tool {
+    Node => @specials.before_npm_command(exec_program_path, exec_args)
+    _ => None
+  }
+}
+
+///|
+async fn after_run(
+  before_run_result : Map[String, String]?,
+  exec_tool : @tools.Tool,
+  exec_program_path : String,
+  exec_args : ArrayView[String],
+) -> Unit {
+  match exec_tool {
+    Node => @specials.after_npm_command(before_run_result, exec_program_path, exec_args)
+    _ => ()
   }
 }

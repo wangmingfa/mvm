@@ -5,22 +5,29 @@ import {
   "moonbitlang/core/debug",
   "moonbitlang/core/json",
   "username/mvm/os",
+  "username/mvm/utils",
 }
 
 // Values
+pub const NPM_PKG : String = "npm-pkg"
+
 pub fn apply_global_config(String, GlobalConfig, UrlReplaceContext) -> String
 
 pub fn cache_dir() -> String raise
+
+pub fn format_os_compat_error(String, String, @os.OsInfo) -> String
 
 pub async fn get_config(tool? : Tool, dir? : String, search_upwards? : Bool, fallback_to_global_config? : Bool) -> (String, Config)?
 
 pub async fn get_global_config() -> (String, GlobalConfig)
 
+pub async fn get_target_version_with_cache(String, String, String, @os.OsInfo, String, Int, (@os.OsInfo, String, Int, Json) -> String raise, headers? : Map[String, String]) -> String
+
 pub async fn installed_versions(Tool) -> Array[String]
 
 pub async fn is_installed(Tool, String) -> Bool
 
-pub fn make_global_config(String?, String?) -> GlobalConfig
+pub fn make_global_config(existing_config? : GlobalConfig, logo? : Bool?, github_proxy? : String?, node_mirror? : String?, go_mirror? : String?) -> GlobalConfig
 
 pub fn mvm_bin_home() -> String raise
 
@@ -29,6 +36,8 @@ pub fn mvm_home() -> String raise
 pub fn mvm_npm_pkg_home() -> String raise
 
 pub async fn read_cache_file_content(String) -> String?
+
+pub async fn remove_global_config(Tool) -> String
 
 pub fn replace_url(String, UrlReplaceContext) -> String
 
@@ -65,27 +74,49 @@ pub struct Config {
   node : String?
   bun : String?
   zig : String?
-} derive(ToJson, @json.FromJson)
+  go : String?
+} derive(ToJson, @debug.Debug, @json.FromJson)
 pub fn Config::get_value(Self, Tool) -> String? raise
 
-pub struct GlobalConfig {
+pub(all) struct GlobalConfig {
+  logo : Bool?
   github_proxy : String?
   node_mirror : String?
+  go_mirror : String?
 } derive(ToJson, @json.FromJson)
+pub fn GlobalConfig::to_string(Self, indent? : Int) -> String
+
+pub struct Go {
+}
+pub fn Go::get_download_url(@os.OsInfo, String) -> String raise
+pub fn Go::get_exe_path(String) -> String raise
+pub async fn Go::get_expected_checksum(@os.OsInfo, String) -> String?
+pub async fn Go::get_target_version(@os.OsInfo, String, Int) -> String
 
 type Node
 pub fn Node::get_download_url(@os.OsInfo, String) -> String raise
 pub fn Node::get_exe_path(String) -> String raise
+pub async fn Node::get_expected_checksum(@os.OsInfo, String) -> String?
 pub async fn Node::get_node_builtin_tool_path_and_version(Tool, ToolExe) -> ToolExe?
 pub fn Node::get_node_dir(String) -> NodeDir raise
+pub async fn Node::get_npm_global_pkg_path_and_version(String, ToolExe) -> NpmPkgExe?
 pub async fn Node::get_target_version(@os.OsInfo, String, Int) -> String
 
 pub struct NodeDir {
   root : String
   lib : String
+  bin : String
 }
+pub fn NodeDir::get_bin_file_path(Self, String) -> String
+pub fn NodeDir::get_pkg_root_dir(Self, String) -> String
+pub fn NodeDir::join_with_bin(Self, ArrayView[String]) -> String
 
 type NodeJsInfo derive(@json.FromJson)
+
+pub struct NpmPkgExe {
+  path : String
+  version : String
+} derive(@debug.Debug)
 
 pub(all) enum Tool {
   Node
@@ -94,11 +125,16 @@ pub(all) enum Tool {
   Corepack
   Bun
   Zig
+  Go
 } derive(@debug.Debug)
+pub fn Tool::all_tools() -> Array[Self]
 pub fn Tool::from_string(String) -> Self raise
+pub fn Tool::from_string_with_option_result(String) -> Self?
+pub fn Tool::get_belonging_tools(Self) -> Self
 pub fn Tool::installable_tools() -> Array[Self]
 pub fn Tool::is_node_builtin_tools(Self) -> Bool
 pub impl Show for Tool
+pub impl @utils.ToStr for Tool
 
 pub struct ToolExe {
   tool : Tool
@@ -123,6 +159,7 @@ pub struct Zig {
 }
 pub fn Zig::get_download_url(@os.OsInfo, String) -> String raise
 pub fn Zig::get_exe_path(String) -> String raise
+pub async fn Zig::get_expected_checksum(@os.OsInfo, String) -> String?
 pub async fn Zig::get_target_version(@os.OsInfo, String, Int) -> String
 
 // Type aliases

@@ -3,7 +3,16 @@ using @fs_ext {ensure_dir}
 
 ///|
 /// 执行安装命令
-pub async fn run_install(tool : @tools.Tool, version : String?) -> Unit {
+/// skip_verify: 是否跳过 SHA256 校验（当无法获取校验值时，默认会中断安装）
+/// no_cache: 是否不使用缓存（跳过索引文件缓存和压缩包缓存，强制重新下载）
+pub async fn run_install(
+  tool : @tools.Tool,
+  version : String?,
+  skip_verify : Bool,
+  no_cache : Bool,
+) -> Unit {
+  // 设置全局 no_cache 模式（影响 read_cache_file_content 等缓存读写）
+  @tools.set_no_cache_mode(no_cache)
   // 如果version为空，则默认为lts
   let version = if version is Some(version) { version } else { "" }
   let os_info = @os.get_os_info()
@@ -28,14 +37,14 @@ pub async fn run_install(tool : @tools.Tool, version : String?) -> Unit {
   // 确保目录存在
   ensure_dir(@tools.tool_dir(tool))
 
-  // 获取下载 URL
-  let (url, root_path_depth) = @tools.get_download_url(os_info, tool, version)
-  if url.is_blank() {
+  // 获取下载信息（URL、headers、目录深度）
+  let download_info = @tools.get_download_info(os_info, tool, version)
+  if download_info.url.is_blank() {
     @log.error("无法获取下载地址")
     return
   }
 
-  // 应用全局配置（如镜像、代理）
+  // 应用全局配置（如镜像、代理）转换 URL
   let (_, config) = @tools.get_global_config()
   let arch_str = if os_info.arch is Aarch64 { "arm64" } else { "x64" }
   let os_str = match os_info.name {
@@ -45,15 +54,19 @@ pub async fn run_install(tool : @tools.Tool, version : String?) -> Unit {
     _ => raise fail("不支持的操作系统")
   }
   let ctx = @tools.UrlReplaceContext::new(
-    url,
+    download_info.url,
     tool.to_string(),
     version,
     os_str,
     arch_str,
   )
-  let url = @tools.apply_global_config(url, config, ctx)
+  let url = @tools.apply_global_config(download_info.url, config, ctx)
+  let headers = download_info.headers
+  let root_path_depth = download_info.root_path_depth
 
-  // 下载文件
+  // 临时文件夹根目录
+  let temp_dir_root = @tools.temp_dir()
+  // 下载文件临时存放目录
   let tmp_dir = "\{@tools.temp_dir()}/tmp-\{tool}-\{version}"
   ensure_dir(tmp_dir)
   let ext = if url.has_suffix(".tar.gz") {
@@ -63,9 +76,55 @@ pub async fn run_install(tool : @tools.Tool, version : String?) -> Unit {
   } else {
     "zip"
   }
-  let archive_file = "\{tmp_dir}/\{tool}-\{version}.\{ext}"
 
-  download_file(url, archive_file)
+  let archive_file_name = "\{tool}-\{version}.\{ext}"
+  // 检查缓存目录是否已有该压缩包，如有则直接复用，无需重新下载
+  // no_cache 模式下跳过压缩包缓存读取，强制重新下载
+  let cached_archive_file = "\{temp_dir_root}/\{archive_file_name}"
+  let archive_file = "\{tmp_dir}/\{archive_file_name}"
+  let mut skip_download = false
+  if !no_cache && @fs.exists(cached_archive_file) {
+    @log.info(
+      "发现已缓存的压缩包，直接复用: \{@utils.blue(cached_archive_file)}",
+    )
+    // 使用拷贝而非移动，防止用户 Ctrl+C 中断时缓存文件丢失
+    @fs_ext.copy(cached_archive_file, archive_file)
+    skip_download = true
+  }
+
+  if !skip_download {
+    download_file(url, archive_file, headers~)
+  }
+
+  // SHA256 校验：skip_verify 为 true 时跳过整个校验逻辑（包括获取校验值）
+  if skip_verify {
+    @log.warn("已跳过 SHA256 校验（使用了 --skip-verify 参数）")
+  } else {
+    let expected_checksum = @tools.get_expected_checksum(os_info, tool, version)
+    match expected_checksum {
+      Some(expected) => {
+        @log.info("正在校验 SHA256 ...")
+        let verified = @checksum.verify_file_checksum(archive_file, expected)
+        if !verified {
+          @log.error("SHA256 校验失败！文件可能已损坏或被篡改")
+          // 如果复用了缓存文件，需要清除损坏的缓存，防止下次再复用导致死循环
+          if skip_download {
+            @fs_ext.remove_if_exists(cached_archive_file)
+            @log.info("已清除损坏的缓存文件，下次将重新下载")
+          }
+          @fs.rmdir(tmp_dir, recursive=true)
+          raise fail("下载文件校验失败，请重新尝试安装")
+        }
+        @log.success("SHA256 校验通过")
+      }
+      None => {
+        @fs.rmdir(tmp_dir, recursive=true)
+        raise fail(
+          "无法获取 SHA256 校验值，安装中止。如需跳过校验请使用: mvm install \{tool}@\{version} --skip-verify",
+        )
+      }
+    }
+  }
 
   // 解压到临时目录
   let extract_dir = "\{tmp_dir}/extract-\{tool}-\{version}"
@@ -116,6 +175,18 @@ pub async fn run_install(tool : @tools.Tool, version : String?) -> Unit {
 
   @fs_ext.mv(src_dir, final_dir)
 
+  // 仅全新下载且非 no_cache 模式时才缓存压缩包
+  // no_cache 模式下不缓存压缩包，复用缓存的情况下原文件已保留无需再缓存
+  if !skip_download && !no_cache {
+    let cached_archive_path = "\{temp_dir_root}/\{archive_file_name}"
+    if @fs.exists(archive_file) {
+      // 如果缓存目录已有同名文件（极少见），先移除再移动
+      @fs_ext.remove_if_exists(cached_archive_path)
+      @fs_ext.mv(archive_file, cached_archive_path)
+      @log.debug("压缩包已缓存到: \{cached_archive_path}")
+    }
+  }
+
   // 清理临时文件
   @fs.rmdir(tmp_dir, recursive=true)
 
@@ -130,13 +201,22 @@ pub async fn run_install(tool : @tools.Tool, version : String?) -> Unit {
 
 ///|
 /// 下载文件
-pub async fn download_file(url : String, dest : String) -> Unit {
+/// headers: 下载请求需要携带的额外 headers
+/// show_progress: 是否显示下载进度，默认为 true
+pub async fn download_file(
+  url : String,
+  dest : String,
+  headers? : Map[String, String] = {},
+  show_progress? : Bool = true,
+) -> Unit {
   @log.info("正在下载: \{@utils.blue(url)}")
   @log.info("保存到：\{dest}")
   let os = @os.get_os_name()
   match os {
-    Windows => @download.download(url, dest, dest_is_file=true)
-    _ => @download.download_by_native_command(url, dest)
+    Windows | MacOS =>
+      @download.download(url, dest, dest_is_file=true, headers~, show_progress~)
+    _ =>
+      @download.download_by_native_command(url, dest, headers~, show_progress~)
   }
 }
 

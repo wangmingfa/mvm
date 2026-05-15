@@ -204,12 +204,12 @@ mvm 兼容 Volta 的项目配置。如果项目目录下存在 Volta 的 `packag
 ```bash
 # 等同生产：mvm install node@20
 moon run cmd/main install node@20
-# 调试模式运行，等同生产：node -v
-MVM_LOG_LEVEL=debug ./executor.sh node -v
+# 调试模式运行，等同生产：mvm install node
+MVM_LOG_LEVEL=debug ./debug.sh install node
 ```
 
 ```powershell
-$env:MVM_LOG_LEVEL="debug"; ./executor.ps1  node -v
+$env:MVM_LOG_LEVEL="debug"; ./debug.ps1 install node
 ```
 
 2. 本地构建产物测试

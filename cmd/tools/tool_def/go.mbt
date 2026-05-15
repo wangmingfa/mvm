@@ -46,7 +46,9 @@ pub async fn Go::get_target_version(
     GO_INDEX_CACHE_FILE,
     GO_INDEX_URL,
     "Go",
-    os, version, version_count,
+    os,
+    version,
+    version_count,
     Go::_get_proper_version,
   )
 }
@@ -184,10 +186,13 @@ fn Go::_check_os_compatiable(
 }
 
 ///|
-pub fn Go::get_download_url(
+
+///|
+/// 获取 Go 的下载信息（URL 和 headers）
+pub fn Go::get_download_info(
   os_info : @os.OsInfo,
   version : String,
-) -> String raise {
+) -> DownloadInfo raise {
   let version_release_key = Go::_get_version_release_key()
   let ext = match os_info.name {
     Windows => "zip"
@@ -195,7 +200,89 @@ pub fn Go::get_download_url(
     Linux => "tar.gz"
     name => raise fail("不支持的操作系统：\{name}")
   }
-  "\{GO_RELEASE_URL}/go\{version}.\{version_release_key}.\{ext}"
+  let url = "\{GO_RELEASE_URL}/go\{version}.\{version_release_key}.\{ext}"
+  { url, headers: {}, root_path_depth: 1 }
+}
+
+///|
+/// 获取 Go 的预期 SHA256 校验值
+/// 从缓存的 go_index.json 中提取对应平台归档文件的 sha256 字段
+pub async fn Go::get_expected_checksum(
+  os_info : @os.OsInfo,
+  version : String,
+) -> String? {
+  // 构建预期的 os 和 arch 值（与 _check_os_compatiable 一致）
+  let expected_os = match os_info.name {
+    Windows => "windows"
+    MacOS => "darwin"
+    Linux => "linux"
+    _ => return None
+  }
+  let expected_arch = match os_info.arch {
+    Aarch64 => "arm64"
+    X86_64 => "amd64"
+    X86 => "386"
+    _ => return None
+  }
+
+  // 从缓存读取索引 JSON
+  let cached_content = read_cache_file_content(GO_INDEX_CACHE_FILE)
+  guard cached_content is Some(content) else {
+    @log.warn("Go 索引缓存不存在，无法获取校验值")
+    return None
+  }
+  let json = @json.parse(content) catch {
+    _ => {
+      @log.warn("Go 索引缓存格式错误，无法获取校验值")
+      return None
+    }
+  }
+  guard json is Array(versions) else { return None }
+
+  // 查找匹配版本（JSON 中版本带 "go" 前缀）
+  let go_version = "go\{version}"
+  let version_json = for item in versions {
+    guard item is Object(map) else { continue }
+    guard map.get("version") is Some(String(ver)) else { continue }
+    if ver == go_version {
+      break item
+    }
+  } nobreak {
+    @log.warn("Go 版本 \{go_version} 不在索引中，无法获取校验值")
+    return None
+  }
+
+  guard version_json is Object(map) else { return None }
+  guard map.get("files") is Some(Array(files)) else { return None }
+
+  // 在 files 数组中查找匹配的 archive 文件
+  for file in files {
+    guard file is Object(file_map) else { continue }
+    guard file_map.get("os") is Some(String(file_os)) else { continue }
+    guard file_map.get("arch") is Some(String(file_arch)) else { continue }
+    guard file_map.get("kind") is Some(String(kind)) else { continue }
+    if kind != "archive" {
+      continue
+    }
+    if file_os != expected_os || file_arch != expected_arch {
+      continue
+    }
+    // 找到匹配的文件，提取 sha256
+    match file_map.get("sha256") {
+      Some(String(hash)) => return Some(hash)
+      _ => {
+        @log.warn(
+          "Go \{go_version}/\{expected_os}-\{expected_arch} 缺少 sha256 字段",
+        )
+        return None
+      }
+    }
+  }
+
+  @log.warn(
+    "Go \{go_version} 未找到 \{expected_os}-\{expected_arch} 的 archive 文件",
+  )
+  None
 }
 
 ///|

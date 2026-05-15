@@ -4,6 +4,9 @@ using @tool_def {type Node, type Bun, type Zig, type Go, type ToolExe}
 ///|
 pub using @tool_def {
   type Tool,
+  type DownloadInfo,
+  set_no_cache_mode,
+  is_no_cache_mode,
   write_global_config,
   remove_global_config,
   write_project_config,
@@ -50,17 +53,35 @@ fn parse_version(version : String) -> (String, Int) {
 
 ///|
 pub async fn get_target_version(
-  os : OsInfo,
+  os_info : OsInfo,
   tool : Tool,
   version : String,
 ) -> String {
   let (version, version_count) = parse_version(version)
   match tool {
-    Node => Node::get_target_version(os, version, version_count)
-    Bun => Bun::get_target_version(os, version, version_count)
-    Zig => Zig::get_target_version(os, version, version_count)
-    Go => Go::get_target_version(os, version, version_count)
-    _ => raise fail("暂不支持该工具：\{tool}")
+    Node => Node::get_target_version(os_info, version, version_count)
+    Bun => Bun::get_target_version(os_info, version, version_count)
+    Zig => Zig::get_target_version(os_info, version, version_count)
+    Go => Go::get_target_version(os_info, version, version_count)
+    _ => raise fail("不支持的工具：\{tool}")
+  }
+}
+
+///|
+/// 获取指定工具版本的期望 SHA256 checksum
+/// 返回 None 表示该工具暂不支持 checksum 校验
+pub async fn get_expected_checksum(
+  os_info : OsInfo,
+  tool : Tool,
+  version : String,
+) -> String? {
+  match tool {
+    Node => Node::get_expected_checksum(os_info, version)
+    Zig => Zig::get_expected_checksum(os_info, version)
+    Go => Go::get_expected_checksum(os_info, version)
+    // Bun 的 GitHub Releases API 不提供 checksum，暂不支持
+    Bun => None
+    _ => None
   }
 }
 
@@ -167,21 +188,22 @@ test "match_version" {
 }
 
 ///|
-/// 获取下载 URL
-/// 返回值说明：(String, UInt)
-///   String 为下载地址
-///   UInt 为压缩包解压出来之后，需要进入多少层级才能到达实际工具根目录。一般的压缩包会有1层目录，某些压缩包没有包装一层根目录，返回0即可。
-pub fn get_download_url(
+/// 获取下载信息（URL、headers 和压缩包目录深度）
+/// DownloadInfo 包含：
+///   url: 下载地址
+///   headers: 下载请求需要携带的 headers
+///   root_path_depth: 压缩包解压出来之后，需要进入多少层级才能到达实际工具根目录
+pub fn get_download_info(
   os_info : OsInfo,
   tool : Tool,
   version : String,
-) -> (String, UInt) raise {
+) -> DownloadInfo raise {
   match tool {
-    Node => (Node::get_download_url(os_info, version), 1)
-    Bun => (Bun::get_download_url(os_info, version), 1)
-    Zig => (Zig::get_download_url(os_info, version), 1)
-    Go => (Go::get_download_url(os_info, version), 1)
-    _ => raise fail("无法获取 \{tool} 的下载链接")
+    Node => Node::get_download_info(os_info, version)
+    Bun => Bun::get_download_info(os_info, version)
+    Zig => Zig::get_download_info(os_info, version)
+    Go => Go::get_download_info(os_info, version)
+    _ => raise fail("无法获取 \{tool} 的下载信息")
   }
 }
 

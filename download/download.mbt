@@ -82,10 +82,15 @@ priv suberror DownloadError {
 }
 
 ///|
+/// 下载文件（使用 MoonBit HTTP 客户端）
+/// headers: 下载请求需要携带的额外 headers（会与默认 headers 合并）
+/// show_progress: 是否显示下载进度条，默认为 true
 pub async fn download(
   url : String,
   dest : String,
   dest_is_file? : Bool = false,
+  headers? : Map[String, String] = {},
+  show_progress? : Bool = true,
 ) -> Unit {
   let exist_file_size = if dest_is_file && @fs.exists(dest) {
     let file = @fs.open(dest, mode=ReadOnly)
@@ -100,6 +105,7 @@ pub async fn download(
     range_start=exist_file_size,
     dest~,
     dest_is_file~,
+    headers~,
   ) catch {
     e => {
       if e is DownloadError::FileAlreadyComplete {
@@ -136,23 +142,46 @@ pub async fn download(
     sync=Data,
   )
   defer file.close()
-  let progress_bar = @progress.ProgressBar::new(size)
-  @async.any([
-    () => file.write_reader(client),
-    () => {
-      while true {
-        let current_size = file.size()
-        progress_bar.set_completed(current_size)
-        @async.sleep(1000)
-      }
-    },
-  ])
-  // 进度条需要添加一行
-  @log.add_log_lines(lines=1)
-  progress_bar.set_complete()
-  @log.info(
-    "\n文件已保存：\{file_path} 耗时：\{@utils.get_readable_time(progress_bar.duration())}",
-  )
+  if show_progress {
+    // 显示进度条模式
+    let progress_bar = @progress.ProgressBar::new(size)
+    @async.any([
+      () => file.write_reader(client),
+      () => {
+        while true {
+          let current_size = file.size()
+          progress_bar.set_completed(current_size)
+          @async.sleep(1000)
+        }
+      },
+    ])
+    progress_bar.set_complete()
+    @progress.ProgressBar::clear()
+    println("")
+    @log.info(
+      "文件已保存：\{file_path} 耗时：\{@utils.get_readable_time(progress_bar.duration())}",
+    )
+  } else {
+    // 不显示进度条，直接等待下载完成
+    file.write_reader(client)
+    @log.info("文件已保存：\{file_path}")
+  }
+}
+
+///|
+pub fn merge_detault_headers(
+  headers? : Map[String, String] = {},
+) -> Map[String, String] {
+  let merged_headers = {
+    "User-Agent": "curl/8.7.1",
+    "Accept": "*/*",
+    "Accept-Encoding": "gzip, deflate, br",
+    "Connection": "keep-alive",
+  }
+  for k, v in headers {
+    merged_headers.set(k, v)
+  }
+  merged_headers
 }
 
 ///|
@@ -161,14 +190,14 @@ async fn get_client(
   range_start? : Int64 = 0,
   dest? : String = "",
   dest_is_file? : Bool = false,
+  headers? : Map[String, String] = {},
 ) -> (@http.Client, Int64, String, Int64) {
-  let (res, client) = @http.get_stream(url, headers={
-    "User-Agent": "curl/8.7.1",
-    "Accept": "*/*",
-    "Accept-Encoding": "gzip, deflate, br",
-    "Connection": "keep-alive",
-    "Range": "bytes=\{range_start}-",
-  })
+  // 合并默认 headers 和用户提供的 headers
+  // 用户提供的 headers 会覆盖默认值
+  let headers = merge_detault_headers(headers~)
+  // 设置range以支持断点续传
+  headers.set("Range", "bytes=\{range_start}-")
+  let (res, client) = @http.get_stream(url, headers~)
   match res.code {
     301 | 302 => {
       client.close()
@@ -177,7 +206,7 @@ async fn get_client(
         raise fail("重定向失败: 未找到 Location 头")
       }
       @log.debug("重定向到：\{location}")
-      get_client(location, range_start~, dest~, dest_is_file~)
+      get_client(location, range_start~, dest~, dest_is_file~, headers~)
     }
     416 => {
       client.close()
@@ -197,7 +226,7 @@ async fn get_client(
         }
       }
       @log.debug("服务器不支持断点续传（416），将重新下载...")
-      get_client(url, range_start=0)
+      get_client(url, range_start=0, headers~)
     }
     200..<300 as code => {
       let size = if @utils.get_from_map_ignore_case(
@@ -243,52 +272,93 @@ async test "download" {
 }
 
 ///|
-pub async fn download_by_native_command(url : String, dest : String) -> Unit {
+/// 使用系统原生命令下载文件（curl/wget/powershell）
+/// headers: 下载请求需要携带的额外 headers
+/// show_progress: 是否显示下载进度，默认为 true
+pub async fn download_by_native_command(
+  url : String,
+  dest : String,
+  headers? : Map[String, String] = {},
+  show_progress? : Bool = true,
+) -> Unit {
   guard @command.get_best_downloader() is Some(downloader) else {
     raise fail("没有找到合适的下载器，请安装curl或者wget")
   }
-  let args = match downloader {
+  // 构建 curl 格式的 header 参数（每个 header 生成 "-H" 和 "key: value" 两个参数）
+  let curl_header_args : Array[String] = []
+  for k, v in headers {
+    curl_header_args.push("-H")
+    curl_header_args.push("\{k}: \{v}")
+  }
+  // 构建 wget 格式的 header 参数（每个 header 生成一个 "--header=key: value" 参数）
+  let wget_header_args : Array[String] = []
+  for k, v in headers {
+    wget_header_args.push("--header=\{k}: \{v}")
+  }
+  // 根据 show_progress 构建 curl/wget 的进度相关参数
+  let curl_silent_args : Array[String] = if show_progress { [] } else { ["-s"] }
+  let wget_progress_args : Array[String] = if show_progress {
+    ["--show-progress"]
+  } else {
+    []
+  }
+  let args : Array[String] = match downloader {
     "curl" | "curl.exe" => {
       // curl 命令
-      let args = [
+      if show_progress {
+        @log.add_log_lines(lines=2)
+      }
+      [
         "-L", // 跟随重定向
          "-C", "-", // 断点续传
          "--max-time", "300", // 5分钟超时
          "--retry", "3", // 重试3次
          "--retry-delay", "5", // 重试间隔5秒
          "--show-error", // 显示错误信息
+         ..curl_silent_args, // 不显示进度时添加静默模式
+         ..curl_header_args, // 额外的 headers
          "-o", dest, // 输出文件
          url,
       ]
-      @log.add_log_lines(lines=2)
-      args
     }
     "wget" => {
       // wget 命令
-      let args = [
+      if show_progress {
+        @log.add_log_lines(lines=1)
+      }
+      [
         "-c", // 断点续传
-         "--show-progress", // 限时进度条
+         ..wget_progress_args, // 进度条（仅显示进度时启用）
          "-q", // quiet 关闭大部分日志
          "--tries=3", // 重试3次
          "--timeout=300", // 5分钟超时
          "--waitretry=5", // 重试间隔5秒
+         ..wget_header_args, // 额外的 headers
          "-O", dest, // 输出文件
          url,
       ]
-      @log.add_log_lines(lines=1)
-      args
     }
     "powershell" => {
       // PowerShell 命令 (Windows 备用方案)
+      // 构建 headers 字典字符串
+      let headers_str = if headers.is_empty() {
+        ""
+      } else {
+        let pairs : Array[String] = []
+        for k, v in headers {
+          pairs.push("'\{k}'='\{v}'")
+        }
+        let pairs_str = pairs.join("; ")
+        " -Headers @{ " + pairs_str + " }"
+      }
       let ps_script = "Invoke-WebRequest -Uri '" +
         url +
         "' -OutFile '" +
         dest +
-        "' -UserAgent 'Mozilla/5.0' -MaximumRedirection 5 -TimeoutSec 300 -Resume"
+        "' -UserAgent 'Mozilla/5.0' -MaximumRedirection 5 -TimeoutSec 300 -Resume" +
+        headers_str
 
-      let args = ["-Command", ps_script]
-
-      args
+      ["-Command", ps_script]
     }
     _ => raise fail("不支持的下载方式")
   }

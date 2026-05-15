@@ -46,7 +46,31 @@ pub fn temp_dir() -> String raise {
 }
 
 ///|
+/// 全局 no_cache 模式标志（使用 Ref 作为可变容器，MoonBit 不支持模块级 let mut）
+/// 设置为 true 时，read_cache_file_content 将返回 None，强制重新下载索引和校验值文件
+/// write_cache_file_content 仍会写入缓存（同一安装会话内的后续步骤需要读取）
+let no_cache_flag : Ref[Bool] = Ref(false)
+
+///|
+/// 设置 no_cache 模式（安装时传入 --no-cache 参数时设为 true）
+pub fn set_no_cache_mode(no_cache : Bool) -> Unit {
+  no_cache_flag.val = no_cache
+}
+
+///|
+/// 获取当前 no_cache 模式状态
+pub fn is_no_cache_mode() -> Bool {
+  no_cache_flag.val
+}
+
+///|
+/// 从缓存读取文件内容
+/// 当 no_cache 模式开启时，返回 None（强制重新下载）
 pub async fn read_cache_file_content(cache_file_path : String) -> String? {
+  if is_no_cache_mode() {
+    @log.debug("no_cache 模式：跳过读取缓存 \{cache_file_path}")
+    return None
+  }
   let file_path = @fs_ext.join_path(cache_dir(), cache_file_path)
   if @fs.exists(file_path) {
     return Some(@fs.read_file(file_path).text())
@@ -83,6 +107,18 @@ pub fn tool_dir(tool : Tool) -> String raise {
 pub fn version_dir(tool : Tool, version : String) -> String raise {
   "\{tool_dir(tool)}/\{version}"
 }
+
+///|
+/// 下载信息结构体，包含下载 URL、请求 headers 和压缩包目录深度
+pub struct DownloadInfo {
+  // 下载地址
+  url : String
+  // 下载请求需要携带的 headers
+  headers : Map[String, String]
+  // 压缩包解压出来之后，需要进入多少层级才能到达实际工具根目录
+  // 一般的压缩包会有1层目录，某些压缩包没有包装一层根目录，返回0即可
+  root_path_depth : UInt
+} derive(Debug)
 
 ///|
 /// 检查版本是否已安装
@@ -233,11 +269,7 @@ pub fn make_global_config(
   go_mirror? : String? = None,
 ) -> GlobalConfig {
   // logo: None 表示不覆盖（保留原值），Some(true/false) 表示显式设置
-  let logo = if logo is Some(v) {
-    Some(v)
-  } else {
-    existing_config.logo
-  }
+  let logo = if logo is Some(v) { Some(v) } else { existing_config.logo }
   let github_proxy = if github_proxy is Some(v) {
     Some(v)
   } else {
@@ -295,7 +327,10 @@ pub async fn get_global_config() -> (String, GlobalConfig) {
     }
     (config_path, config)
   } else {
-    (config_path, { logo: None, github_proxy: None, node_mirror: None, go_mirror: None })
+    (
+      config_path,
+      { logo: None, github_proxy: None, node_mirror: None, go_mirror: None },
+    )
   }
 }
 
@@ -477,7 +512,7 @@ pub struct Config {
   bun : String?
   zig : String?
   go : String?
-} derive(FromJson, ToJson)
+} derive(FromJson, ToJson, Debug)
 
 ///|
 impl Show for Config with output(s, logger) {
@@ -535,10 +570,10 @@ async fn get_node_version_from_volta_package_json(dir : String) -> String? {
 test "Config from_json" {
   let json : Json = { "node": "v20.1.1" }
   let config : Config = @json.from_json(json)
-  inspect(
+  debug_inspect(
     config,
     content=(
-      #|{node: Some("v20.1.1"), bun: None, zig: None, go: None}
+      #|{ node: Some("v20.1.1"), bun: None, zig: None, go: None }
     ),
   )
 }
@@ -663,9 +698,9 @@ pub fn format_os_compat_error(
   os : @os.OsInfo,
 ) -> String {
   error_msg_tpl
-    .replace_all(old="{version}", new=@utils.yellow(version))
-    .replace_all(old="{os.name}", new=@utils.yellow(os.name.to_string()))
-    .replace_all(old="{os.arch}", new=@utils.yellow(os.arch.to_string()))
+  .replace_all(old="{version}", new=@utils.yellow(version))
+  .replace_all(old="{os.name}", new=@utils.yellow(os.name.to_string()))
+  .replace_all(old="{os.arch}", new=@utils.yellow(os.arch.to_string()))
 }
 
 ///|

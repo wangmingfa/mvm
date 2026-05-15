@@ -2,11 +2,15 @@
 package "username/mvm/command"
 
 // Values
+pub async fn chmod_x(Array[String]) -> Unit
+
 pub async fn command_exists(String) -> Bool
 
 pub async fn get_best_downloader() -> String?
 
 pub fn get_cmd_and_args(String, ArrayView[String]) -> (String, ArrayView[String])
+
+pub fn join_args(ArrayView[String]) -> String
 
 pub async fn run(String, ArrayView[String], extra_env? : Map[String, String]) -> Int
 

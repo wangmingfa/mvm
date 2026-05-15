@@ -204,12 +204,12 @@ mvm is compatible with Volta's project configuration. If a Volta `package.json` 
 ```bash
 # Equivalent to production: mvm install node@20
 moon run cmd/main install node@20
-# Debug mode, equivalent to production: node -v
-MVM_LOG_LEVEL=debug ./executor.sh node -v
+# Debug mode, equivalent to production: mvm install node
+MVM_LOG_LEVEL=debug ./debug.sh install node
 ```
 
 ```powershell
-$env:MVM_LOG_LEVEL="debug"; ./executor.ps1  node -v
+$env:MVM_LOG_LEVEL="debug"; ./debug.ps1 install node
 ```
 
 2. Test local build

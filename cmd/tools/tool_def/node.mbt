@@ -37,7 +37,9 @@ pub async fn Node::get_target_version(
     NODE_INDEX_CACHE_FILE,
     NODE_INDEX_URL,
     "Node.js",
-    os, version, version_count,
+    os,
+    version,
+    version_count,
     Node::_get_proper_version,
   )
 }
@@ -147,10 +149,11 @@ fn Node::_check_os_compatiable(
 }
 
 ///|
-pub fn Node::get_download_url(
+/// 获取 Node.js 的下载信息（URL 和 headers）
+pub fn Node::get_download_info(
   os_info : @os.OsInfo,
   version : String,
-) -> String raise {
+) -> DownloadInfo raise {
   let arch = if os_info.arch is Aarch64 { "arm64" } else { "x64" }
   let (os, ext) = match os_info.name {
     Windows => ("win", "zip")
@@ -158,7 +161,84 @@ pub fn Node::get_download_url(
     MacOS => ("darwin", "tar.gz")
     name => raise fail("不支持的操作系统：\{name}")
   }
-  "\{NODE_RELEASE_URL}/\{version}/node-\{version}-\{os}-\{arch}.\{ext}"
+  let url = "\{NODE_RELEASE_URL}/\{version}/node-\{version}-\{os}-\{arch}.\{ext}"
+  { url, headers: {}, root_path_depth: 1 }
+}
+
+///|
+/// 获取 Node.js 的预期 SHA256 校验值
+/// 从 https://nodejs.org/dist/v{version}/SHASUMS256.txt 获取
+pub async fn Node::get_expected_checksum(
+  os_info : @os.OsInfo,
+  version : String,
+) -> String? {
+  // 构建归档文件名（与 get_download_url 一致）
+  let arch = if os_info.arch is Aarch64 { "arm64" } else { "x64" }
+  let (os, ext) = match os_info.name {
+    Windows => ("win", "zip")
+    Linux => ("linux", "tar.gz")
+    MacOS => ("darwin", "tar.gz")
+    _ => return None
+  }
+  let archive_filename = "node-\{version}-\{os}-\{arch}.\{ext}"
+
+  // 构建 SHASUMS256.txt URL
+  let shasums_url = "\{NODE_RELEASE_URL}/\{version}/SHASUMS256.txt"
+
+  // 应用镜像/代理配置
+  let (_, global_config) = get_global_config()
+  let ctx = UrlReplaceContext::new(shasums_url, "node", version, os, arch)
+  let shasums_url = apply_global_config(shasums_url, global_config, ctx)
+
+  // 尝试从缓存读取
+  let cache_file = "node_shasums_\{version}.txt"
+  let cached_content = read_cache_file_content(cache_file)
+  let shasums_content = match cached_content {
+    Some(content) => content
+    None => {
+      // 从远程获取
+      let (res, data) = @http.get(
+        shasums_url,
+        headers=@download.merge_detault_headers(),
+      )
+      if !(res.code is (200..<300)) {
+        @log.warn(
+          "无法从 \{@utils.blue(shasums_url)} 获取 Node.js SHA256 校验文件: \{res.code} \{res.reason}",
+        )
+        return None
+      }
+      let content = data.text()
+      write_cache_file_content(cache_file, content)
+      content
+    }
+  }
+
+  // 解析 SHASUMS256.txt，查找匹配的文件名
+  // 格式: <hash>  <filename> (两个空格分隔)
+  _parse_node_shasums(shasums_content, archive_filename)
+}
+
+///|
+/// 解析 Node.js SHASUMS256.txt 文件内容
+/// 格式: <hash>  <filename>
+fn _parse_node_shasums(content : String, filename : String) -> String? {
+  let lines = content.split("\n")
+  for line in lines {
+    let line = line.trim().to_owned()
+    if line.is_blank() {
+      continue
+    }
+    // 用两个空格分隔，格式: <hash>  <filename>
+    let parts = line.split("  ").to_array()
+    if parts.length() >= 2 {
+      let hash = parts[0].trim().to_owned().to_lower()
+      let name = parts[1].trim().to_owned()
+      if name == filename {
+        return Some(hash)
+      }
+    }
+  }
+  None
 }
 
 ///|

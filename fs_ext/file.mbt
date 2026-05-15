@@ -27,7 +27,7 @@ pub async fn mv(src : String, dest : String) -> Unit {
 }
 
 ///|
-async fn copy_file(src : String, dest : String) -> Unit {
+pub async fn copy(src : String, dest : String) -> Unit {
   let src_file = @fs.open(src, mode=ReadOnly)
   defer src_file.close()
   let dest_file = @fs.open(dest, mode=WriteOnly, create_mode=CreateOrTruncate)
@@ -57,7 +57,7 @@ pub async fn copy_dir(
     match kind {
       Regular => {
         let dest_path = "\{dest_dir}/\{entry}"
-        copy_file(src_path, dest_path)
+        copy(src_path, dest_path)
       }
       Directory => copy_dir(src_path, dest_dir)
       _ => ignore(())
@@ -275,7 +275,7 @@ test "readlink_target" {
   debug_inspect(
     path,
     content=(
-      #|Some("b\"/Users/11048490/.mvm-test/bin/executor.sh\"")
+      #|Some("b\"/Users/11048490/.mvm-test/bin/debug.sh\"")
     ),
   )
 }

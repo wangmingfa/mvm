@@ -4,8 +4,7 @@ pub enum Command {
   Version
   Upgrade
   Setup(Bool)
-  Executor(Array[String])
-  Install(Tool, String?)
+  Install(Tool, String?, Bool, Bool) // 第一个 Bool 为是否跳过 SHA256 校验，第二个 Bool 为是否不使用缓存
   Pin(Tool, String)
   Use(Tool, String?)
   Unuse(Tool)
@@ -27,9 +26,8 @@ pub impl Show for Command with to_string(s) {
     Version => "Version"
     Upgrade => "Upgrade"
     Setup(use_prefix) => "Setup(\{use_prefix})"
-    Executor(args) => "Executor(\{to_repr(args)})"
-    Install(tool, version) =>
-      "Install(\{tool.to_string()}, \{@utils.option_to_string(version)})"
+    Install(tool, version, skip_verify, no_cache) =>
+      "Install(\{tool.to_string()}, \{@utils.option_to_string(version)}, skip_verify=\{skip_verify}, no_cache=\{no_cache})"
     Pin(tool, version) => "Pin(\{tool.to_string()}, \{version})"
     Use(tool, version) =>
       "Use(\{tool.to_string()}, \{@utils.option_to_string(version)})"
@@ -60,10 +58,12 @@ fn Command::new_with_version(
   command_type : String,
   tool : String,
   version? : String,
+  skip_verify? : Bool = false,
+  no_cache? : Bool = false,
 ) -> Command raise {
   let t = Tool::from_string(tool)
   match command_type {
-    "install" => Install(t, version)
+    "install" => Install(t, version, skip_verify, no_cache)
     "pin" => {
       guard version is Some(version) else {
         raise fail("pin参数无效。示例：mvm pin node@20")
@@ -77,15 +77,23 @@ fn Command::new_with_version(
 }
 
 ///|
-fn parse_with_version(command_type : String, options : String) -> Command raise {
+fn parse_with_version(
+  command_type : String,
+  options : String,
+  skip_verify? : Bool = false,
+  no_cache? : Bool = false,
+) -> Command raise {
   match options.split("@").to_array() {
     [before, after] =>
       Command::new_with_version(
         command_type,
         before.to_owned(),
         version=after.to_owned(),
+        skip_verify~,
+        no_cache~,
       )
-    [tool] => Command::new_with_version(command_type, tool.to_owned())
+    [tool] =>
+      Command::new_with_version(command_type, tool.to_owned(), skip_verify~, no_cache~)
     _ => raise fail("无效的参数 \{options}")
   }
 }
@@ -99,9 +107,17 @@ pub fn get_command(argv : ArrayView[String]) -> Command raise {
     ["setup"] => Setup(false)
     ["setup", "--prefix"] => Setup(true)
     ["setup", "-p"] => Setup(true)
-    ["executor", .. args] => Executor(args.to_owned())
     ["install", options] | ["i", options] =>
-      parse_with_version("install", options)
+      parse_with_version("install", options, skip_verify=false, no_cache=false)
+    ["install", options, "--skip-verify"] | ["i", options, "--skip-verify"] =>
+      parse_with_version("install", options, skip_verify=true, no_cache=false)
+    ["install", options, "--no-cache"] | ["i", options, "--no-cache"] =>
+      parse_with_version("install", options, skip_verify=false, no_cache=true)
+    ["install", options, "--skip-verify", "--no-cache"] |
+    ["i", options, "--skip-verify", "--no-cache"] |
+    ["install", options, "--no-cache", "--skip-verify"] |
+    ["i", options, "--no-cache", "--skip-verify"] =>
+      parse_with_version("install", options, skip_verify=true, no_cache=true)
     ["pin", options] => parse_with_version("pin", options)
     ["use", options] => parse_with_version("use", options)
     ["unuse"] =>

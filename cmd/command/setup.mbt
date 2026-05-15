@@ -40,6 +40,7 @@ async fn remove_tools(
 
 ///|
 async fn cleanup_tool_shims(bin_dir : String, tools : Array[Tool]) -> Unit {
+  // 清除旧版本的 executor 脚本（已更名为 debug）
   for ext in [".sh", ".ps1"] {
     let executor_path = @fs_ext.join_path(bin_dir, "executor\{ext}")
     @fs_ext.remove_if_exists(executor_path)
@@ -148,7 +149,6 @@ fn print_success_unix(
   println("")
   println("安装完成！可执行文件已安装到 \{bin_dir}")
   println("  - mvm         (主命令)")
-  println("  - executor.sh (工具执行脚本)")
   println("  - npm-pkg 目录    (npm 全局包安装路径：\{npm_dir})")
   println("  工具软连接：\{tools_str}")
   println("")
@@ -217,7 +217,6 @@ fn print_success_windows(
   println("")
   println("安装完成！可执行文件已安装到 \{bin_dir}")
   println("  - mvm.exe         (主命令)")
-  println("  - executor.ps1    (工具执行脚本)")
   println("  - npm-pkg 目录    (npm 全局包安装路径：\{npm_dir})")
   println("  工具脚本：\{tools_str}")
   println("  (.ps1 for PowerShell, .cmd for cmd.exe/npm postinstall)")

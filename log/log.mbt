@@ -34,9 +34,10 @@ fn[T : ToStr] log(prefix : String, loc? : String = "", msg : T) -> Unit {
 
   // 记录行数
   let _ = add_log_lines_by_content(text)
-  // println("行数: \{log_line_count.val}")
 
   println(text)
+
+  // println("行数: \{log_line_count.val}")
 }
 
 ///|

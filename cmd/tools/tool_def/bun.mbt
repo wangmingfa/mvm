@@ -37,7 +37,9 @@ pub async fn Bun::get_target_version(
     BUN_INDEX_CACHE_FILE,
     BUN_INDEX_URL,
     "Bun",
-    os, version, version_count,
+    os,
+    version,
+    version_count,
     Bun::_get_proper_version,
     headers={
       "User-Agent": "curl/8.7.1",
@@ -160,10 +162,13 @@ fn Bun::_check_os_compatiable(
 }
 
 ///|
-pub fn Bun::get_download_url(
+
+///|
+/// 获取 Bun 的下载信息（URL 和 headers）
+pub fn Bun::get_download_info(
   os_info : @os.OsInfo,
   version : String,
-) -> String raise {
+) -> DownloadInfo raise {
   let _ = os_info
   let platform_name = Bun::_get_platform_asset_name()
   let ext = "zip"
@@ -173,7 +178,8 @@ pub fn Bun::get_download_url(
   } else {
     "bun-v\{version}"
   }
-  "\{BUN_RELEASE_URL}/\{tag}/\{platform_name}.\{ext}"
+  let url = "\{BUN_RELEASE_URL}/\{tag}/\{platform_name}.\{ext}"
+  { url, headers: {}, root_path_depth: 1 }
 }
 
 ///|
