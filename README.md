@@ -159,8 +159,11 @@ mvm setup
 
 11. `mvm upgrade`——升级 mvm 自身
 ```bash
-# 升级 mvm 到最新版本
+# 升级到最新版本
 mvm upgrade
+
+# 升级到指定版本（方便在不同版本之间切换）
+mvm upgrade@v1.0.0
 ```
 
 12. `mvm config`——查看/设置配置

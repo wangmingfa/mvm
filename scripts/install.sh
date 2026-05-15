@@ -48,27 +48,32 @@ if [ "$ONLINE" = true ]; then
     *) echo "不支持的系统组合：${OS}_${ARCH}"; exit 1 ;;
   esac
 
-  # 获取最新 release 的 tag（使用 GitHub JSON API）
-  API_RESP=$(curl -sL \
-    -H "Accept: application/vnd.github+json" \
-    "https://api.github.com/repos/${GITHUB_REPO}/releases/latest")
-  LATEST_TAG=$(echo "$API_RESP" | grep -o '"tag_name": *"[^"]*"' | head -1 | grep -o '"[^"]*"$' | tr -d '"')
-
-  # 兜底：若 releases/latest 无结果，尝试 tags API
-  if [ -z "$LATEST_TAG" ]; then
-    echo "releases/latest 未找到，尝试从 tags 获取..."
-    LATEST_TAG=$(curl -sL \
+  # 确定目标版本：MVM_VERSION 环境变量优先，否则从 GitHub API 获取最新版本
+  if [ -n "$MVM_VERSION" ]; then
+    LATEST_TAG="$MVM_VERSION"
+    echo "指定版本：${LATEST_TAG}"
+  else
+    API_RESP=$(curl -sL \
       -H "Accept: application/vnd.github+json" \
-      "https://api.github.com/repos/${GITHUB_REPO}/tags" \
-      | grep -o '"name": *"[^"]*"' | head -1 | grep -o '"[^"]*"$' | tr -d '"')
-  fi
+      "https://api.github.com/repos/${GITHUB_REPO}/releases/latest")
+    LATEST_TAG=$(echo "$API_RESP" | grep -o '"tag_name": *"[^"]*"' | head -1 | grep -o '"[^"]*"$' | tr -d '"')
 
-  if [ -z "$LATEST_TAG" ]; then
-    echo "无法获取最新 release 版本号"
-    echo "API 响应：${API_RESP}"
-    exit 1
+    # 兜底：若 releases/latest 无结果，尝试 tags API
+    if [ -z "$LATEST_TAG" ]; then
+      echo "releases/latest 未找到，尝试从 tags 获取..."
+      LATEST_TAG=$(curl -sL \
+        -H "Accept: application/vnd.github+json" \
+        "https://api.github.com/repos/${GITHUB_REPO}/tags" \
+        | grep -o '"name": *"[^"]*"' | head -1 | grep -o '"[^"]*"$' | tr -d '"')
+    fi
+
+    if [ -z "$LATEST_TAG" ]; then
+      echo "无法获取最新 release 版本号"
+      echo "API 响应：${API_RESP}"
+      exit 1
+    fi
+    echo "最新版本：${LATEST_TAG}"
   fi
-  echo "最新版本：${LATEST_TAG}"
 
   # 确定压缩包文件名（格式：mvm-{version}-{os}-{arch}.tar.gz）
   ARCHIVE="mvm-${LATEST_TAG}-${OS}-${ARCH}.tar.gz"

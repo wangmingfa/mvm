@@ -158,8 +158,11 @@ mvm setup
 
 11. `mvm upgrade`——Upgrade mvm itself
 ```bash
-# Upgrade mvm to the latest version
+# Upgrade to the latest version
 mvm upgrade
+
+# Upgrade to a specific version (for switching between versions)
+mvm upgrade@v1.0.0
 ```
 
 12. `mvm config`——View or set configuration

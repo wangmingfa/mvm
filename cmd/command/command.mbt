@@ -2,7 +2,7 @@
 pub enum Command {
   Help
   Version
-  Upgrade
+  Upgrade(String?) // 可指定升级目标版本号，None 表示升级到最新版
   Setup(Bool)
   Install(Tool, String?, Bool, Bool) // 第一个 Bool 为是否跳过 SHA256 校验，第二个 Bool 为是否不使用缓存
   Pin(Tool, String)
@@ -24,7 +24,7 @@ pub impl Show for Command with to_string(s) {
   match s {
     Help => "Help"
     Version => "Version"
-    Upgrade => "Upgrade"
+    Upgrade(version) => "Upgrade(\{@utils.option_to_string(version)})"
     Setup(use_prefix) => "Setup(\{use_prefix})"
     Install(tool, version, skip_verify, no_cache) =>
       "Install(\{tool.to_string()}, \{@utils.option_to_string(version)}, skip_verify=\{skip_verify}, no_cache=\{no_cache})"
@@ -103,7 +103,8 @@ pub fn get_command(argv : ArrayView[String]) -> Command raise {
   match argv {
     ["--help"] | ["-h"] | [] => Help
     ["--version"] | ["-v"] => Version
-    ["upgrade"] => Upgrade
+    ["upgrade"] => Upgrade(None)
+    ["upgrade", version] => Upgrade(Some(version))
     ["setup"] => Setup(false)
     ["setup", "--prefix"] => Setup(true)
     ["setup", "-p"] => Setup(true)

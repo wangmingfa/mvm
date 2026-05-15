@@ -36,13 +36,19 @@ if ($ONLINE) {
     $ARCH = "x86_64"
     $EXT = "zip"
 
-    try {
-        $releaseInfo = Invoke-RestMethod -Uri "https://api.github.com/repos/${GITHUB_REPO}/releases/latest" -ErrorAction Stop
-        $LATEST_TAG = $releaseInfo.tag_name
-        Write-Host "最新版本：${LATEST_TAG}"
-    } catch {
-        Write-Error "无法获取最新 release 版本号: $_"
-        exit 1
+    # 确定目标版本：MVM_VERSION 环境变量优先，否则从 GitHub API 获取最新版本
+    if ($env:MVM_VERSION) {
+        $LATEST_TAG = $env:MVM_VERSION
+        Write-Host "指定版本：${LATEST_TAG}"
+    } else {
+        try {
+            $releaseInfo = Invoke-RestMethod -Uri "https://api.github.com/repos/${GITHUB_REPO}/releases/latest" -ErrorAction Stop
+            $LATEST_TAG = $releaseInfo.tag_name
+            Write-Host "最新版本：${LATEST_TAG}"
+        } catch {
+            Write-Error "无法获取最新 release 版本号: $_"
+            exit 1
+        }
     }
 
     $ARCHIVE = "mvm-${LATEST_TAG}-${OS}-${ARCH}.${EXT}"

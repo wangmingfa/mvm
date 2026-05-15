@@ -1,5 +1,8 @@
 import {
-  "moonbitlang/async/process",
-  "username/mvm/os",
+  "username/mvm/ffi",
   "username/mvm/log",
 }
+
+options(
+  "native-stub": [ "sha256.c" ],
+)
