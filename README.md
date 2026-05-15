@@ -176,6 +176,10 @@ mvm config set china
 mvm config set node_mirror https://mirrors.aliyun.com/nodejs-release
 mvm config set go_mirror https://mirrors.aliyun.com/golang
 mvm config set github_proxy https://cdn.gh-proxy.org/$URL
+
+# 关闭/开启启动 logo 显示（默认显示）
+mvm config set logo false
+mvm config set logo true
 ```
 
 ## Volta 兼容

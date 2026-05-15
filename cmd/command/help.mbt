@@ -68,6 +68,7 @@ pub fn run_help() -> Unit {
     ("mvm install node@lts", "安装 Node.js LTS 版本"),
     ("mvm pin node@20.18.0", "在项目中锁定 Node.js 版本"),
     ("mvm config set china", "一键配置中国大陆镜像"),
+    ("mvm config set logo false", "关闭启动 logo 显示"),
   ]
   let mut max_ex_w = 0
   for ex_item in examples {

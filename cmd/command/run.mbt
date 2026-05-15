@@ -1,15 +1,21 @@
 ///|
-fn should_print_logo(command : Command) -> Bool {
+/// 判断是否应打印 logo：Executor 和 Run 命令不打印，配置 logo=false 时不打印
+fn should_print_logo(command : Command, config : @tools.GlobalConfig) -> Bool {
+  // Executor 和 Run 是工具直接调用，不需要打印 logo
   match command {
     Executor(_) | Run(_, _, _) => false
-    _ => true
+    _ => {
+      // config.logo 为 Some(false) 时隐藏 logo，其他情况（None 或 Some(true））显示
+      config.logo != Some(false)
+    }
   }
 }
 
 ///|
 /// 执行命令
 pub async fn run(command : Command) -> Unit {
-  if should_print_logo(command) {
+  let (_, config) = @tools.get_global_config()
+  if should_print_logo(command, config) {
     @utils.print_logo()
   }
   match command {

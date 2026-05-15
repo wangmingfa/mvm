@@ -176,6 +176,10 @@ mvm config set china
 mvm config set node_mirror https://npm.taobao.org/mirrors/node
 mvm config set go_mirror https://mirrors.aliyun.com/golang
 mvm config set github_proxy https://cdn.gh-proxy.org/
+
+# Hide/show startup logo (shown by default)
+mvm config set logo false
+mvm config set logo true
 ```
 
 ## Volta Compatibility

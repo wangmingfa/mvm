@@ -212,6 +212,8 @@ const GLOBAL_SETTINGS_FILE = "config.json"
 ///   "github_proxy": "https://cdn.gh-proxy.org/$URL"
 /// }
 pub(all) struct GlobalConfig {
+  // 是否显示启动 logo（None 或 Some(true) 为显示，Some(false) 为隐藏）
+  logo : Bool?
   github_proxy : String?
   node_mirror : String?
   go_mirror : String?
@@ -220,14 +222,22 @@ pub(all) struct GlobalConfig {
 ///|
 pub fn make_global_config(
   existing_config? : GlobalConfig = {
+    logo: None,
     github_proxy: None,
     node_mirror: None,
     go_mirror: None,
   },
+  logo? : Bool? = None,
   github_proxy? : String? = None,
   node_mirror? : String? = None,
   go_mirror? : String? = None,
 ) -> GlobalConfig {
+  // logo: None 表示不覆盖（保留原值），Some(true/false) 表示显式设置
+  let logo = if logo is Some(v) {
+    Some(v)
+  } else {
+    existing_config.logo
+  }
   let github_proxy = if github_proxy is Some(v) {
     Some(v)
   } else {
@@ -243,16 +253,22 @@ pub fn make_global_config(
   } else {
     existing_config.go_mirror
   }
-  { github_proxy, node_mirror, go_mirror }
+  { logo, github_proxy, node_mirror, go_mirror }
 }
 
 ///|
 pub fn GlobalConfig::to_string(s : Self, indent? : Int = 0) -> String {
   let indent_str = " ".repeat(indent)
+  let logo = match s.logo {
+    Some(true) => "true"
+    Some(false) => "false"
+    None => "default(true)"
+  }
   let github_proxy = s.github_proxy.unwrap_or("")
   let node_mirror = s.node_mirror.unwrap_or("")
   let go_mirror = s.go_mirror.unwrap_or("")
   (
+    $|\{indent_str}logo: \{logo}
     $|\{indent_str}github_proxy: \{github_proxy}
     $|\{indent_str}node_mirror: \{node_mirror}
     $|\{indent_str}go_mirror: \{go_mirror}
@@ -279,7 +295,7 @@ pub async fn get_global_config() -> (String, GlobalConfig) {
     }
     (config_path, config)
   } else {
-    (config_path, { github_proxy: None, node_mirror: None, go_mirror: None })
+    (config_path, { logo: None, github_proxy: None, node_mirror: None, go_mirror: None })
   }
 }
 
