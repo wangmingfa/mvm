@@ -163,6 +163,10 @@ mvm upgrade
 
 # Upgrade to a specific version (for switching between versions)
 mvm upgrade@v1.0.0
+
+# List all available versions
+mvm upgrade --list
+mvm upgrade -l
 ```
 
 12. `mvm config`——View or set configuration

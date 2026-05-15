@@ -3,6 +3,7 @@ import {
   "moonbitlang/core/json",
   "moonbitlang/core/debug",
   "moonbitlang/async/fs",
+  "moonbitlang/async/http",
   "moonbitlang/async/process",
   "username/mvm/os",
   "username/mvm/download",

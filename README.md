@@ -164,6 +164,10 @@ mvm upgrade
 
 # 升级到指定版本（方便在不同版本之间切换）
 mvm upgrade@v1.0.0
+
+# 查看所有可用版本
+mvm upgrade --list
+mvm upgrade -l
 ```
 
 12. `mvm config`——查看/设置配置

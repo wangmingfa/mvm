@@ -11,17 +11,43 @@ const INSTALL_SH = "https://raw.githubusercontent.com/\{GITHUB_REPO}/main/script
 const INSTALL_PS1 = "https://raw.githubusercontent.com/\{GITHUB_REPO}/main/scripts/install_online.ps1"
 
 ///|
+const GITHUB_API_RELEASES = "https://api.github.com/repos/\{GITHUB_REPO}/releases"
+
+///|
 /// 规范化版本号：不以 v 开头时自动补齐
 fn normalize_version(version : String) -> String {
   if version.has_prefix("v") { version } else { "v\{version}" }
 }
 
 ///|
+/// 检查指定版本是否存在于 GitHub releases
+async fn check_version_exists(version : String) -> Bool {
+  // 通过 GitHub releases/tags API 验证版本是否存在，返回 200 表示存在，404 表示不存在
+  let url =
+    "https://api.github.com/repos/\{GITHUB_REPO}/releases/tags/\{version}"
+  let (res, _) = @http.get(
+    url,
+    headers=@download.merge_detault_headers(),
+  ) // 网络错误时 res.code 不会是 200，等同于版本不存在
+  res.code == 200
+}
+
+///|
 /// 执行 upgrade 命令，可指定目标版本
 pub async fn run_upgrade(version : String?) -> Unit {
-  // 确定目标版本：指定版本直接使用，未指定则获取最新版本
+  // 确定目标版本：指定版本需验证存在性，未指定则获取最新版本
   let target_version = match version {
-    Some(v) => normalize_version(v)
+    Some(v) => {
+      let v = normalize_version(v)
+      @log.info("正在验证版本 \{@utils.yellow(v)}...")
+      if !check_version_exists(v) {
+        @log.error(
+          "版本 \{@utils.yellow(v)} 不存在，请检查版本号是否正确（可用 mvm upgrade 升级到最新版本）",
+        )
+        return
+      }
+      v
+    }
     None => {
       @log.info("正在检查最新版本...")
       let latest = fetch_latest_version()
@@ -63,6 +89,66 @@ pub async fn run_upgrade(version : String?) -> Unit {
   match code {
     0 => @log.success("升级成功！当前版本：\{target_version}")
     _ => @log.error("升级失败，请尝试手动执行安装命令")
+  }
+}
+
+///|
+/// 从 GitHub releases JSON 响应中提取所有 tag_name
+fn extract_all_tag_names(body : String) -> Array[String] {
+  let prefix = "\"tag_name\":"
+  let versions : Array[String] = []
+  let mut search_from = 0
+  let body_len = body.length()
+  while search_from < body_len {
+    let remaining = body[search_from:]
+    match remaining.find(prefix) {
+      Some(offset) => {
+        let after_prefix = body[search_from + offset + prefix.length():]
+        match after_prefix.find("\"") {
+          Some(q1) => {
+            let content = after_prefix[q1 + 1:]
+            match content.find("\"") {
+              Some(q2) => {
+                versions.push(content[:q2].to_owned())
+                search_from =
+                  search_from + offset + prefix.length() + q1 + 1 + q2 + 1
+              }
+              None => break
+            }
+          }
+          None => break
+        }
+      }
+      None => break
+    }
+  }
+  versions
+}
+
+///|
+/// 查询所有可用的 mvm 版本
+pub async fn run_upgrade_list() -> Unit {
+  @log.info("正在获取所有可用的 mvm 版本...")
+  let (res, data) = @http.get(
+    GITHUB_API_RELEASES,
+    headers=@download.merge_detault_headers(),
+  )
+  if res.code != 200 {
+    @log.error(
+      "无法获取版本列表（HTTP \{res.code}），请检查网络连接",
+    )
+    return
+  }
+  let body = data.text()
+  let versions = extract_all_tag_names(body)
+  if versions.is_empty() {
+    @log.error("未找到任何版本信息")
+    return
+  }
+  @log.info("可用的 mvm 版本（共 \{versions.length()} 个）：")
+  for v in versions {
+    let marker = if v == VERSION { " ← 当前版本" } else { "" }
+    println("  \{@utils.yellow(v)}\{marker}")
   }
 }
 
