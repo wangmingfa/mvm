@@ -94,13 +94,13 @@ async fn walk_global_pkgs(
     // 读取package.json中的bin字段的值
     let json = @fs.read_file(pkg_package_json_file_path).json()
     guard json is Object(map) else {
-      @log.error(
+      @log.warn(
         "NPM包 \{pkg} 的package.json格式有问题，文件路径：\{pkg_package_json_file_path}",
       )
       continue
     }
     guard map.get("bin") is Some(Object(bin)) else {
-      @log.error(
+      @log.warn(
         "NPM包 \{pkg} 的package.json中的bin格式有问题，文件路径：\{pkg_package_json_file_path}",
       )
       continue
@@ -111,7 +111,7 @@ async fn walk_global_pkgs(
         "NPM包的bin配置: \{cmd_name}\n\{cmd_path.stringify(indent=2)}",
       )
       guard cmd_path is String(cmd_path) else {
-        @log.error("NPM包的bin配置 \{cmd_name} 有问题")
+        @log.warn("NPM包的bin配置 \{cmd_name} 有问题")
         continue
       }
       let target_file_path = @fs_ext.join_path(pkg_root_dir, cmd_path)

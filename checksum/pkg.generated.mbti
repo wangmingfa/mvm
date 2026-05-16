@@ -2,9 +2,9 @@
 package "username/mvm/checksum"
 
 // Values
-pub async fn compute_file_sha256(String) -> String
+pub fn compute_file_sha256(String) -> String raise
 
-pub async fn verify_file_checksum(String, String) -> Bool
+pub fn verify_file_checksum(String, String) -> Bool
 
 // Errors
 

@@ -25,7 +25,8 @@ pub impl Show for Command with to_string(s) {
   match s {
     Help => "Help"
     Version => "Version"
-    Upgrade(version, reinstall) => "Upgrade(\{@utils.option_to_string(version)}, reinstall=\{reinstall})"
+    Upgrade(version, reinstall) =>
+      "Upgrade(\{@utils.option_to_string(version)}, reinstall=\{reinstall})"
     UpgradeList => "UpgradeList"
     Setup(use_prefix) => "Setup(\{use_prefix})"
     Install(tool, version, skip_verify, no_cache) =>
@@ -125,9 +126,7 @@ fn _extract_install_flags(
 
 ///|
 /// 从参数数组中提取 upgrade 命令的 flags，返回 (reinstall, 剩余位置参数)
-fn _extract_upgrade_flags(
-  args : ArrayView[String],
-) -> (Bool, Array[String]) {
+fn _extract_upgrade_flags(args : ArrayView[String]) -> (Bool, Array[String]) {
   let mut reinstall = false
   let positional : Array[String] = []
   for arg in args {

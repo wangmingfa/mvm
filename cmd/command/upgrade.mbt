@@ -41,14 +41,13 @@ pub async fn run_upgrade(version : String?, reinstall : Bool) -> Unit {
       let v = normalize_version(v)
       @log.info("正在验证版本 \{@utils.yellow(v)}...")
       if !check_version_exists(v) {
-        @log.error(
+        raise fail(
           "版本 \{@utils.yellow(v)} 不存在，请检查版本号是否正确（可用 mvm upgrade 升级到最新版本）",
         )
-        return
       }
       v
     }
-    None => {
+    None =>
       // --reinstall 时直接使用当前版本，跳过"已是最新版本"检查
       if reinstall {
         @log.info("正在重新安装当前版本 \{@utils.yellow(VERSION)}...")
@@ -57,8 +56,7 @@ pub async fn run_upgrade(version : String?, reinstall : Bool) -> Unit {
         @log.info("正在检查最新版本...")
         let latest = fetch_latest_version()
         if latest.is_blank() {
-          @log.error("无法获取最新版本信息，请检查网络连接")
-          return
+          raise fail("无法获取最新版本信息，请检查网络连接")
         }
         @log.info(
           "当前版本：\{@utils.yellow(VERSION)}，最新版本：\{@utils.yellow(latest)}",
@@ -69,7 +67,6 @@ pub async fn run_upgrade(version : String?, reinstall : Bool) -> Unit {
         }
         latest
       }
-    }
   }
   @log.info("正在升级到 \{@utils.yellow(target_version)}...")
   // 使用 install_online 脚本升级；指定版本时通过 MVM_VERSION 环境变量传递
@@ -94,7 +91,7 @@ pub async fn run_upgrade(version : String?, reinstall : Bool) -> Unit {
   }
   match code {
     0 => @log.success("升级成功！当前版本：\{target_version}")
-    _ => @log.error("升级失败，请尝试手动执行安装命令")
+    _ => raise fail("升级失败，请尝试手动执行安装命令")
   }
 }
 
@@ -145,16 +142,14 @@ pub async fn run_upgrade_list() -> Unit {
     headers=@request.merge_detault_headers(),
   )
   if res.code != 200 {
-    @log.error(
+    raise fail(
       "无法获取版本列表（HTTP \{res.code}），请检查网络连接",
     )
-    return
   }
   let body = data.text()
   let versions = extract_all_tag_names(body)
   if versions.is_empty() {
-    @log.error("未找到任何版本信息")
-    return
+    raise fail("未找到任何版本信息")
   }
   @log.info("可用的 mvm 版本（共 \{versions.length()} 个）：")
   for v in versions {

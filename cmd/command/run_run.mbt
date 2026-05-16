@@ -64,10 +64,9 @@ pub async fn run_run(
   // 获取可执行文件路径
   let exe_path = @tools.get_exe_path_for_version(tool, target_version)
   if !@fs.exists(exe_path) {
-    @log.error(
+    raise fail(
       "\{tool}@\{target_version} 的可执行文件不存在：\{@utils.yellow(exe_path)}",
     )
-    return
   }
 
   // 处理exec_program

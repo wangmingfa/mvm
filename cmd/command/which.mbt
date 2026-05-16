@@ -6,16 +6,14 @@ pub async fn run_which(tool : @tools.Tool) -> Unit {
   match config_info {
     Some((config_path, config)) => {
       guard config.get_value(tool) is Some(version) else {
-        @log.error(
+        raise fail(
           "未在配置文件 \{@utils.yellow(config_path)} 中找到 \{tool} 的版本信息",
         )
-        return
       }
       // 通过已有的公共 API 获取可执行文件路径
       let tool_exe = @tools.get_tool_exe_path(tool)
       guard tool_exe is Some({ path: exe_path, .. }) else {
-        @log.error("无法获取 \{tool}@\{version} 的可执行文件路径")
-        return
+        raise fail("无法获取 \{tool}@\{version} 的可执行文件路径")
       }
       let mvm_home = @tools.mvm_home()
       let source_label = if config_path.has_prefix(mvm_home) {
@@ -35,7 +33,7 @@ pub async fn run_which(tool : @tools.Tool) -> Unit {
       }
     }
     None =>
-      @log.error(
+      raise fail(
         "未找到 \{tool} 的版本配置，请先使用 mvm use 或 mvm pin 指定版本",
       )
   }

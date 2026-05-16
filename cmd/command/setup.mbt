@@ -15,7 +15,7 @@ pub async fn run_setup(use_prefix : Bool) -> Unit {
   match os {
     MacOS | Linux => setup_unix(bin_dir, npm_dir, tools, prefix_str)
     Windows => setup_windows(bin_dir, npm_dir, tools, prefix_str)
-    _ => @log.error("不支持的操作系统：\{os}")
+    _ => raise fail("不支持的操作系统：\{os}")
   }
 }
 

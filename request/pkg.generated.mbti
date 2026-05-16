@@ -1,10 +1,14 @@
 // Generated using `moon info`, DON'T EDIT IT
-package "username/mvm/download"
+package "username/mvm/request"
 
 // Values
-pub async fn download(String, String, dest_is_file? : Bool) -> Unit
+pub async fn download(String, String, dest_is_file? : Bool, headers? : Map[String, String], show_progress? : Bool) -> Unit
 
-pub async fn download_by_native_command(String, String) -> Unit
+pub async fn download_by_native_command(String, String, headers? : Map[String, String], show_progress? : Bool) -> Unit
+
+pub fn merge_detault_headers(headers? : Map[String, String]) -> Map[String, String]
+
+pub async fn try_urls(Array[String], headers? : Map[String, String], String) -> (String, String)?
 
 // Errors
 

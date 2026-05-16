@@ -19,16 +19,24 @@ test "parse_version" {
   // 测试 parse_version 的各版本号解析结果
   let arr = parse_version("v2.3.2")
   guard arr.length() == 3 else { fail("expected 3 segments") }
-  guard arr[0] == 2 && arr[1] == 3 && arr[2] == 2 else { fail("values mismatch") }
+  guard arr[0] == 2 && arr[1] == 3 && arr[2] == 2 else {
+    fail("values mismatch")
+  }
 
   let arr2 = parse_version("v21.3.20")
-  guard arr2[0] == 21 && arr2[1] == 3 && arr2[2] == 20 else { fail("values mismatch") }
+  guard arr2[0] == 21 && arr2[1] == 3 && arr2[2] == 20 else {
+    fail("values mismatch")
+  }
 
   let arr3 = parse_version("v2.3111.2")
-  guard arr3[0] == 2 && arr3[1] == 3111 && arr3[2] == 2 else { fail("values mismatch") }
+  guard arr3[0] == 2 && arr3[1] == 3111 && arr3[2] == 2 else {
+    fail("values mismatch")
+  }
 
   let arr4 = parse_version("v1.2.3-dev-alpha")
-  guard arr4[0] == 1 && arr4[1] == 2 && arr4[2] == 3 else { fail("values mismatch") }
+  guard arr4[0] == 1 && arr4[1] == 2 && arr4[2] == 3 else {
+    fail("values mismatch")
+  }
 }
 
 ///|

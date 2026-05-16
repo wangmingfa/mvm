@@ -27,6 +27,8 @@ pub async fn installed_versions(Tool) -> Array[String]
 
 pub async fn is_installed(Tool, String) -> Bool
 
+pub fn is_no_cache_mode() -> Bool
+
 pub fn make_global_config(existing_config? : GlobalConfig, logo? : Bool?, github_proxy? : String?, node_mirror? : String?, go_mirror? : String?) -> GlobalConfig
 
 pub fn mvm_bin_home() -> String raise
@@ -42,6 +44,8 @@ pub async fn remove_global_config(Tool) -> String
 pub fn replace_url(String, UrlReplaceContext) -> String
 
 pub async fn save_global_config(GlobalConfig) -> String
+
+pub fn set_no_cache_mode(Bool) -> Unit
 
 pub fn temp_dir() -> String raise
 
@@ -62,8 +66,9 @@ pub async fn write_project_config(Tool, String) -> String
 // Types and methods
 pub struct Bun {
 }
-pub fn Bun::get_download_url(@os.OsInfo, String) -> String raise
+pub fn Bun::get_download_info(@os.OsInfo, String) -> DownloadInfo raise
 pub fn Bun::get_exe_path(String) -> String raise
+pub async fn Bun::get_expected_checksum(@os.OsInfo, String) -> String?
 pub async fn Bun::get_target_version(@os.OsInfo, String, Int) -> String
 
 type BunAssetInfo derive(@json.FromJson)
@@ -78,6 +83,12 @@ pub struct Config {
 } derive(ToJson, @debug.Debug, @json.FromJson)
 pub fn Config::get_value(Self, Tool) -> String? raise
 
+pub struct DownloadInfo {
+  url : String
+  headers : Map[String, String]
+  root_path_depth : UInt
+} derive(@debug.Debug)
+
 pub(all) struct GlobalConfig {
   logo : Bool?
   github_proxy : String?
@@ -88,13 +99,13 @@ pub fn GlobalConfig::to_string(Self, indent? : Int) -> String
 
 pub struct Go {
 }
-pub fn Go::get_download_url(@os.OsInfo, String) -> String raise
+pub fn Go::get_download_info(@os.OsInfo, String) -> DownloadInfo raise
 pub fn Go::get_exe_path(String) -> String raise
 pub async fn Go::get_expected_checksum(@os.OsInfo, String) -> String?
 pub async fn Go::get_target_version(@os.OsInfo, String, Int) -> String
 
 type Node
-pub fn Node::get_download_url(@os.OsInfo, String) -> String raise
+pub fn Node::get_download_info(@os.OsInfo, String) -> DownloadInfo raise
 pub fn Node::get_exe_path(String) -> String raise
 pub async fn Node::get_expected_checksum(@os.OsInfo, String) -> String?
 pub async fn Node::get_node_builtin_tool_path_and_version(Tool, ToolExe) -> ToolExe?
@@ -157,7 +168,7 @@ pub fn UrlReplaceContext::new(String, String, String, String, String) -> Self
 
 pub struct Zig {
 }
-pub fn Zig::get_download_url(@os.OsInfo, String) -> String raise
+pub fn Zig::get_download_info(@os.OsInfo, String) -> DownloadInfo raise
 pub fn Zig::get_exe_path(String) -> String raise
 pub async fn Zig::get_expected_checksum(@os.OsInfo, String) -> String?
 pub async fn Zig::get_target_version(@os.OsInfo, String, Int) -> String

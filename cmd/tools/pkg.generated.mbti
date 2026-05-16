@@ -19,7 +19,7 @@ pub async fn create_tool_cmd_windows(@tool_def.Tool, String, file_name? : String
 
 pub async fn get_config(tool? : @tool_def.Tool, dir? : String, search_upwards? : Bool, fallback_to_global_config? : Bool) -> (String, @tool_def.Config)?
 
-pub fn get_download_url(@os.OsInfo, @tool_def.Tool, String) -> (String, UInt) raise
+pub fn get_download_info(@os.OsInfo, @tool_def.Tool, String) -> @tool_def.DownloadInfo raise
 
 pub fn get_exe_path_for_version(@tool_def.Tool, String) -> String raise
 
@@ -32,6 +32,8 @@ pub async fn get_target_version(@os.OsInfo, @tool_def.Tool, String) -> String
 pub async fn get_tool_exe_path(@tool_def.Tool) -> @tool_def.ToolExe?
 
 pub async fn is_installed(@tool_def.Tool, String) -> Bool
+
+pub fn is_no_cache_mode() -> Bool
 
 pub fn make_global_config(existing_config? : @tool_def.GlobalConfig, logo? : Bool?, github_proxy? : String?, node_mirror? : String?, go_mirror? : String?) -> @tool_def.GlobalConfig
 
@@ -46,6 +48,8 @@ pub async fn remove_global_config(@tool_def.Tool) -> String
 pub fn replace_url(String, @tool_def.UrlReplaceContext) -> String
 
 pub async fn save_global_config(@tool_def.GlobalConfig) -> String
+
+pub fn set_no_cache_mode(Bool) -> Unit
 
 pub fn temp_dir() -> String raise
 
@@ -62,6 +66,8 @@ pub async fn write_project_config(@tool_def.Tool, String) -> String
 // Types and methods
 
 // Type aliases
+pub using @tool_def {type DownloadInfo}
+
 pub using @tool_def {type GlobalConfig}
 
 pub using @tool_def {type Tool}

@@ -11,44 +11,47 @@ async fn get_file_size_from_url(url : String) -> Int64? {
 }
 
 ///|
-async fn get_file_size_with_curl_exe(url : String) -> Int64? {
-  // 优先使用 curl.exe 获取文件大小，因为powershell的Invoke-WebRequest会有蓝色背景闪烁，体验不好
-  let (code, output) = @process.collect_stdout("curl.exe", ["-sI", url]) catch {
-    _ => return get_file_size_with_powershell(url)
-  }
-  if code == 0 {
-    let stdout = output.text()
-    let lines = stdout.split("\n").collect()
-    for line in lines {
-      let line = line.trim()
-      if line.has_prefix("Content-Length:") {
-        let value = line["Content-Length:".length():].trim()
-        let size = @string.parse_int64(value) catch { _ => return None }
-        return Some(size)
-      }
+/// 从 HTTP 响应头文本中解析 Content-Length 值
+fn parse_content_length_from_headers(header_text : String) -> Int64? {
+  let lines = header_text.split("\n").collect()
+  for line in lines {
+    let line = line.trim()
+    if line.has_prefix("Content-Length:") {
+      let value = line["Content-Length:".length():].trim()
+      let size = @string.parse_int64(value) catch { _ => return None }
+      return Some(size)
     }
   }
+  None
+}
+
+///|
+/// 通用函数：使用指定命令获取文件大小
+/// 通过运行 curl/curl.exe -sI 命令并解析 Content-Length 头来获取文件大小
+async fn get_file_size_by_command(cmd_name : String, url : String) -> Int64? {
+  let (code, output) = @process.collect_stdout(cmd_name, ["-sI", url]) catch {
+    _ => return None
+  }
+  if code == 0 {
+    return parse_content_length_from_headers(output.text())
+  }
+  None
+}
+
+///|
+async fn get_file_size_with_curl_exe(url : String) -> Int64? {
+  // 优先使用 curl.exe 获取文件大小，因为powershell的Invoke-WebRequest会有蓝色背景闪烁，体验不好
+  let size = get_file_size_by_command("curl.exe", url)
+  if size is Some(_) {
+    return size
+  }
+  // curl.exe 失败时 fallback 到 PowerShell
   get_file_size_with_powershell(url)
 }
 
 ///|
 async fn get_file_size_with_curl(url : String) -> Int64? {
-  let (code, output) = @process.collect_stdout("curl", ["-sI", url]) catch {
-    _ => return None
-  }
-  if code == 0 {
-    let stdout = output.text()
-    let lines = stdout.split("\n").collect()
-    for line in lines {
-      let line = line.trim()
-      if line.has_prefix("Content-Length:") {
-        let value = line["Content-Length:".length():].trim()
-        let size = @string.parse_int64(value) catch { _ => return None }
-        return Some(size)
-      }
-    }
-  }
-  None
+  get_file_size_by_command("curl", url)
 }
 
 ///|
@@ -85,6 +88,7 @@ priv suberror DownloadError {
 /// 下载文件（使用 MoonBit HTTP 客户端）
 /// headers: 下载请求需要携带的额外 headers（会与默认 headers 合并）
 /// show_progress: 是否显示下载进度条，默认为 true
+/// 网络连接失败/超时类错误最多重试 3 次，间隔 1s → 3s → 5s；HTTP 4xx/5xx 不重试
 pub async fn download(
   url : String,
   dest : String,
@@ -92,79 +96,100 @@ pub async fn download(
   headers? : Map[String, String] = {},
   show_progress? : Bool = true,
 ) -> Unit {
-  let exist_file_size = if dest_is_file && @fs.exists(dest) {
-    let file = @fs.open(dest, mode=ReadOnly)
-    defer file.close()
-    file.size()
-  } else {
-    0
-  }
-
-  let (client, size, name, start) = get_client(
-    url,
-    range_start=exist_file_size,
-    dest~,
-    dest_is_file~,
-    headers~,
-  ) catch {
-    e => {
-      if e is DownloadError::FileAlreadyComplete {
-        @log.info("文件已完整下载，跳过")
-        return
+  let max_retries = 3
+  let retry_intervals : Array[Int] = [1000, 3000, 5000]
+  for attempt in 0..<4 {
+    try {
+      // 每次重试重新检查已有文件大小，以支持断点续传
+      let exist_file_size = if dest_is_file && @fs.exists(dest) {
+        let file = @fs.open(dest, mode=ReadOnly)
+        defer file.close()
+        file.size()
+      } else {
+        0
       }
-      raise e
-    }
-  }
-  defer client.close()
 
-  let dest_dir = if dest_is_file {
-    guard get_parent_dir(dest) is Some(dir) else {
-      raise fail("无法获取到 \{dest} 的父目录")
-    }
-    dir
-  } else {
-    dest
-  }
-  ensure_dir(dest_dir)
-  let is_append = start > 0
-  @log.debug("文件大小：\{@utils.get_readable_file_size(size)}")
-  if is_append {
-    @log.debug(
-      "文件 \{dest} 支持断点续传，已下载大小：\{@utils.get_readable_file_size(start)}",
-    )
-  }
-  let file_path = if dest_is_file { dest } else { "\{dest_dir}/\{name}" }
-  let file = @fs.open(
-    file_path,
-    mode=@fs.Mode::WriteOnly,
-    append=is_append,
-    create_mode=if is_append { OpenOrCreate } else { CreateOrTruncate },
-    sync=Data,
-  )
-  defer file.close()
-  if show_progress {
-    // 显示进度条模式
-    let progress_bar = @progress.ProgressBar::new(size)
-    @async.any([
-      () => file.write_reader(client),
-      () => {
-        while true {
-          let current_size = file.size()
-          progress_bar.set_completed(current_size)
-          @async.sleep(1000)
+      let (client, size, name, start) = get_client(
+        url,
+        range_start=exist_file_size,
+        dest~,
+        dest_is_file~,
+        headers~,
+      ) catch {
+        e => {
+          if e is DownloadError::FileAlreadyComplete {
+            @log.info("文件已完整下载，跳过")
+            return
+          }
+          raise e
         }
-      },
-    ])
-    progress_bar.set_complete()
-    @progress.ProgressBar::clear()
-    println("")
-    @log.info(
-      "文件已保存：\{file_path} 耗时：\{@utils.get_readable_time(progress_bar.duration())}",
-    )
-  } else {
-    // 不显示进度条，直接等待下载完成
-    file.write_reader(client)
-    @log.info("文件已保存：\{file_path}")
+      }
+      defer client.close()
+
+      let dest_dir = if dest_is_file {
+        guard get_parent_dir(dest) is Some(dir) else {
+          raise fail("无法获取到 \{dest} 的父目录")
+        }
+        dir
+      } else {
+        dest
+      }
+      ensure_dir(dest_dir)
+      let is_append = start > 0
+      @log.debug("文件大小：\{@utils.get_readable_file_size(size)}")
+      if is_append {
+        @log.debug(
+          "文件 \{dest} 支持断点续传，已下载大小：\{@utils.get_readable_file_size(start)}",
+        )
+      }
+      let file_path = if dest_is_file { dest } else { "\{dest_dir}/\{name}" }
+      let file = @fs.open(
+        file_path,
+        mode=@fs.Mode::WriteOnly,
+        append=is_append,
+        create_mode=if is_append { OpenOrCreate } else { CreateOrTruncate },
+        sync=Data,
+      )
+      defer file.close()
+      if show_progress {
+        let progress_bar = @progress.ProgressBar::new(size)
+        @async.any([
+          () => file.write_reader(client),
+          () => {
+            while true {
+              let current_size = file.size()
+              progress_bar.set_completed(current_size)
+              @async.sleep(1000)
+            }
+          },
+        ])
+        progress_bar.set_complete()
+        @progress.ProgressBar::clear()
+        println("")
+        @log.info(
+          "文件已保存：\{file_path} 耗时：\{@utils.get_readable_time(progress_bar.duration())}",
+        )
+      } else {
+        file.write_reader(client)
+        @log.info("文件已保存：\{file_path}")
+      }
+      return // 下载成功，退出重试循环
+    } catch {
+      e => {
+        if e is DownloadError::FileAlreadyComplete {
+          return
+        }
+        if e.to_string().has_prefix("[HTTP]") {
+          raise e // HTTP 4xx/5xx，不重试
+        }
+        if attempt < max_retries {
+          @log.warn("下载失败，第 \{attempt + 1} 次重试...")
+          @async.sleep(retry_intervals[attempt])
+        } else {
+          raise e // 重试次数已耗尽，抛出错误
+        }
+      }
+    }
   }
 }
 
@@ -237,7 +262,31 @@ async fn get_client(
         },
       )
     }
-    _ => raise fail("\{url} 下载失败，原因：\{res.code} \{res.reason}")
+    _ => raise fail("[HTTP]\{res.code} \{res.reason} (\{url})")
+  }
+}
+
+///|
+test "parse_content_length_from_headers" {
+  // 正常格式
+  let headers = "HTTP/1.1 200 OK\nContent-Type: application/octet-stream\nContent-Length: 1234567\nAccept-Ranges: bytes\n"
+  guard parse_content_length_from_headers(headers) is Some(1234567L) else {
+    fail("should parse Content-Length correctly")
+  }
+  // Content-Length 前后有空格
+  let headers2 = "Content-Length:  999  \n"
+  guard parse_content_length_from_headers(headers2) is Some(999L) else {
+    fail("should parse Content-Length with spaces")
+  }
+  // 没有 Content-Length 头
+  let headers3 = "HTTP/1.1 200 OK\nContent-Type: text/html\n"
+  guard parse_content_length_from_headers(headers3) is None else {
+    fail("should return None when no Content-Length")
+  }
+  // 无效的 Content-Length 值
+  let headers4 = "Content-Length: abc\n"
+  guard parse_content_length_from_headers(headers4) is None else {
+    fail("should return None for invalid Content-Length")
   }
 }
 
@@ -359,7 +408,10 @@ pub async fn download_by_native_command(
 
   match @process.run(downloader, args) {
     0 => ()
-    _ => raise fail("下载失败")
+    _ => {
+      @log.warn("使用 \{downloader} 下载失败")
+      raise fail("下载失败")
+    }
   }
 }
 

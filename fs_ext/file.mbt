@@ -113,7 +113,9 @@ async fn get_all_sub_dir_or_file_path(
 }
 
 ///|
-async fn generate_tmp_dir_and_files(tag~ : String = "") -> (String, Array[String]) {
+async fn generate_tmp_dir_and_files(
+  tag? : String = "",
+) -> (String, Array[String]) {
   let dir_or_files = []
   // 生成临时文件
   let file_content = "hello world, MoonBit!"
@@ -216,7 +218,9 @@ async test "move file into dir" {
 
 ///|
 async test "move dir" {
-  let (src_root_dir, src_dir_and_files) = generate_tmp_dir_and_files(tag="move_dir")
+  let (src_root_dir, src_dir_and_files) = generate_tmp_dir_and_files(
+    tag="move_dir",
+  )
   let dest_path = src_root_dir
     .join_path("../")
     .join_path("dest_\{@async.now()}")

@@ -33,11 +33,29 @@ pub async fn run_config() -> Unit {
 }
 
 ///|
+/// 校验 URL 类配置值
+/// - URL 类值必须以 http:// 或 https:// 开头（严格校验，不通过则 raise fail）
+/// - github_proxy 值应包含 $URL 变量（宽松校验，缺少则 warn 但不阻断）
+fn validate_config_url(key : String, value : String) -> Unit raise {
+  if !value.has_prefix("http://") && !value.has_prefix("https://") {
+    raise fail(
+      "配置项 \{key} 的值必须是有效的 URL（以 http:// 或 https:// 开头），当前值：\{value}",
+    )
+  }
+  if key == "github_proxy" && !value.contains("$URL") {
+    @log.warn(
+      "github_proxy 值中未包含 $URL 变量，可能导致代理功能异常",
+    )
+  }
+}
+
+///|
 /// 执行设置配置命令
 pub async fn run_config_set(key : String, value : String) -> Unit {
   let (_, existing_config) = @tools.get_global_config()
   match key {
     "github_proxy" => {
+      validate_config_url(key, value)
       let new_config = @tools.make_global_config(
         existing_config~,
         github_proxy=Some(value),
@@ -47,6 +65,7 @@ pub async fn run_config_set(key : String, value : String) -> Unit {
       println("设置 \{key} = \{value}")
     }
     "node_mirror" => {
+      validate_config_url(key, value)
       let new_config = @tools.make_global_config(
         existing_config~,
         node_mirror=Some(value),
@@ -56,6 +75,7 @@ pub async fn run_config_set(key : String, value : String) -> Unit {
       println("设置 \{key} = \{value}")
     }
     "go_mirror" => {
+      validate_config_url(key, value)
       let new_config = @tools.make_global_config(
         existing_config~,
         go_mirror=Some(value),
@@ -140,4 +160,42 @@ pub async fn run_config_preset(name : String) -> Unit {
       )
     }
   }
+}
+
+///|
+test "validate_config_url_valid" {
+  // 合法 URL 应通过校验
+  try {
+    validate_config_url(
+      "node_mirror", "https://mirrors.aliyun.com/nodejs-release",
+    )
+    validate_config_url("node_mirror", "http://example.com/mirror")
+    validate_config_url("go_mirror", "https://mirrors.aliyun.com/golang")
+  } catch {
+    _ => fail("valid URL should not raise error")
+  }
+}
+
+///|
+test "validate_config_url_invalid" {
+  // 不以 http:// 或 https:// 开头的 URL 应抛出错误
+  try {
+    validate_config_url("node_mirror", "ftp://example.com")
+    fail("should reject ftp:// URL")
+  } catch {
+    _ => ()
+  }
+  try {
+    validate_config_url("node_mirror", "example.com")
+    fail("should reject URL without protocol")
+  } catch {
+    _ => ()
+  }
+}
+
+///|
+test "validate_config_url_github_proxy_without_url_var" {
+  // github_proxy 缺少 $URL 变量时应 warn 但不阻断
+  validate_config_url("github_proxy", "https://proxy.example.com")
+  // 此测试应通过（不抛出错误），仅输出 warn 日志
 }

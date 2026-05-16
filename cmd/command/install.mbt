@@ -28,8 +28,7 @@ pub async fn run_install(
 
   // npm 随 node 安装
   if tool is @tools.Tool::Npm {
-    @log.error("npm 会随 node 自动安装，请先安装 node")
-    return
+    raise fail("npm 会随 node 自动安装，请先安装 node")
   }
 
   @log.info("安装 \{@utils.yellow(tool)} \{@utils.yellow(version)}")
@@ -40,8 +39,7 @@ pub async fn run_install(
   // 获取下载信息（URL、headers、目录深度）
   let download_info = @tools.get_download_info(os_info, tool, version)
   if download_info.url.is_blank() {
-    @log.error("无法获取下载地址")
-    return
+    raise fail("无法获取下载地址")
   }
 
   // 应用全局配置（如镜像、代理）转换 URL
@@ -140,9 +138,7 @@ pub async fn run_install(
   let extract_dir = "\{tmp_dir}/extract-\{tool}-\{version}"
   ensure_dir(extract_dir)
 
-  if !extract_file(archive_file, extract_dir) {
-    return
-  }
+  extract_file(archive_file, extract_dir)
 
   let mut src_dir = extract_dir
   let mut find_sub_dir_count : UInt = 0
@@ -232,7 +228,7 @@ pub async fn download_file(
 
 ///|
 /// 解压文件
-pub async fn extract_file(file : String, dest : String) -> Bool {
+pub async fn extract_file(file : String, dest : String) -> Unit {
   @log.info("正在解压 \{file} 到 \{dest} ...")
   let (code, data) = match file {
     f if f.has_suffix(".tar.gz") =>
@@ -240,19 +236,12 @@ pub async fn extract_file(file : String, dest : String) -> Bool {
     f if f.has_suffix(".tar.xz") =>
       @process.collect_output_merged("tar", ["-xJf", f, "-C", dest])
     f if f.has_suffix(".zip") => unzip(file, dest)
-    _ => {
-      @log.error("未知的压缩格式")
-      return false
-    }
+    _ => raise fail("未知的压缩格式：\{file}")
   }
   @log.debug("解压结果: \{code}")
   match code {
-    0 => true
-    _ => {
-      @log.error("解压失败，原因：")
-      @log.error(data.text())
-      false
-    }
+    0 => ()
+    _ => raise fail("解压失败，原因：\{data.text()}")
   }
 }
 
