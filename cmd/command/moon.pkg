@@ -6,6 +6,7 @@ import {
   "moonbitlang/async/http",
   "moonbitlang/async/process",
   "username/mvm/os",
+  "username/mvm/sys",
   "username/mvm/request",
   "username/mvm/fs_ext",
   "username/mvm/cmd/tools/tool_def",

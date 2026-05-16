@@ -44,6 +44,10 @@ fn[T : ToStr] log(prefix : String, loc? : String = "", msg : T) -> Unit {
 const FAILED_KEY = "FAILED:"
 
 ///|
+/// 是否打印取消的标记
+let print_cancelled_flag : Ref[Bool] = Ref(true)
+
+///|
 pub fn println_error(e : Error) -> Unit {
   let msg = match e {
     Failure::Failure(msg) => {
@@ -55,15 +59,19 @@ pub fn println_error(e : Error) -> Unit {
       }
       msg[start_index:].trim().to_owned()
     }
-    _ => {
-      let msg = e.to_string()
-      if msg == "Cancelled" {
-        println("")
-        "操作已取消"
+    _ =>
+      if @sys.is_cancelled(e) {
+        if print_cancelled_flag.val {
+          // 只打印一次取消
+          print_cancelled_flag.val = false
+          println("")
+          "操作已取消"
+        } else {
+          "\n"
+        }
       } else {
-        msg
+        e.to_string()
       }
-    }
   }
   error(msg)
 }

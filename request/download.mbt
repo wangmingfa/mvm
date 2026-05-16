@@ -179,8 +179,8 @@ pub async fn download(
         if e is DownloadError::FileAlreadyComplete {
           return
         }
-        if e.to_string().has_prefix("[HTTP]") {
-          raise e // HTTP 4xx/5xx，不重试
+        if @sys.is_cancelled(e) {
+          raise e // 用户手动取消
         }
         if attempt < max_retries {
           @log.warn("下载失败，第 \{attempt + 1} 次重试...")

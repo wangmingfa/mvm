@@ -73,9 +73,19 @@ pub async fn get_best_downloader() -> String? {
       // }
       // None
       Some("powershell")
-    Linux | MacOS => {
-      // Linux/macOS: 优先用 curl，其次用 wget
+    Linux => {
+      // Linux: 优先用 wget，其次用 curl
       let cmds = ["wget", "curl"]
+      for cmd in cmds {
+        if command_exists(cmd) {
+          return Some(cmd)
+        }
+      }
+      None
+    }
+    MacOS => {
+      // macOS: curl 是系统自带工具，优先使用；wget 通常需额外安装
+      let cmds = ["curl", "wget"]
       for cmd in cmds {
         if command_exists(cmd) {
           return Some(cmd)
