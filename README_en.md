@@ -167,6 +167,10 @@ mvm upgrade@v1.0.0
 # List all available versions
 mvm upgrade --list
 mvm upgrade -l
+
+# Reinstall the current version (useful for repairing a corrupted installation)
+mvm upgrade --reinstall
+mvm upgrade -r
 ```
 
 12. `mvm config`——View or set configuration

@@ -20,7 +20,7 @@ pub async fn run(command : Command) -> Unit {
   match command {
     Help => run_help()
     Version => run_version()
-    Upgrade(version) => run_upgrade(version)
+    Upgrade(version, reinstall) => run_upgrade(version, reinstall)
     UpgradeList => run_upgrade_list()
     Setup(use_prefix) => run_setup(use_prefix)
     Install(tool, version, skip_verify, no_cache) =>

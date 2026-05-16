@@ -2,7 +2,7 @@
 pub enum Command {
   Help
   Version
-  Upgrade(String?) // 可指定升级目标版本号，None 表示升级到最新版
+  Upgrade(String?, Bool) // 可指定升级目标版本号，None 表示升级到最新版；Bool 为是否重新安装当前版本
   UpgradeList // 查询所有可用的 mvm 版本
   Setup(Bool)
   Install(Tool, String?, Bool, Bool) // 第一个 Bool 为是否跳过 SHA256 校验，第二个 Bool 为是否不使用缓存
@@ -25,7 +25,7 @@ pub impl Show for Command with to_string(s) {
   match s {
     Help => "Help"
     Version => "Version"
-    Upgrade(version) => "Upgrade(\{@utils.option_to_string(version)})"
+    Upgrade(version, reinstall) => "Upgrade(\{@utils.option_to_string(version)}, reinstall=\{reinstall})"
     UpgradeList => "UpgradeList"
     Setup(use_prefix) => "Setup(\{use_prefix})"
     Install(tool, version, skip_verify, no_cache) =>
@@ -124,8 +124,24 @@ fn _extract_install_flags(
 }
 
 ///|
+/// 从参数数组中提取 upgrade 命令的 flags，返回 (reinstall, 剩余位置参数)
+fn _extract_upgrade_flags(
+  args : ArrayView[String],
+) -> (Bool, Array[String]) {
+  let mut reinstall = false
+  let positional : Array[String] = []
+  for arg in args {
+    match arg {
+      "--reinstall" | "-r" => reinstall = true
+      _ => positional.push(arg)
+    }
+  }
+  (reinstall, positional)
+}
+
+///|
 pub fn get_command(argv : ArrayView[String]) -> Command raise {
-  // 处理 install/i 前缀的命令（支持灵活的 flag 位置）
+  // 处理 install/i 命令（支持灵活的 flag 位置）
   if argv.length() >= 2 && (argv[0] == "install" || argv[0] == "i") {
     let (skip_verify, no_cache, positional) = _extract_install_flags(argv[1:])
     match positional.length() {
@@ -144,12 +160,29 @@ pub fn get_command(argv : ArrayView[String]) -> Command raise {
         )
     }
   }
+  // 处理 upgrade 命令（支持 --reinstall/-r flag 和灵活的参数位置）
+  if argv.length() >= 2 && argv[0] == "upgrade" {
+    let (reinstall, positional) = _extract_upgrade_flags(argv[1:])
+    match positional.length() {
+      0 => return Upgrade(None, reinstall)
+      1 => {
+        let arg = positional[0]
+        // --list/-l 查看版本列表，不是升级操作
+        if arg == "--list" || arg == "-l" {
+          return UpgradeList
+        }
+        return Upgrade(Some(arg), reinstall)
+      }
+      _ =>
+        raise fail(
+          "upgrade 命令参数无效。示例：mvm upgrade 或 mvm upgrade v1.0.0 --reinstall",
+        )
+    }
+  }
   match argv {
     ["--help"] | ["-h"] | [] => Help
     ["--version"] | ["-v"] => Version
-    ["upgrade"] => Upgrade(None)
-    ["upgrade", "--list"] | ["upgrade", "-l"] => UpgradeList
-    ["upgrade", version] => Upgrade(Some(version))
+    ["upgrade"] => Upgrade(None, false)
     ["setup"] => Setup(false)
     ["setup", "--prefix"] => Setup(true)
     ["setup", "-p"] => Setup(true)
@@ -448,19 +481,35 @@ test "get_command: run 命令" {
 }
 
 ///|
-test "get_command: upgrade/setup/cache/config 命令" {
-  // upgrade
+test "get_command: upgrade 命令" {
+  // upgrade（升级到最新版）
   guard (try? get_command(["upgrade"])) is Ok(cmd)
-  debug_inspect(cmd, content=@debug.to_string(Upgrade(None)))
-  // upgrade v1.0.0
+  debug_inspect(cmd, content=@debug.to_string(Upgrade(None, false)))
+  // upgrade v1.0.0（升级到指定版本）
   guard (try? get_command(["upgrade", "v1.0.0"])) is Ok(cmd)
-  debug_inspect(cmd, content=@debug.to_string(Upgrade(Some("v1.0.0"))))
-  // upgrade --list
+  debug_inspect(cmd, content=@debug.to_string(Upgrade(Some("v1.0.0"), false)))
+  // upgrade --list（查看版本列表）
   guard (try? get_command(["upgrade", "--list"])) is Ok(cmd)
   debug_inspect(cmd, content=@debug.to_string(UpgradeList))
-  // upgrade -l
+  // upgrade -l（查看版本列表）
   guard (try? get_command(["upgrade", "-l"])) is Ok(cmd)
   debug_inspect(cmd, content=@debug.to_string(UpgradeList))
+  // upgrade --reinstall（重新安装当前版本）
+  guard (try? get_command(["upgrade", "--reinstall"])) is Ok(cmd)
+  debug_inspect(cmd, content=@debug.to_string(Upgrade(None, true)))
+  // upgrade -r（重新安装当前版本，缩写）
+  guard (try? get_command(["upgrade", "-r"])) is Ok(cmd)
+  debug_inspect(cmd, content=@debug.to_string(Upgrade(None, true)))
+  // upgrade --reinstall v1.0.0（重新安装指定版本）
+  guard (try? get_command(["upgrade", "--reinstall", "v1.0.0"])) is Ok(cmd)
+  debug_inspect(cmd, content=@debug.to_string(Upgrade(Some("v1.0.0"), true)))
+  // upgrade v1.0.0 --reinstall（flag 在后）
+  guard (try? get_command(["upgrade", "v1.0.0", "--reinstall"])) is Ok(cmd)
+  debug_inspect(cmd, content=@debug.to_string(Upgrade(Some("v1.0.0"), true)))
+}
+
+///|
+test "get_command: setup/cache/config 命令" {
   // setup
   guard (try? get_command(["setup"])) is Ok(cmd)
   debug_inspect(cmd, content=@debug.to_string(Setup(false)))

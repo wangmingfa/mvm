@@ -33,8 +33,8 @@ async fn check_version_exists(version : String) -> Bool {
 }
 
 ///|
-/// 执行 upgrade 命令，可指定目标版本
-pub async fn run_upgrade(version : String?) -> Unit {
+/// 执行 upgrade 命令，可指定目标版本；reinstall 为 true 时重新安装当前版本
+pub async fn run_upgrade(version : String?, reinstall : Bool) -> Unit {
   // 确定目标版本：指定版本需验证存在性，未指定则获取最新版本
   let target_version = match version {
     Some(v) => {
@@ -49,20 +49,26 @@ pub async fn run_upgrade(version : String?) -> Unit {
       v
     }
     None => {
-      @log.info("正在检查最新版本...")
-      let latest = fetch_latest_version()
-      if latest.is_blank() {
-        @log.error("无法获取最新版本信息，请检查网络连接")
-        return
+      // --reinstall 时直接使用当前版本，跳过"已是最新版本"检查
+      if reinstall {
+        @log.info("正在重新安装当前版本 \{@utils.yellow(VERSION)}...")
+        VERSION
+      } else {
+        @log.info("正在检查最新版本...")
+        let latest = fetch_latest_version()
+        if latest.is_blank() {
+          @log.error("无法获取最新版本信息，请检查网络连接")
+          return
+        }
+        @log.info(
+          "当前版本：\{@utils.yellow(VERSION)}，最新版本：\{@utils.yellow(latest)}",
+        )
+        if latest == VERSION {
+          @log.success("已是最新版本，无需升级")
+          return
+        }
+        latest
       }
-      @log.info(
-        "当前版本：\{@utils.yellow(VERSION)}，最新版本：\{@utils.yellow(latest)}",
-      )
-      if latest == VERSION {
-        @log.success("已是最新版本，无需升级")
-        return
-      }
-      latest
     }
   }
   @log.info("正在升级到 \{@utils.yellow(target_version)}...")

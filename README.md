@@ -168,6 +168,10 @@ mvm upgrade@v1.0.0
 # 查看所有可用版本
 mvm upgrade --list
 mvm upgrade -l
+
+# 重新安装当前版本（用于修复损坏的安装）
+mvm upgrade --reinstall
+mvm upgrade -r
 ```
 
 12. `mvm config`——查看/设置配置

@@ -20,7 +20,7 @@ pub fn run_help() -> Unit {
     ("run", "临时运行指定版本", "mvm run node@18 -- node -v"),
     ("unuse", "移除全局版本设置", "mvm unuse node"),
     ("setup", "初始化工具脚本和PATH", "mvm setup [-p]"),
-    ("upgrade", "升级 mvm 自身", "mvm upgrade / mvm upgrade -l"),
+    ("upgrade", "升级 mvm 自身", "mvm upgrade / mvm upgrade -l / mvm upgrade -r"),
     ("cache clean", "清理缓存", "mvm cache clean"),
     ("config", "查看/设置配置", "mvm config list / mvm config ls"),
   ]
@@ -50,6 +50,7 @@ pub fn run_help() -> Unit {
     ("--version, -v", "显示版本号"),
     ("--skip-verify", "跳过 SHA256 校验（安装时使用）"),
     ("--no-cache", "不使用缓存，强制重新下载（安装时使用）"),
+    ("--reinstall, -r", "重新安装当前版本（升级时使用）"),
   ]
   let mut max_opt_w = 0
   for opt_item in options {
@@ -73,6 +74,7 @@ pub fn run_help() -> Unit {
     ("mvm pin node@20.18.0", "在项目中锁定 Node.js 版本"),
     ("mvm config set china", "一键配置中国大陆镜像"),
     ("mvm config set logo false", "关闭启动 logo 显示"),
+    ("mvm upgrade --reinstall", "重新安装当前版本的 mvm"),
   ]
   let mut max_ex_w = 0
   for ex_item in examples {
