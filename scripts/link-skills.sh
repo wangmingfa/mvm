@@ -5,7 +5,9 @@ CLAUDE_SKILLS="${SCRIPT_DIR}/.claude/skills"
 AICODE_SKILLS="${SCRIPT_DIR}/.aicode/skills"
 
 if [ ! -d "$CLAUDE_SKILLS" ]; then
-  echo "错误：未找到 .claude/skills 目录，请先初始化 git submodule"
+  echo "错误：未找到 .claude/skills 目录"
+  echo "请先运行 sync-skills.sh 同步上游技能内容："
+  echo "  ./scripts/sync-skills.sh"
   exit 1
 fi
 

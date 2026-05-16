@@ -297,17 +297,27 @@ mvm 兼容 Volta 的项目配置。如果项目目录下存在 Volta 的 `packag
 ./scripts/bump-tag.sh -yd  # 自动模式
 ```
 
-## Skills 子模块
+## Skills 配置
 
-本项目使用 [moonbitlang/skills](https://github.com/moonbitlang/skills) 作为子模块。
+本项目的 `.claude` 目录包含 AI 编码助手相关的技能配置，参考了 [moonbitlang/skills](https://github.com/moonbitlang/skills) 项目。
 
-**添加子模块：**
-> 项目中已经添加此子模块，无需再次添加
+**目录结构：**
+- `skills/`——AI 编码助手技能定义（moonbit 相关、openspec 相关等）
+- `commands/`——自定义命令配置
+- `.claude-plugin/`——插件配置
+
+**同步上游技能更新：**
+
+`.claude` 目录的内容来自 [moonbitlang/skills](https://github.com/moonbitlang/skills) 仓库，但不使用 git submodule，而是通过脚本同步（避免 `.git` 目录冲突）。
+
+**macOS / Linux**
 ```bash
-git submodule add https://github.com/moonbitlang/skills.git .claude
+./scripts/sync-skills.sh
 ```
 
-**更新子模块：**
-```bash
-git submodule update --init --recursive
+**Windows（PowerShell）**
+```powershell
+.\scripts\sync-skills.ps1
 ```
+
+> **提示：** 本地新增的自定义技能不会被同步脚本删除。

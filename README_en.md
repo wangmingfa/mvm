@@ -297,17 +297,27 @@ mvm is compatible with Volta's project configuration. If a Volta `package.json` 
 ./scripts/bump-tag.sh -yd  # auto mode
 ```
 
-## Skills Submodule
+## Skills Configuration
 
-This project uses [moonbitlang/skills](https://github.com/moonbitlang/skills) as a submodule.
+The `.claude` directory in this project contains AI coding assistant skill configurations, referencing the [moonbitlang/skills](https://github.com/moonbitlang/skills) project.
 
-**Add submodule:**
-> Already added to this project, no need to add again
+**Directory structure:**
+- `skills/`——AI coding assistant skill definitions (moonbit-related, openspec-related, etc.)
+- `commands/`——Custom command configurations
+- `.claude-plugin/`——Plugin configurations
+
+**Sync upstream skill updates:**
+
+The `.claude` directory content comes from the [moonbitlang/skills](https://github.com/moonbitlang/skills) repository, but does not use git submodule. Instead, it's synced via script (avoiding `.git` directory conflicts).
+
+**macOS / Linux**
 ```bash
-git submodule add https://github.com/moonbitlang/skills.git .claude
+./scripts/sync-skills.sh
 ```
 
-**Update submodule:**
-```bash
-git submodule update --init --recursive
+**Windows (PowerShell)**
+```powershell
+.\scripts\sync-skills.ps1
 ```
+
+> **Note:** Local custom skills will not be deleted by the sync script.

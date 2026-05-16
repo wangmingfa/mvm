@@ -3,7 +3,7 @@ $ClaudeSkills = Join-Path $ScriptDir ".claude\skills"
 $AicodeSkills = Join-Path $ScriptDir ".aicode\skills"
 
 if (-not (Test-Path $ClaudeSkills)) {
-    Write-Host "错误：未找到 .claude/skills 目录，请先初始化 git submodule"
+    Write-Host "错误：未找到 .claude/skills 目录"
     exit 1
 }
 
