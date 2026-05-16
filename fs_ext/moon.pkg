@@ -4,8 +4,10 @@ import {
   "moonbitlang/core/encoding/utf8",
   "moonbitlang/async",
   "moonbitlang/async/fs",
+  "moonbitlang/async/process",
   "username/mvm/array_ext",
   "username/mvm/ffi",
+  "username/mvm/os",
 }
 
 options(

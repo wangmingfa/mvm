@@ -79,8 +79,7 @@ pub async fn get_expected_checksum(
     Node => Node::get_expected_checksum(os_info, version)
     Zig => Zig::get_expected_checksum(os_info, version)
     Go => Go::get_expected_checksum(os_info, version)
-    // Bun 的 GitHub Releases API 不提供 checksum，暂不支持
-    Bun => None
+    Bun => Bun::get_expected_checksum(os_info, version)
     _ => None
   }
 }

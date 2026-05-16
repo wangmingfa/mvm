@@ -3,7 +3,7 @@ pub enum Command {
   Help
   Version
   Upgrade(String?) // 可指定升级目标版本号，None 表示升级到最新版
-  UpgradeList      // 查询所有可用的 mvm 版本
+  UpgradeList // 查询所有可用的 mvm 版本
   Setup(Bool)
   Install(Tool, String?, Bool, Bool) // 第一个 Bool 为是否跳过 SHA256 校验，第二个 Bool 为是否不使用缓存
   Pin(Tool, String)
@@ -18,7 +18,7 @@ pub enum Command {
   ConfigList
   ConfigSet(String, String)
   ConfigPreset(String)
-}
+} derive(Debug)
 
 ///|
 pub impl Show for Command with to_string(s) {
@@ -95,13 +95,55 @@ fn parse_with_version(
         no_cache~,
       )
     [tool] =>
-      Command::new_with_version(command_type, tool.to_owned(), skip_verify~, no_cache~)
+      Command::new_with_version(
+        command_type,
+        tool.to_owned(),
+        skip_verify~,
+        no_cache~,
+      )
     _ => raise fail("无效的参数 \{options}")
   }
 }
 
 ///|
+/// 从参数数组中提取 install 命令的 flags，返回 (skip_verify, no_cache, 剩余位置参数)
+fn _extract_install_flags(
+  args : ArrayView[String],
+) -> (Bool, Bool, Array[String]) {
+  let mut skip_verify = false
+  let mut no_cache = false
+  let positional : Array[String] = []
+  for arg in args {
+    match arg {
+      "--skip-verify" => skip_verify = true
+      "--no-cache" => no_cache = true
+      _ => positional.push(arg)
+    }
+  }
+  (skip_verify, no_cache, positional)
+}
+
+///|
 pub fn get_command(argv : ArrayView[String]) -> Command raise {
+  // 处理 install/i 前缀的命令（支持灵活的 flag 位置）
+  if argv.length() >= 2 && (argv[0] == "install" || argv[0] == "i") {
+    let (skip_verify, no_cache, positional) = _extract_install_flags(argv[1:])
+    match positional.length() {
+      0 =>
+        raise fail("请指定要安装的工具。示例：mvm install node@20")
+      1 =>
+        return parse_with_version(
+          "install",
+          positional[0],
+          skip_verify~,
+          no_cache~,
+        )
+      _ =>
+        raise fail(
+          "install 命令只接受一个工具参数。示例：mvm install node@20",
+        )
+    }
+  }
   match argv {
     ["--help"] | ["-h"] | [] => Help
     ["--version"] | ["-v"] => Version
@@ -111,17 +153,6 @@ pub fn get_command(argv : ArrayView[String]) -> Command raise {
     ["setup"] => Setup(false)
     ["setup", "--prefix"] => Setup(true)
     ["setup", "-p"] => Setup(true)
-    ["install", options] | ["i", options] =>
-      parse_with_version("install", options, skip_verify=false, no_cache=false)
-    ["install", options, "--skip-verify"] | ["i", options, "--skip-verify"] =>
-      parse_with_version("install", options, skip_verify=true, no_cache=false)
-    ["install", options, "--no-cache"] | ["i", options, "--no-cache"] =>
-      parse_with_version("install", options, skip_verify=false, no_cache=true)
-    ["install", options, "--skip-verify", "--no-cache"] |
-    ["i", options, "--skip-verify", "--no-cache"] |
-    ["install", options, "--no-cache", "--skip-verify"] |
-    ["i", options, "--no-cache", "--skip-verify"] =>
-      parse_with_version("install", options, skip_verify=true, no_cache=true)
     ["pin", options] => parse_with_version("pin", options)
     ["use", options] => parse_with_version("use", options)
     ["unuse"] =>
@@ -254,4 +285,228 @@ test "get_arg_value" {
       #|Some("v0.15.1")
     ),
   )
+}
+
+// =====================
+// get_command 命令解析测试
+// =====================
+
+///|
+test "get_command: 基本命令" {
+  // 无参数 → Help
+  guard (try? get_command([])) is Ok(cmd)
+  debug_inspect(cmd, content=@debug.to_string(Help))
+  // --help → Help
+  guard (try? get_command(["--help"])) is Ok(cmd)
+  debug_inspect(cmd, content=@debug.to_string(Help))
+  // -h → Help
+  guard (try? get_command(["-h"])) is Ok(cmd)
+  debug_inspect(cmd, content=@debug.to_string(Help))
+  // --version → Version
+  guard (try? get_command(["--version"])) is Ok(cmd)
+  debug_inspect(cmd, content=@debug.to_string(Version))
+  // -v → Version
+  guard (try? get_command(["-v"])) is Ok(cmd)
+  debug_inspect(cmd, content=@debug.to_string(Version))
+}
+
+///|
+test "get_command: install 命令" {
+  // install node@20
+  guard (try? get_command(["install", "node@20"])) is Ok(cmd)
+  debug_inspect(
+    cmd,
+    content=@debug.to_string(Install(Node, Some("20"), false, false)),
+  )
+  // i node@20 (缩写)
+  guard (try? get_command(["i", "node@20"])) is Ok(cmd)
+  debug_inspect(
+    cmd,
+    content=@debug.to_string(Install(Node, Some("20"), false, false)),
+  )
+  // install node (无版本号)
+  guard (try? get_command(["install", "node"])) is Ok(cmd)
+  debug_inspect(
+    cmd,
+    content=@debug.to_string(Install(Node, None, false, false)),
+  )
+  // install node@20 --skip-verify
+  guard (try? get_command(["install", "node@20", "--skip-verify"])) is Ok(cmd)
+  debug_inspect(
+    cmd,
+    content=@debug.to_string(Install(Node, Some("20"), true, false)),
+  )
+  // install node@20 --no-cache
+  guard (try? get_command(["install", "node@20", "--no-cache"])) is Ok(cmd)
+  debug_inspect(
+    cmd,
+    content=@debug.to_string(Install(Node, Some("20"), false, true)),
+  )
+  // install node@20 --skip-verify --no-cache
+  guard (try? get_command(["install", "node@20", "--skip-verify", "--no-cache"]))
+    is Ok(cmd)
+  debug_inspect(
+    cmd,
+    content=@debug.to_string(Install(Node, Some("20"), true, true)),
+  )
+  // install bun@lts
+  guard (try? get_command(["install", "bun@lts"])) is Ok(cmd)
+  debug_inspect(
+    cmd,
+    content=@debug.to_string(Install(Bun, Some("lts"), false, false)),
+  )
+  // install go@1.23
+  guard (try? get_command(["install", "go@1.23"])) is Ok(cmd)
+  debug_inspect(
+    cmd,
+    content=@debug.to_string(Install(Go, Some("1.23"), false, false)),
+  )
+}
+
+///|
+test "get_command: install 灵活 flag 位置" {
+  // --skip-verify 在工具参数前
+  guard (try? get_command(["install", "--skip-verify", "node@20"])) is Ok(cmd)
+  debug_inspect(
+    cmd,
+    content=@debug.to_string(Install(Node, Some("20"), true, false)),
+  )
+  // --no-cache 在工具参数前
+  guard (try? get_command(["install", "--no-cache", "node@20"])) is Ok(cmd)
+  debug_inspect(
+    cmd,
+    content=@debug.to_string(Install(Node, Some("20"), false, true)),
+  )
+  // 两个 flag 在工具参数前
+  guard (try? get_command(["install", "--skip-verify", "--no-cache", "node@20"]))
+    is Ok(cmd)
+  debug_inspect(
+    cmd,
+    content=@debug.to_string(Install(Node, Some("20"), true, true)),
+  )
+  // flag 在前和在后的组合
+  guard (try? get_command(["install", "--no-cache", "node@20", "--skip-verify"]))
+    is Ok(cmd)
+  debug_inspect(
+    cmd,
+    content=@debug.to_string(Install(Node, Some("20"), true, true)),
+  )
+  // 缩写 i 也支持灵活位置
+  guard (try? get_command(["i", "--skip-verify", "node@20"])) is Ok(cmd)
+  debug_inspect(
+    cmd,
+    content=@debug.to_string(Install(Node, Some("20"), true, false)),
+  )
+}
+
+///|
+test "get_command: use/pin/unuse 命令" {
+  // use node@20
+  guard (try? get_command(["use", "node@20"])) is Ok(cmd)
+  debug_inspect(cmd, content=@debug.to_string(Use(Node, Some("20"))))
+  // use node (无版本号)
+  guard (try? get_command(["use", "node"])) is Ok(cmd)
+  debug_inspect(cmd, content=@debug.to_string(Use(Node, None)))
+  // pin node@20.18.0
+  guard (try? get_command(["pin", "node@20.18.0"])) is Ok(cmd)
+  debug_inspect(cmd, content=@debug.to_string(Pin(Node, "20.18.0")))
+  // unuse node
+  guard (try? get_command(["unuse", "node"])) is Ok(cmd)
+  debug_inspect(cmd, content=@debug.to_string(Unuse(Node)))
+}
+
+///|
+test "get_command: list/current/which 命令" {
+  // list
+  guard (try? get_command(["list"])) is Ok(cmd)
+  debug_inspect(cmd, content=@debug.to_string(List(None)))
+  // ls (缩写)
+  guard (try? get_command(["ls"])) is Ok(cmd)
+  debug_inspect(cmd, content=@debug.to_string(List(None)))
+  // list node
+  guard (try? get_command(["list", "node"])) is Ok(cmd)
+  debug_inspect(cmd, content=@debug.to_string(List(Some(Node))))
+  // current
+  guard (try? get_command(["current"])) is Ok(cmd)
+  debug_inspect(cmd, content=@debug.to_string(Current(None)))
+  // current node
+  guard (try? get_command(["current", "node"])) is Ok(cmd)
+  debug_inspect(cmd, content=@debug.to_string(Current(Some(Node))))
+  // which node
+  guard (try? get_command(["which", "node"])) is Ok(cmd)
+  debug_inspect(cmd, content=@debug.to_string(Which(Node)))
+}
+
+///|
+test "get_command: run 命令" {
+  // run node@18 -- node -v
+  guard (try? get_command(["run", "node@18", "--", "node", "-v"])) is Ok(cmd)
+  debug_inspect(cmd, content=@debug.to_string(Run(Node, "18", ["node", "-v"])))
+  // run node -- npm -v (无版本号)
+  guard (try? get_command(["run", "node", "--", "npm", "-v"])) is Ok(cmd)
+  debug_inspect(cmd, content=@debug.to_string(Run(Node, "", ["npm", "-v"])))
+}
+
+///|
+test "get_command: upgrade/setup/cache/config 命令" {
+  // upgrade
+  guard (try? get_command(["upgrade"])) is Ok(cmd)
+  debug_inspect(cmd, content=@debug.to_string(Upgrade(None)))
+  // upgrade v1.0.0
+  guard (try? get_command(["upgrade", "v1.0.0"])) is Ok(cmd)
+  debug_inspect(cmd, content=@debug.to_string(Upgrade(Some("v1.0.0"))))
+  // upgrade --list
+  guard (try? get_command(["upgrade", "--list"])) is Ok(cmd)
+  debug_inspect(cmd, content=@debug.to_string(UpgradeList))
+  // upgrade -l
+  guard (try? get_command(["upgrade", "-l"])) is Ok(cmd)
+  debug_inspect(cmd, content=@debug.to_string(UpgradeList))
+  // setup
+  guard (try? get_command(["setup"])) is Ok(cmd)
+  debug_inspect(cmd, content=@debug.to_string(Setup(false)))
+  // setup --prefix
+  guard (try? get_command(["setup", "--prefix"])) is Ok(cmd)
+  debug_inspect(cmd, content=@debug.to_string(Setup(true)))
+  // setup -p
+  guard (try? get_command(["setup", "-p"])) is Ok(cmd)
+  debug_inspect(cmd, content=@debug.to_string(Setup(true)))
+  // cache clean
+  guard (try? get_command(["cache", "clean"])) is Ok(cmd)
+  debug_inspect(cmd, content=@debug.to_string(CacheClean))
+  // config list
+  guard (try? get_command(["config", "list"])) is Ok(cmd)
+  debug_inspect(cmd, content=@debug.to_string(ConfigList))
+  // config ls
+  guard (try? get_command(["config", "ls"])) is Ok(cmd)
+  debug_inspect(cmd, content=@debug.to_string(ConfigList))
+  // config set github_proxy https://example.com/$URL
+  guard (try? get_command([
+      "config", "set", "github_proxy", "https://example.com/$URL",
+    ]))
+    is Ok(cmd)
+  debug_inspect(
+    cmd,
+    content=@debug.to_string(
+      ConfigSet("github_proxy", "https://example.com/$URL"),
+    ),
+  )
+  // config set china (预设)
+  guard (try? get_command(["config", "set", "china"])) is Ok(cmd)
+  debug_inspect(cmd, content=@debug.to_string(ConfigPreset("china")))
+}
+
+///|
+test "get_command: 错误命令" {
+  // unuse 无参数 → 报错
+  guard (try? get_command(["unuse"])) is Err(_)
+  // which 无参数 → 报错
+  guard (try? get_command(["which"])) is Err(_)
+  // run 无参数 → 报错
+  guard (try? get_command(["run"])) is Err(_)
+  // run 缺少 -- 分隔 → 报错
+  guard (try? get_command(["run", "node@18", "node", "-v"])) is Err(_)
+  // 不存在的命令 → 报错
+  guard (try? get_command(["foobar"])) is Err(_)
+  // pin 无版本号 → 报错
+  guard (try? get_command(["pin", "node"])) is Err(_)
 }

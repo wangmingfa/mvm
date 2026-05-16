@@ -16,30 +16,19 @@ pub fn parse_version(version : String) -> FixedArray[Int] raise {
 
 ///|
 test "parse_version" {
-  debug_inspect(
-    parse_version("v2.3.2"),
-    content=(
-      #|[2, 3, 2]
-    ),
-  )
-  debug_inspect(
-    parse_version("v21.3.20"),
-    content=(
-      #|[21, 3, 20]
-    ),
-  )
-  debug_inspect(
-    parse_version("v2.3111.2"),
-    content=(
-      #|[2, 3111, 2]
-    ),
-  )
-  debug_inspect(
-    parse_version("v1.2.3-dev-alpha"),
-    content=(
-      #|[1, 2, 3]
-    ),
-  )
+  // 测试 parse_version 的各版本号解析结果
+  let arr = parse_version("v2.3.2")
+  guard arr.length() == 3 else { fail("expected 3 segments") }
+  guard arr[0] == 2 && arr[1] == 3 && arr[2] == 2 else { fail("values mismatch") }
+
+  let arr2 = parse_version("v21.3.20")
+  guard arr2[0] == 21 && arr2[1] == 3 && arr2[2] == 20 else { fail("values mismatch") }
+
+  let arr3 = parse_version("v2.3111.2")
+  guard arr3[0] == 2 && arr3[1] == 3111 && arr3[2] == 2 else { fail("values mismatch") }
+
+  let arr4 = parse_version("v1.2.3-dev-alpha")
+  guard arr4[0] == 1 && arr4[1] == 2 && arr4[2] == 3 else { fail("values mismatch") }
 }
 
 ///|
@@ -92,4 +81,55 @@ test "compare_version" {
       #|0
     ),
   )
+}
+
+///|
+test "compare_version 边界情况" {
+  // 较长版本 vs 较短版本：1.0.0 比 1.0 多一个段，视为更大
+  inspect(
+    compare_version("1.0.0", "1.0"),
+    content=(
+      #|1
+    ),
+  )
+  // 大版本号比较
+  inspect(
+    compare_version("20.0.0", "18.0.0"),
+    content=(
+      #|1
+    ),
+  )
+  // 两段版本号：第一位相同，第二位决定
+  inspect(
+    compare_version("1.2", "1.10"),
+    content=(
+      #|-1
+    ),
+  )
+}
+
+///|
+test "parse_version 错误输入" {
+  // 空字符串 → 报错
+  guard (try? parse_version("")) is Err(_) else {
+    fail("空字符串应报错")
+  }
+
+  // 纯字母 → 报错
+  guard (try? parse_version("abc")) is Err(_) else {
+    fail("纯字母应报错")
+  }
+
+  // 单段数字（正则要求至少两段，所以"1"是无效的）
+  guard (try? parse_version("1")) is Err(_) else {
+    fail("单段数字应报错（正则要求至少两段）")
+  }
+
+  // 两段版本号（有效）
+  guard (try? parse_version("1.2")) is Ok(arr2) else {
+    fail("两段版本号应成功")
+  }
+  guard arr2[0] == 1 && arr2[1] == 2 else {
+    fail("两段版本号解析值不正确")
+  }
 }

@@ -579,6 +579,141 @@ test "Config from_json" {
 }
 
 ///|
+test "Config from_json 多工具" {
+  let json : Json = {
+    "node": "v20.1.1",
+    "bun": "v1.2.3",
+    "zig": "v0.13.0",
+    "go": "v1.23.0",
+  }
+  let config : Config = @json.from_json(json)
+  guard config.node is Some("v20.1.1") else {
+    fail("expected node = Some(\"v20.1.1\")")
+  }
+  guard config.bun is Some("v1.2.3") else {
+    fail("expected bun = Some(\"v1.2.3\")")
+  }
+  guard config.zig is Some("v0.13.0") else {
+    fail("expected zig = Some(\"v0.13.0\")")
+  }
+  guard config.go is Some("v1.23.0") else {
+    fail("expected go = Some(\"v1.23.0\")")
+  }
+}
+
+///|
+test "Config get_value" {
+  let config : Config = {
+    node: Some("v20.1.1"),
+    bun: Some("v1.2.3"),
+    zig: None,
+    go: None,
+  }
+  guard config.get_value(Node) is Some("v20.1.1") else {
+    fail("expected Some(\"v20.1.1\")")
+  }
+  guard config.get_value(Bun) is Some("v1.2.3") else {
+    fail("expected Some(\"v1.2.3\")")
+  }
+  guard config.get_value(Zig) is None else { fail("expected None for zig") }
+}
+
+///|
+test "Tool::from_string 所有工具" {
+  guard Tool::from_string("node") is Node else { fail("expected Node") }
+  guard Tool::from_string("npm") is Npm else { fail("expected Npm") }
+  guard Tool::from_string("npx") is Npx else { fail("expected Npx") }
+  guard Tool::from_string("corepack") is Corepack else {
+    fail("expected Corepack")
+  }
+  guard Tool::from_string("bun") is Bun else { fail("expected Bun") }
+  guard Tool::from_string("zig") is Zig else { fail("expected Zig") }
+  guard Tool::from_string("go") is Go else { fail("expected Go") }
+  // 大小写不敏感
+  guard Tool::from_string("NODE") is Node else { fail("expected Node") }
+  guard Tool::from_string("Bun") is Bun else { fail("expected Bun") }
+}
+
+///|
+test "Tool::from_string 无效工具" {
+  guard (try? Tool::from_string("python")) is Err(_) else {
+    fail("invalid tool should raise error")
+  }
+}
+
+///|
+test "Tool::from_string_with_option_result" {
+  guard Tool::from_string_with_option_result("node") is Some(Node) else {
+    fail("expected Some(Node)")
+  }
+  guard Tool::from_string_with_option_result("rust") is None else {
+    fail("expected None for invalid tool")
+  }
+}
+
+///|
+test "replace_url 变量替换" {
+  let ctx = UrlReplaceContext::new(
+    "https://github.com/oven-sh/bun/releases/download/bun-v1.3.12/bun-darwin-aarch64.zip",
+    "bun", "bun-v1.3.12", "darwin", "arm64",
+  )
+  // $URL 替换
+  let result = replace_url("https://proxy.org/$URL", ctx)
+  guard result ==
+    "https://proxy.org/https://github.com/oven-sh/bun/releases/download/bun-v1.3.12/bun-darwin-aarch64.zip" else {
+    fail("URL replacement failed: \{result}")
+  }
+  // $TOOL 替换
+  let result2 = replace_url("https://mirror.org/$TOOL/$VERSION", ctx)
+  guard result2 == "https://mirror.org/bun/bun-v1.3.12" else {
+    fail("TOOL replacement failed: \{result2}")
+  }
+  // $OS 和 $ARCH 替换
+  let result3 = replace_url("https://mirror.org/$TOOL/$VERSION/$OS-$ARCH", ctx)
+  guard result3 == "https://mirror.org/bun/bun-v1.3.12/darwin-arm64" else {
+    fail("OS/ARCH replacement failed: \{result3}")
+  }
+}
+
+///|
+test "GlobalConfig to_string" {
+  let config : GlobalConfig = {
+    logo: Some(true),
+    github_proxy: Some("https://proxy.org/$URL"),
+    node_mirror: Some("https://mirrors.aliyun.com/nodejs-release"),
+    go_mirror: None,
+  }
+  let str = config.to_string()
+  guard str.contains("logo: true") else { fail("should contain 'logo: true'") }
+  guard str.contains("github_proxy: https://proxy.org/$URL") else {
+    fail("should contain github_proxy")
+  }
+  guard str.contains("node_mirror: https://mirrors.aliyun.com/nodejs-release") else {
+    fail("should contain node_mirror")
+  }
+  guard str.contains("go_mirror:") else { fail("should contain go_mirror") }
+}
+
+///|
+test "make_global_config 覆盖逻辑" {
+  let existing : GlobalConfig = {
+    logo: Some(true),
+    github_proxy: Some("https://old-proxy.org/$URL"),
+    node_mirror: None,
+    go_mirror: None,
+  }
+  // 只覆盖 github_proxy，保留 logo
+  let updated = make_global_config(
+    existing_config=existing,
+    github_proxy=Some("https://new-proxy.org/$URL"),
+  )
+  guard updated.logo is Some(true) else { fail("logo should be preserved") }
+  guard updated.github_proxy is Some("https://new-proxy.org/$URL") else {
+    fail("github_proxy should be updated")
+  }
+}
+
+///|
 fn get_project_config_path() -> String {
   guard @env.current_dir() is Some(cwd)
   return @fs_ext.join_path(cwd, CONFIG_FILE)

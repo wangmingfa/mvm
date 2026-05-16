@@ -189,6 +189,47 @@ mvm config set logo false
 mvm config set logo true
 ```
 
+## 工作原理
+
+mvm 的核心设计灵感来自 Volta，通过 **Shim 代理脚本 + 版本解析** 的方式实现多语言版本的无缝切换。
+
+### 1. Shim 代理脚本
+
+运行 `mvm setup` 时，mvm 会在 `$MVM_HOME/bin/` 目录下为每个工具创建轻量级的代理脚本（Shim）：
+
+- **Unix（macOS/Linux）**：创建 shell 脚本，内容为 `#!/bin/sh\nmvm run node -- node "$@"`
+- **Windows**：创建 `.ps1` 和 `.cmd` 文件，内容类似 `mvm run node -- node %*`
+
+当你在终端输入 `node`、`bun`、`zig` 或 `go` 时，实际上执行的是这些代理脚本，它们会自动调用 `mvm run` 来解析正确的版本并执行对应的真实二进制文件。
+
+### 2. PATH 配置
+
+mvm 将 `$MVM_HOME/bin/` 添加到系统 PATH 中（通过修改 `.zshrc`、`.bash_profile` 等 shell 配置文件），确保代理脚本优先于系统自带的工具被调用。
+
+### 3. 版本解析优先级
+
+当执行工具命令时，mvm 按以下优先级确定使用哪个版本：
+
+1. **项目级锁定**（`mvm pin`）：当前目录或父目录中的 `mvm.json`
+2. **Volta 兼容**：项目目录中 `package.json` 的 `volta.node` 字段（仅 Node.js）
+3. **全局默认**（`mvm use`）：`$MVM_HOME/config.json` 中的全局版本设置
+
+> 💡 mvm 会向上搜索父目录，因此子目录中的命令也能继承父级的版本配置。
+
+### 4. 安装流程
+
+执行 `mvm install node@20` 时的流程：
+
+1. 从官方发布地址（或配置的镜像/代理）下载归档文件
+2. 校验 SHA256 哈希值（可通过 `--skip-verify` 跳过）
+3. 解压到 `$MVM_HOME/tools/<tool>/<version>/` 目录
+4. 在 `$MVM_HOME/installed.json` 中记录已安装版本
+
+### 5. 配置体系
+
+- **全局配置** `$MVM_HOME/config.json`：存储 logo 显示、GitHub 代理、Node 镜像、Go 镜像等设置
+- **项目配置** `mvm.json`：存储项目级别的工具版本锁定（node、bun、zig、go）
+
 ## Volta 兼容
 
 mvm 兼容 Volta 的项目配置。如果项目目录下存在 Volta 的 `package.json`（包含 `volta.node` 字段），mvm 会自动读取其中的 Node.js 版本信息。
@@ -209,14 +250,19 @@ mvm 兼容 Volta 的项目配置。如果项目目录下存在 Volta 的 `packag
 
 1. 程序入口
 ```bash
-# 等同生产：mvm install node@20
-moon run cmd/main install node@20
-# 调试模式运行，等同生产：mvm install node
-MVM_LOG_LEVEL=debug ./scripts/debug.sh install node
+# 普通运行（使用默认日志级别）
+./scripts/run.sh install node@20
+
+# 调试运行（自动设置 MVM_LOG_LEVEL=debug，运行后恢复原值）
+./scripts/debug.sh install node
 ```
 
 ```powershell
-$env:MVM_LOG_LEVEL="debug"; ./scripts/debug.ps1 install node
+# 普通运行（使用默认日志级别）
+.\scripts\run.ps1 install node@20
+
+# 调试运行（自动设置 MVM_LOG_LEVEL=debug，运行后恢复原值）
+.\scripts\debug.ps1 install node
 ```
 
 2. 本地构建产物测试

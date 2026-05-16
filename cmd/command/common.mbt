@@ -7,23 +7,51 @@ fn get_installed_file_path() -> String raise {
 }
 
 ///|
+/// installed.json 文件损坏时，自动备份损坏文件并重建空记录
+/// 返回重建后的空 JSON Object
+async fn recover_installed_file(installed_file_path : String) -> Json {
+  let backup_path = installed_file_path + ".bak"
+  @log.warn(
+    "文件 \{@utils.yellow(installed_file_path)} 格式异常，已备份至 \{@utils.yellow(backup_path)}，将重建空记录",
+  )
+  // 将损坏文件备份（如果备份文件已存在则覆盖）
+  @fs_ext.remove_if_exists(backup_path)
+  let mv_result = try? @fs_ext.mv(installed_file_path, backup_path)
+  if mv_result is Err(_) {
+    @log.warn("备份损坏文件失败，将直接删除损坏文件")
+    @fs_ext.remove_if_exists(installed_file_path)
+  }
+  // 创建新的空记录文件并返回空 JSON Object
+  @fs.write_file(installed_file_path, "{}", create_mode=CreateOrTruncate)
+  @json.parse("{}") catch {
+    _ => raise fail("无法创建空 JSON 记录")
+  }
+}
+
+///|
 async fn add_installed(tool : Tool, version : String) -> Unit {
   let installed_file_path = get_installed_file_path()
   let json = if @fs.exists(installed_file_path) {
     @fs.read_file(installed_file_path).json() catch {
-      e => {
-        @log.error(
-          "文件 \{@utils.yellow(installed_file_path)} 不是有效的json格式",
-        )
-        raise e
-      }
+      _ => recover_installed_file(installed_file_path)
     }
   } else {
     {}
   }
   guard json is Object(map) else {
-    // TODO 如何自动修复格式
-    raise fail("文件 \{@utils.yellow(installed_file_path)} 格式不对")
+    // 格式不是 Object，自动恢复后重新读取
+    let recovered = recover_installed_file(installed_file_path)
+    guard recovered is Object(map) else {
+      raise fail(
+        "文件 \{@utils.yellow(installed_file_path)} 恢复后格式仍不对",
+      )
+    }
+    // 恢复成功，使用恢复后的 map 继续写入
+    let key = tool.to_string()
+    map.set(key, [version])
+    let content = Json::object(map).stringify(indent=2)
+    @fs.write_file(installed_file_path, content, create_mode=CreateOrTruncate)
+    return
   }
   let key = tool.to_string()
   if map.contains(key) {
@@ -54,13 +82,12 @@ async fn remove_installed(
     return []
   }
   let json = @fs.read_file(installed_file_path).json() catch {
-    _ =>
-      raise fail(
-        "文件 \{@utils.yellow(installed_file_path)} 不是有效的json格式",
-      )
+    _ => recover_installed_file(installed_file_path)
   }
   guard json is Object(map) else {
-    raise fail("文件 \{@utils.yellow(installed_file_path)} 格式不对")
+    // 格式不是 Object，自动恢复后返回空结果（remove 操作无需再处理）
+    let _ = recover_installed_file(installed_file_path)
+    return []
   }
   let key = tool.to_string()
   if map.contains(key) {

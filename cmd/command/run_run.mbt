@@ -145,7 +145,10 @@ async fn after_run(
   exec_args : ArrayView[String],
 ) -> Unit {
   match exec_tool {
-    Node => @specials.after_npm_command(before_run_result, exec_program_path, exec_args)
+    Node =>
+      @specials.after_npm_command(
+        before_run_result, exec_program_path, exec_args,
+      )
     _ => ()
   }
 }

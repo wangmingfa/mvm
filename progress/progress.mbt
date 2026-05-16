@@ -20,14 +20,15 @@ pub fn progress_bar(completed : Int64, total : Int64, suffix? : String) -> Unit 
 
 ///|
 async test "progress_bar" {
-  let total = 50
+  // 仅验证进度条渲染，减少迭代次数和 sleep 时间
+  let total = 5
   for i in 0..<=total {
     progress_bar(
       Int64::from_int(i + 1),
       total.to_int64(),
       suffix="downloading...",
     )
-    @async.sleep(100)
+    @async.sleep(50)
   }
   clear_progress()
   println("下载完成")
@@ -55,11 +56,12 @@ pub fn progress_bar_with_detailed_info(
 
 ///|
 async test "progress_bar_with_detailed_info" {
-  let total : Int64 = 534_020_831
+  // 仅验证进度条+速度/时间信息渲染，大幅减少模拟数据量和等待时间
+  let total : Int64 = 100_000_000
   let mut completed : Int64 = 0
-  let step : Int64 = 3_612_341
+  let step : Int64 = 20_000_000
   let start_time = @async.now()
-  let period : Int64 = 100
+  let period : Int64 = 50
   let sleep_time = period.to_int()
   while completed < total {
     completed += step
@@ -156,10 +158,11 @@ pub fn ProgressBar::duration(self : Self) -> Int64 {
 
 ///|
 async test "ProgressBar" {
-  let progress_bar = ProgressBar::new(81_456_789_33)
+  // 仅验证 ProgressBar 结构体逻辑，大幅减少模拟数据量和等待时间
+  let progress_bar = ProgressBar::new(100_000_000)
   while !progress_bar.is_completed() {
-    progress_bar.add_completed(193_123_239)
-    @async.sleep(300)
+    progress_bar.add_completed(20_000_000)
+    @async.sleep(50)
   }
   ProgressBar::clear()
   println("下载完成")

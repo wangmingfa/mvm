@@ -183,6 +183,85 @@ pub fn Bun::get_download_info(
 }
 
 ///|
+/// 获取 Bun 的预期 SHA256 校验值
+/// 从 GitHub Releases 的 SHA256SUMS.txt 获取
+pub async fn Bun::get_expected_checksum(
+  _os_info : @os.OsInfo,
+  version : String,
+) -> String? {
+  // 构建归档文件名（与 get_download_info 一致）
+  let platform_name_result = try? Bun::_get_platform_asset_name()
+  guard platform_name_result is Ok(platform_name) else { return None }
+  let archive_filename = "\{platform_name}.zip"
+
+  // 构建 tag（与 get_download_info 一致）
+  let tag = if version.has_prefix("v") {
+    "bun-\{version}"
+  } else {
+    "bun-v\{version}"
+  }
+  // 保留原始 GitHub URL，作为代理失败时的回退
+  let original_url = "\{BUN_RELEASE_URL}/\{tag}/SHASUMS256.txt"
+
+  // 应用镜像/代理配置
+  let (_, global_config) = get_global_config()
+  let ctx = UrlReplaceContext::new(original_url, "bun", version, "", "")
+  let proxied_url = apply_global_config(original_url, global_config, ctx)
+
+  // 构建 URL 尝试列表：代理优先，GitHub 原链接兜底
+  // 某些 GitHub 代理未实现 SHA256SUMS.txt 等辅助文件的代理，需要回退机制
+  let urls = if proxied_url != original_url {
+    [proxied_url, original_url]
+  } else {
+    [original_url]
+  }
+  // let headers = {
+  //   "User-Agent": "curl/8.7.1",
+  //   "Accept": "application/octet-stream",
+  // }
+
+  // 尝试从缓存读取
+  let cache_file = "bun_shasums_\{version}.txt"
+  let cached_content = read_cache_file_content(cache_file)
+  let shasums_content = match cached_content {
+    Some(content) => content
+    None => {
+      // 顺序尝试 URL 列表，首个成功即返回
+      let result = @request.try_urls(urls, "Bun SHA256 校验文件")
+      guard result is Some((_, content)) else { return None }
+      write_cache_file_content(cache_file, content)
+      content
+    }
+  }
+
+  // 解析 SHA256SUMS.txt，查找匹配的文件名
+  // 格式: <hash>  <filename> (两个空格分隔)
+  _parse_bun_shasums(shasums_content, archive_filename)
+}
+
+///|
+/// 解析 Bun SHA256SUMS.txt 文件内容
+/// 格式: <hash>  <filename>
+fn _parse_bun_shasums(content : String, filename : String) -> String? {
+  let lines = content.split("\n")
+  for line in lines {
+    let line = line.trim().to_owned()
+    if line.is_blank() {
+      continue
+    }
+    let parts = line.split("  ").to_array()
+    if parts.length() >= 2 {
+      let hash = parts[0].trim().to_owned().to_lower()
+      let name = parts[1].trim().to_owned()
+      if name == filename {
+        return Some(hash)
+      }
+    }
+  }
+  None
+}
+
+///|
 pub fn Bun::get_exe_path(version : String) -> String raise {
   // let os = @os.get_os_name()
   // let suffix = if os is Windows { ".exe" } else { "" }

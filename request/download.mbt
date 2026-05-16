@@ -169,25 +169,6 @@ pub async fn download(
 }
 
 ///|
-pub fn merge_detault_headers(
-  headers? : Map[String, String] = {},
-) -> Map[String, String] {
-  // 注意：不包含 Accept-Encoding 头
-  // MoonBit 的 @http.get 不自动解压 gzip/br 响应，如果发送 Accept-Encoding
-  // 服务器可能返回压缩数据，导致 data.text() 解码时抛出 utf8.Malformed 错误
-  // 实际的大文件下载通过 curl/PowerShell 处理，它们有自己的压缩机制
-  let merged_headers = {
-    "User-Agent": "curl/8.7.1",
-    "Accept": "*/*",
-    "Connection": "keep-alive",
-  }
-  for k, v in headers {
-    merged_headers.set(k, v)
-  }
-  merged_headers
-}
-
-///|
 async fn get_client(
   url : String,
   range_start? : Int64 = 0,
@@ -264,10 +245,9 @@ async fn get_client(
 async test "download" {
   let start = @async.now()
   guard @env.current_dir() is Some(dir)
-  let output_path = "\{dir}/.temp/游戏直播大师课.zip"
-  // "https://cdn.gh-proxy.org/https://github.com/oven-sh/bun/releases/download/bun-v1.3.12/bun-darwin-aarch64.zip",
-  // let url = "https://github.com/oven-sh/bun/releases/download/bun-v1.3.12/bun-darwin-aarch64.zip"
-  let url = "https://szpdmtest.vivo.xyz/filemanager/api/attachment/download?code=E9ABC642472443F18909366E6FB22B77"
+  // 使用阿里云镜像上的小文件（~810KB），测试速度快且能验证进度条
+  let url = "https://mirrors.aliyun.com/macports/distfiles/bzip2/bzip2-1.0.8.tar.gz"
+  let output_path = "\{dir}/.temp/bzip2-1.0.8.tar.gz"
   download(url, output_path, dest_is_file=true)
   let end = @async.now()
   let time = end - start
@@ -385,7 +365,8 @@ pub async fn download_by_native_command(
 
 ///|
 async test "download_by_native_command" {
-  let url = "https://mirrors.aliyun.com/nodejs-release/v21.7.3/node-v21.7.3-linux-x64.tar.gz"
+  // 使用阿里云镜像上的小文件（~2KB SHASUMS256.txt），测试速度快
+  let url = "https://mirrors.aliyun.com/nodejs-release/v22.14.0/SHASUMS256.txt"
   let name = @fs_ext.get_path_name(url)
   let dest_dir = ".temp/\{@async.now()}"
   ensure_dir(dest_dir)

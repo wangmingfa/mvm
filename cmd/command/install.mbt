@@ -107,13 +107,23 @@ pub async fn run_install(
         let verified = @checksum.verify_file_checksum(archive_file, expected)
         if !verified {
           @log.error("SHA256 校验失败！文件可能已损坏或被篡改")
-          // 如果复用了缓存文件，需要清除损坏的缓存，防止下次再复用导致死循环
+          // 清除损坏的缓存文件和下载文件，防止续传拼接损坏数据
           if skip_download {
             @fs_ext.remove_if_exists(cached_archive_file)
-            @log.info("已清除损坏的缓存文件，下次将重新下载")
           }
-          @fs.rmdir(tmp_dir, recursive=true)
-          raise fail("下载文件校验失败，请重新尝试安装")
+          @fs_ext.remove_if_exists(archive_file)
+          // 自动重试：删除损坏文件后重新下载
+          @log.info("正在重新下载（不使用缓存/续传）...")
+          download_file(url, archive_file, headers~)
+          let verified_retry = @checksum.verify_file_checksum(
+            archive_file, expected,
+          )
+          if !verified_retry {
+            @fs.rmdir(tmp_dir, recursive=true)
+            raise fail(
+              "重新下载后校验仍然失败，请检查网络或代理配置，或使用 --skip-verify 跳过校验",
+            )
+          }
         }
         @log.success("SHA256 校验通过")
       }
@@ -214,9 +224,9 @@ pub async fn download_file(
   let os = @os.get_os_name()
   match os {
     Windows | MacOS =>
-      @download.download(url, dest, dest_is_file=true, headers~, show_progress~)
+      @request.download(url, dest, dest_is_file=true, headers~, show_progress~)
     _ =>
-      @download.download_by_native_command(url, dest, headers~, show_progress~)
+      @request.download_by_native_command(url, dest, headers~, show_progress~)
   }
 }
 

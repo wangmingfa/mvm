@@ -1,29 +1,23 @@
 ///|
 pub async fn mv(src : String, dest : String) -> Unit {
   guard @fs.exists(src) else { raise fail("路径不存在 \{src}") }
-  @fs.rename(src, dest)
 
-  // let kind = @fs.kind(src)
-  // let is_dir = match kind {
-  //   Regular => {
-  //     // 文件
-  //     ensure_dir(dest)
-  //     let name = get_path_name(src)
-  //     let dest_file_path = get_dest_path(dest, name)
-  //     copy_file(src, dest_file_path)
-  //     false
-  //   }
-  //   Directory => {
-  //     copy_dir(src, dest, include_root~)
-  //     true
-  //   }
-  //   _ => raise fail("不支持的类型 \{@debug.to_string(kind)}")
-  // }
-  // if is_dir {
-  //   @fs.rmdir(src[0:], recursive=true)
-  // } else {
-  //   @fs.remove(src[0:])
-  // }
+  // dest 已存在且是目录时，将 src 移入该目录内（类似 Unix mv 命令行为）
+  // 使用 try? @fs.kind 一次性判断，避免 exists 和 kind 之间的竞争条件
+  if (try? @fs.kind(dest)) is Ok(Directory) {
+    let name = get_path_name(src)
+    @fs.rename(src, "\{dest}/\{name}")
+    return
+  }
+
+  // dest 不存在时，确保其父目录存在后再重命名
+  guard get_parent_dir(dest) is Some(parent_dir) else {
+    raise fail("无法获取目标路径的父目录：\{dest}")
+  }
+  if !parent_dir.is_blank() && !@fs.exists(parent_dir) {
+    ensure_dir(parent_dir)
+  }
+  @fs.rename(src, dest)
 }
 
 ///|
@@ -119,12 +113,13 @@ async fn get_all_sub_dir_or_file_path(
 }
 
 ///|
-async fn generate_tmp_dir_and_files() -> (String, Array[String]) {
+async fn generate_tmp_dir_and_files(tag~ : String = "") -> (String, Array[String]) {
   let dir_or_files = []
   // 生成临时文件
   let file_content = "hello world, MoonBit!"
   let temp_dir = get_tmp_dir()
-  let src_root_dir = temp_dir.join_path("src_\{@async.now()}")
+  // tag 用于区分并发测试调用，避免时间戳冲突
+  let src_root_dir = temp_dir.join_path("src_\{tag}_\{@async.now()}")
   ensure_dir(src_root_dir)
   let src_root_file_path = "\{src_root_dir}/root.txt"
   @fs.write_file(
@@ -155,7 +150,7 @@ async fn generate_tmp_dir_and_files() -> (String, Array[String]) {
 
 ///|
 async test "get_all_sub_dir_or_file_path" {
-  let (dest_path, tmp_dir_and_files) = generate_tmp_dir_and_files()
+  let (dest_path, tmp_dir_and_files) = generate_tmp_dir_and_files(tag="get_all")
   let validate_dir_and_fiels = get_all_sub_dir_or_file_path(
     dest_path,
     include_root=true,
@@ -171,32 +166,57 @@ fn get_tmp_dir() -> String {
 
 ///|
 async test "move file" {
-  // 生成临时文件
+  // 测试 mv 将文件重命名到不存在的新路径
   let file_content = "hello world, MoonBit!"
   let temp_dir = get_tmp_dir()
   ensure_dir(temp_dir)
-  let src_random_name = @env.now()
-  let src_file_path = "\{temp_dir}/mv_\{src_random_name}.txt"
-  let file_name = get_path_name(src_file_path)
+  let timestamp = @async.now()
+  let src_file_path = "\{temp_dir}/mv_src_\{timestamp}.txt"
   @fs.write_file(src_file_path, file_content, create_mode=CreateOrTruncate)
-  let dest_path = "\{temp_dir}/\{src_random_name}"
-  // 移动
+  // dest 不存在，mv 将 src 重命名为 dest
+  let dest_path = "\{temp_dir}/mv_dest_\{timestamp}.txt"
   mv(src_file_path, dest_path)
-  // 比较是否成功
-  let dest_file_paht = "\{dest_path}/\{file_name}"
-  println("比较：\{src_file_path}  vs  \{dest_file_paht}")
-  if @fs.exists(dest_file_paht) {
-    let dest_file_content = @fs.read_file(dest_file_paht).text()
-    if dest_file_content == file_content {
-      return
-    }
+  // 验证目标文件存在且内容一致
+  guard @fs.exists(dest_path) else {
+    raise fail("目标文件不存在：\{dest_path}")
   }
-  raise fail("move失败")
+  let dest_file_content = @fs.read_file(dest_path).text()
+  guard dest_file_content == file_content else {
+    raise fail("move 失败：文件内容不一致")
+  }
+  // 清理
+  @fs.remove(dest_path)
+}
+
+///|
+async test "move file into dir" {
+  // 测试 mv 将文件移入已存在的目录
+  let file_content = "hello world, MoonBit!"
+  let temp_dir = get_tmp_dir()
+  ensure_dir(temp_dir)
+  let timestamp = @async.now()
+  let src_file_path = "\{temp_dir}/mv_into_src_\{timestamp}.txt"
+  @fs.write_file(src_file_path, file_content, create_mode=CreateOrTruncate)
+  // 创建目标目录
+  let dest_dir = "\{temp_dir}/mv_into_dest_\{timestamp}"
+  ensure_dir(dest_dir)
+  // mv 到已存在的目录中，文件应被移入目录内部
+  mv(src_file_path, dest_dir)
+  let dest_file_path = "\{dest_dir}/mv_into_src_\{timestamp}.txt"
+  guard @fs.exists(dest_file_path) else {
+    raise fail("目标文件不存在：\{dest_file_path}")
+  }
+  let dest_file_content = @fs.read_file(dest_file_path).text()
+  guard dest_file_content == file_content else {
+    raise fail("move 失败：文件内容不一致")
+  }
+  // 清理
+  @fs.rmdir(dest_dir, recursive=true)
 }
 
 ///|
 async test "move dir" {
-  let (src_root_dir, src_dir_and_files) = generate_tmp_dir_and_files()
+  let (src_root_dir, src_dir_and_files) = generate_tmp_dir_and_files(tag="move_dir")
   let dest_path = src_root_dir
     .join_path("../")
     .join_path("dest_\{@async.now()}")
@@ -225,7 +245,7 @@ pub enum SymlinkStatus {
   SymlinkNone = 0 // 不存在（路径都没有）
   SymlinkBroken = 1 // 软链接存在，但目标失效
   SymlinkOk = 2 // 软链接存在且目标有效
-}
+} derive(Debug)
 
 ///|
 pub fn symlink_status(symlink_file_path : String) -> SymlinkStatus {
@@ -254,30 +274,74 @@ pub fn readlink_target(path : String) -> String? {
 }
 
 ///|
-test "symlink_status" {
-  match symlink_status("/Users/11048490/.mvm-test/bin/npm-pkg/vite") {
-    SymlinkBroken => println("软连接失效")
-    SymlinkNone => println("软连接不存在")
-    SymlinkOk => println("软连接有效")
-  }
+async test "symlink_status" {
+  let temp_dir = get_tmp_dir()
+  ensure_dir(temp_dir)
+  let timestamp = @async.now()
+  let test_dir = "\{temp_dir}/symlink_test_\{timestamp}"
+  ensure_dir(test_dir)
+
+  // 创建目标文件
+  let target_file = "\{test_dir}/target.txt"
+  @fs.write_file(target_file, "hello", create_mode=CreateOrTruncate)
+
+  // 创建有效软连接（指向存在的文件）
+  let valid_symlink = "\{test_dir}/valid_link"
+  let _ = @process.run("ln", ["-s", target_file, valid_symlink])
+
+  // 创建失效软连接（指向不存在的文件）
+  let broken_symlink = "\{test_dir}/broken_link"
+  let _ = @process.run("ln", [
+    "-s",
+    "\{test_dir}/nonexistent.txt",
+    broken_symlink,
+  ])
+
+  // 测试三种状态
+  debug_inspect(
+    symlink_status(valid_symlink),
+    content=@debug.to_string(SymlinkOk),
+  )
+  debug_inspect(
+    symlink_status(broken_symlink),
+    content=@debug.to_string(SymlinkBroken),
+  )
+  debug_inspect(
+    symlink_status("\{test_dir}/no_such_path"),
+    content=@debug.to_string(SymlinkNone),
+  )
+
+  // 清理
+  @fs.rmdir(test_dir, recursive=true)
 }
 
 ///|
-test "readlink_target" {
-  let mvm_home = if @env.get_env_var("MVM_HOME") is Some(dir) {
-    dir
-  } else if @env.get_env_var("HOME") is Some(dir) {
-    dir
-  } else {
-    raise fail("找不到MVM_HOME")
-  }
-  let path = readlink_target("\{mvm_home}/bin/f_node")
+async test "readlink_target" {
+  let temp_dir = get_tmp_dir()
+  ensure_dir(temp_dir)
+  let timestamp = @async.now()
+  let test_dir = "\{temp_dir}/readlink_test_\{timestamp}"
+  ensure_dir(test_dir)
+
+  // 创建目标文件
+  let target_file = "\{test_dir}/debug.sh"
+  @fs.write_file(target_file, "echo hello", create_mode=CreateOrTruncate)
+
+  // 创建软连接指向目标文件
+  let symlink_path = "\{test_dir}/f_node"
+  let _ = @process.run("ln", ["-s", target_file, symlink_path])
+
+  // 验证软连接返回正确的目标路径
   debug_inspect(
-    path,
-    content=(
-      #|Some("b\"/Users/11048490/.mvm-test/bin/debug.sh\"")
-    ),
+    readlink_target(symlink_path),
+    content=@debug.to_string(Some(target_file)),
   )
+
+  // 验证非软连接文件返回 None
+  guard readlink_target(target_file) is None
+
+  // 清理
+  @fs.rmdir(test_dir, recursive=true)
 }
 
 ///|

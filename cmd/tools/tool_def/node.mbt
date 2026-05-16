@@ -199,7 +199,7 @@ pub async fn Node::get_expected_checksum(
       // 从远程获取
       let (res, data) = @http.get(
         shasums_url,
-        headers=@download.merge_detault_headers(),
+        headers=@request.merge_detault_headers(),
       )
       if !(res.code is (200..<300)) {
         @log.warn(

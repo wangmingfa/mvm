@@ -189,6 +189,47 @@ mvm config set logo false
 mvm config set logo true
 ```
 
+## How It Works
+
+mvm's core design is inspired by Volta, achieving seamless multi-language version switching through **Shim proxy scripts + version resolution**.
+
+### 1. Shim Proxy Scripts
+
+When you run `mvm setup`, mvm creates lightweight proxy scripts (shims) in the `$MVM_HOME/bin/` directory for each tool:
+
+- **Unix (macOS/Linux)**: Creates shell scripts with content like `#!/bin/sh\nmvm run node -- node "$@"`
+- **Windows**: Creates `.ps1` and `.cmd` files with content like `mvm run node -- node %*`
+
+When you type `node`, `bun`, `zig`, or `go` in your terminal, you're actually executing these proxy scripts, which automatically call `mvm run` to resolve the correct version and execute the corresponding real binary.
+
+### 2. PATH Configuration
+
+mvm adds `$MVM_HOME/bin/` to the system PATH (by modifying shell profile files like `.zshrc`, `.bash_profile`, etc.), ensuring the proxy scripts are called before any system-installed tools.
+
+### 3. Version Resolution Priority
+
+When executing a tool command, mvm determines the version to use in this order:
+
+1. **Project-level pin** (`mvm pin`): `mvm.json` in the current directory or parent directories
+2. **Volta compatibility**: `volta.node` field in the project's `package.json` (Node.js only)
+3. **Global default** (`mvm use`): Global version setting in `$MVM_HOME/config.json`
+
+> 💡 mvm searches upward through parent directories, so commands in subdirectories inherit the parent's version configuration.
+
+### 4. Installation Flow
+
+When you run `mvm install node@20`:
+
+1. Download the archive from the official release URL (or configured mirror/proxy)
+2. Verify the SHA256 checksum (can be skipped with `--skip-verify`)
+3. Extract to `$MVM_HOME/tools/<tool>/<version>/` directory
+4. Record the installed version in `$MVM_HOME/installed.json`
+
+### 5. Configuration System
+
+- **Global config** `$MVM_HOME/config.json`: Stores logo display, GitHub proxy, Node mirror, Go mirror settings
+- **Project config** `mvm.json`: Stores project-level tool version pins (node, bun, zig, go)
+
 ## Volta Compatibility
 
 mvm is compatible with Volta's project configuration. If a Volta `package.json` (with `volta.node` field) exists in the project directory, mvm will automatically read the Node.js version from it.
@@ -209,14 +250,19 @@ mvm is compatible with Volta's project configuration. If a Volta `package.json` 
 
 1. Entry point
 ```bash
-# Equivalent to production: mvm install node@20
-moon run cmd/main install node@20
-# Debug mode, equivalent to production: mvm install node
-MVM_LOG_LEVEL=debug ./scripts/debug.sh install node
+# Normal run (default log level)
+./scripts/run.sh install node@20
+
+# Debug run (auto sets MVM_LOG_LEVEL=debug, restores original value after)
+./scripts/debug.sh install node
 ```
 
 ```powershell
-$env:MVM_LOG_LEVEL="debug"; ./scripts/debug.ps1 install node
+# Normal run (default log level)
+.\scripts\run.ps1 install node@20
+
+# Debug run (auto sets MVM_LOG_LEVEL=debug, restores original value after)
+.\scripts\debug.ps1 install node
 ```
 
 2. Test local build

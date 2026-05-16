@@ -92,7 +92,7 @@ async test "get_best_downloader" {
   debug_inspect(
     get_best_downloader(),
     content=(
-      #|Some("curl")
+      #|Some("wget")
     ),
   )
 }

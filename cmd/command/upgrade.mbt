@@ -16,19 +16,19 @@ const GITHUB_API_RELEASES = "https://api.github.com/repos/\{GITHUB_REPO}/release
 ///|
 /// 规范化版本号：不以 v 开头时自动补齐
 fn normalize_version(version : String) -> String {
-  if version.has_prefix("v") { version } else { "v\{version}" }
+  if version.has_prefix("v") {
+    version
+  } else {
+    "v\{version}"
+  }
 }
 
 ///|
 /// 检查指定版本是否存在于 GitHub releases
 async fn check_version_exists(version : String) -> Bool {
   // 通过 GitHub releases/tags API 验证版本是否存在，返回 200 表示存在，404 表示不存在
-  let url =
-    "https://api.github.com/repos/\{GITHUB_REPO}/releases/tags/\{version}"
-  let (res, _) = @http.get(
-    url,
-    headers=@download.merge_detault_headers(),
-  ) // 网络错误时 res.code 不会是 200，等同于版本不存在
+  let url = "https://api.github.com/repos/\{GITHUB_REPO}/releases/tags/\{version}"
+  let (res, _) = @http.get(url, headers=@request.merge_detault_headers()) // 网络错误时 res.code 不会是 200，等同于版本不存在
   res.code == 200
 }
 
@@ -110,8 +110,13 @@ fn extract_all_tag_names(body : String) -> Array[String] {
             match content.find("\"") {
               Some(q2) => {
                 versions.push(content[:q2].to_owned())
-                search_from =
-                  search_from + offset + prefix.length() + q1 + 1 + q2 + 1
+                search_from = search_from +
+                  offset +
+                  prefix.length() +
+                  q1 +
+                  1 +
+                  q2 +
+                  1
               }
               None => break
             }
@@ -131,7 +136,7 @@ pub async fn run_upgrade_list() -> Unit {
   @log.info("正在获取所有可用的 mvm 版本...")
   let (res, data) = @http.get(
     GITHUB_API_RELEASES,
-    headers=@download.merge_detault_headers(),
+    headers=@request.merge_detault_headers(),
   )
   if res.code != 200 {
     @log.error(
