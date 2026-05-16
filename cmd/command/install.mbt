@@ -3,7 +3,7 @@ using @fs_ext {ensure_dir}
 
 ///|
 /// 执行安装命令
-/// skip_verify: 是否跳过 SHA256 校验（当无法获取校验值时，默认会中断安装）
+/// skip_verify: 是否跳过 SHA256 校验（当无法获取校验值时，默认会警告并继续安装）
 /// no_cache: 是否不使用缓存（跳过索引文件缓存和压缩包缓存，强制重新下载）
 pub async fn run_install(
   tool : @tools.Tool,
@@ -126,10 +126,7 @@ pub async fn run_install(
         @log.success("SHA256 校验通过")
       }
       None => {
-        @fs.rmdir(tmp_dir, recursive=true)
-        raise fail(
-          "无法获取 SHA256 校验值，安装中止。如需跳过校验请使用: mvm install \{tool}@\{version} --skip-verify",
-        )
+        @log.warn("\{tool} 不支持 SHA256 校验，跳过校验继续安装")
       }
     }
   }

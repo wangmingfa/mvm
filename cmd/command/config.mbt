@@ -30,6 +30,24 @@ pub async fn run_config() -> Unit {
     Some(mirror) => println("  go_mirror: \{mirror}")
     None => println("  go_mirror: (未设置)")
   }
+  println("")
+  println("Python 镜像配置:")
+  match config.python_mirror {
+    Some(mirror) => println("  python_mirror: \{mirror}")
+    None => println("  python_mirror: (未设置)")
+  }
+  println("")
+  println("Rust 镜像配置:")
+  match config.rust_mirror {
+    Some(mirror) => println("  rust_mirror: \{mirror}")
+    None => println("  rust_mirror: (未设置)")
+  }
+  println("")
+  println("Java 镜像配置:")
+  match config.java_mirror {
+    Some(mirror) => println("  java_mirror: \{mirror}")
+    None => println("  java_mirror: (未设置)")
+  }
 }
 
 ///|
@@ -84,6 +102,36 @@ pub async fn run_config_set(key : String, value : String) -> Unit {
       println("配置已保存到: \{config_path}")
       println("设置 \{key} = \{value}")
     }
+    "python_mirror" => {
+      validate_config_url(key, value)
+      let new_config = @tools.make_global_config(
+        existing_config~,
+        python_mirror=Some(value),
+      )
+      let config_path = @tools.save_global_config(new_config)
+      println("配置已保存到: \{config_path}")
+      println("设置 \{key} = \{value}")
+    }
+    "rust_mirror" => {
+      validate_config_url(key, value)
+      let new_config = @tools.make_global_config(
+        existing_config~,
+        rust_mirror=Some(value),
+      )
+      let config_path = @tools.save_global_config(new_config)
+      println("配置已保存到: \{config_path}")
+      println("设置 \{key} = \{value}")
+    }
+    "java_mirror" => {
+      validate_config_url(key, value)
+      let new_config = @tools.make_global_config(
+        existing_config~,
+        java_mirror=Some(value),
+      )
+      let config_path = @tools.save_global_config(new_config)
+      println("配置已保存到: \{config_path}")
+      println("设置 \{key} = \{value}")
+    }
     "logo" => {
       let logo_val = match value.to_lower() {
         "true" | "1" | "yes" | "on" => Some(true)
@@ -116,6 +164,9 @@ pub async fn run_config_set(key : String, value : String) -> Unit {
       println("  github_proxy - GitHub 代理地址")
       println("  node_mirror - Node 镜像地址")
       println("  go_mirror - Go 镜像地址")
+      println("  python_mirror - Python 镜像地址")
+      println("  rust_mirror - Rust 镜像地址")
+      println("  java_mirror - Java 镜像地址")
     }
   }
 }
@@ -130,12 +181,15 @@ fn get_preset_config(name : String) -> @tools.GlobalConfig? {
         github_proxy: Some("https://cdn.gh-proxy.org/$URL"),
         node_mirror: Some("https://mirrors.aliyun.com/nodejs-release"),
         go_mirror: Some("https://mirrors.aliyun.com/golang"),
+        python_mirror: Some("https://mirrors.aliyun.com/python"),
+        rust_mirror: Some("https://mirrors.aliyun.com/rustup"),
+        java_mirror: Some("https://mirrors.aliyun.com/adoptium"),
       })
     _ => {
       println("错误: 不支持的预设配置: \{name}")
       println("支持的预设配置:")
       println(
-        "  china - 中国大陆快速配置（GitHub 代理 + Node 镜像 + Go 镜像）",
+        "  china - 中国大陆快速配置（GitHub 代理 + Node/Go/Python/Rust/Java 镜像）",
       )
       None
     }
@@ -156,7 +210,7 @@ pub async fn run_config_preset(name : String) -> Unit {
       println("错误: 不支持的预设配置: \{name}")
       println("支持的预设配置:")
       println(
-        "  china - 中国大陆快速配置（GitHub 代理 + Node 镜像 + Go 镜像）",
+        "  china - 中国大陆快速配置（GitHub 代理 + Node/Go/Python/Rust/Java 镜像）",
       )
     }
   }

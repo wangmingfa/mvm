@@ -3,6 +3,7 @@ import {
   "moonbitlang/core/string",
   "moonbitlang/async",
   "moonbitlang/async/http",
+  "moonbitlang/async/io",
   "moonbitlang/async/fs",
   "moonbitlang/async/process",
   "moonbitlang/regexp",

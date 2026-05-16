@@ -71,10 +71,12 @@ pub fn run_help() -> Unit {
   println("示例:")
   let examples = [
     ("mvm install node@lts", "安装 Node.js LTS 版本"),
+    ("mvm install python@3.12", "安装 Python 3.12"),
+    ("mvm install rust@stable", "安装 Rust stable 通道"),
     ("mvm install bun@1 --skip-verify", "跳过校验安装 Bun"),
     ("mvm install node@20 --no-cache", "不使用缓存重新安装 Node.js"),
     ("mvm pin node@20.18.0", "在项目中锁定 Node.js 版本"),
-    ("mvm config set china", "一键配置中国大陆镜像"),
+    ("mvm config set china", "一键配置中国大陆镜像（含 Python/Rust/Java 镜像）"),
     ("mvm config set logo false", "关闭启动 logo 显示"),
     ("mvm upgrade --reinstall", "重新安装当前版本的 mvm"),
   ]

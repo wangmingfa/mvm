@@ -28,7 +28,7 @@ fn normalize_version(version : String) -> String {
 async fn check_version_exists(version : String) -> Bool {
   // 通过 GitHub releases/tags API 验证版本是否存在，返回 200 表示存在，404 表示不存在
   let url = "https://api.github.com/repos/\{GITHUB_REPO}/releases/tags/\{version}"
-  let (res, _) = @http.get(url, headers=@request.merge_detault_headers()) // 网络错误时 res.code 不会是 200，等同于版本不存在
+  let (res, _) = @request.github_get(url) // 网络错误时 res.code 不会是 200，等同于版本不存在
   res.code == 200
 }
 
@@ -137,13 +137,10 @@ fn extract_all_tag_names(body : String) -> Array[String] {
 /// 查询所有可用的 mvm 版本
 pub async fn run_upgrade_list() -> Unit {
   @log.info("正在获取所有可用的 mvm 版本...")
-  let (res, data) = @http.get(
-    GITHUB_API_RELEASES,
-    headers=@request.merge_detault_headers(),
-  )
+  let (res, data) = @request.github_get(GITHUB_API_RELEASES)
   if res.code != 200 {
     raise fail(
-      "无法获取版本列表（HTTP \{res.code}），请检查网络连接",
+      "无法获取版本列表（HTTP \{res.code} \{res.reason}，URL: \{GITHUB_API_RELEASES}），请检查网络连接",
     )
   }
   let body = data.text()
@@ -161,24 +158,21 @@ pub async fn run_upgrade_list() -> Unit {
 ///|
 /// 从 GitHub API 获取最新 release 版本号
 async fn fetch_latest_version() -> String {
-  let (code, output) = @process.collect_stdout("curl", [
-    "-sL",
-    "-H",
-    "Accept: application/vnd.github+json",
-    GITHUB_API_LATEST,
-  ]) catch {
-    _ => return ""
+  try {
+    let (res, data) = @request.github_get(GITHUB_API_LATEST)
+    if !(res.code is (200..<300)) {
+      return ""
+    }
+    let body = data.text()
+    // 从 JSON 中提取 "tag_name": "vX.Y.Z"
+    let prefix = "\"tag_name\":"
+    guard body.find(prefix) is Some(start) else { return "" }
+    let after = body[start + prefix.length():]
+    guard after.find("\"") is Some(q1) else { return "" }
+    let tag_start = after[q1 + 1:]
+    guard tag_start.find("\"") is Some(q2) else { return "" }
+    tag_start[:q2].to_owned()
+  } catch {
+    _ => ""
   }
-  if code != 0 {
-    return ""
-  }
-  let body = output.text()
-  // 从 JSON 中提取 "tag_name": "vX.Y.Z"
-  let prefix = "\"tag_name\":"
-  guard body.find(prefix) is Some(start) else { return "" }
-  let after = body[start + prefix.length():]
-  guard after.find("\"") is Some(q1) else { return "" }
-  let tag_start = after[q1 + 1:]
-  guard tag_start.find("\"") is Some(q2) else { return "" }
-  tag_start[:q2].to_owned()
 }

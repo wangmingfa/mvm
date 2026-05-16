@@ -1,5 +1,16 @@
 ///|
-using @tool_def {type Node, type Bun, type Zig, type Go, type ToolExe}
+using @tool_def {
+  type Node,
+  type Bun,
+  type Zig,
+  type Go,
+  type ToolExe,
+  type Python,
+  type Rust,
+  type Deno,
+  type Java,
+  type Kotlin,
+}
 
 ///|
 pub using @tool_def {
@@ -63,6 +74,11 @@ pub async fn get_target_version(
     Bun => Bun::get_target_version(os_info, version, version_count)
     Zig => Zig::get_target_version(os_info, version, version_count)
     Go => Go::get_target_version(os_info, version, version_count)
+    Python => Python::get_target_version(os_info, version, version_count)
+    Rust => Rust::get_target_version(os_info, version, version_count)
+    Deno => Deno::get_target_version(os_info, version, version_count)
+    Java => Java::get_target_version(os_info, version, version_count)
+    Kotlin => Kotlin::get_target_version(os_info, version, version_count)
     _ => raise fail("不支持的工具：\{tool}")
   }
 }
@@ -80,6 +96,11 @@ pub async fn get_expected_checksum(
     Zig => Zig::get_expected_checksum(os_info, version)
     Go => Go::get_expected_checksum(os_info, version)
     Bun => Bun::get_expected_checksum(os_info, version)
+    Python => Python::get_expected_checksum(os_info, version)
+    Rust => Rust::get_expected_checksum(os_info, version)
+    Java => Java::get_expected_checksum(os_info, version)
+    // Deno 和 Kotlin 无官方校验文件
+    Deno | Kotlin => None
     _ => None
   }
 }
@@ -94,7 +115,8 @@ pub fn match_version(
     "tool: \{tool}, version: \{version}, target_version: \{target_version}",
   )
   match tool {
-    Node | Zig | Bun => {
+    // Python、Rust、Deno 版本号带 "v" 前缀（与 Node/Bun/Zig 一致）
+    Node | Zig | Bun | Python | Rust | Deno => {
       let handle_version = if version.has_prefix("v") {
         version
       } else {
@@ -112,8 +134,9 @@ pub fn match_version(
       }
       false
     }
-    Go => {
-      // Go 版本号不带 "v" 前缀（如 "1.23.4"）
+    // Java、Kotlin 版本号不带 "v" 前缀（与 Go 一致）
+    Go | Java | Kotlin => {
+      // 版本号不带 "v" 前缀（如 "1.23.4"、"21.0.2"）
       let handle_version = if version.has_prefix("v") {
         version[1:]
       } else {
@@ -202,6 +225,11 @@ pub fn get_download_info(
     Bun => Bun::get_download_info(os_info, version)
     Zig => Zig::get_download_info(os_info, version)
     Go => Go::get_download_info(os_info, version)
+    Python => Python::get_download_info(os_info, version)
+    Rust => Rust::get_download_info(os_info, version)
+    Deno => Deno::get_download_info(os_info, version)
+    Java => Java::get_download_info(os_info, version)
+    Kotlin => Kotlin::get_download_info(os_info, version)
     _ => raise fail("无法获取 \{tool} 的下载信息")
   }
 }
@@ -225,6 +253,15 @@ pub fn get_exe_path_for_version(tool : Tool, version : String) -> String raise {
     Bun => Bun::get_exe_path(version)
     Zig => Zig::get_exe_path(version)
     Go => Go::get_exe_path(version)
+    Python => Python::get_exe_path(version)
+    Rust => Rust::get_exe_path(version)
+    Deno => Deno::get_exe_path(version)
+    Java => Java::get_exe_path(version)
+    Kotlin => Kotlin::get_exe_path(version)
+    // 内置工具跟随主工具的路径结构
+    Cargo => Rust::get_exe_path(version)
+    Javac | Jar => Java::get_exe_path(version)
+    Kotlinc => Kotlin::get_exe_path(version)
     _ => raise fail("不支持的工具：\{tool}")
   }
   @fs_ext.canonicalize_path(path)
@@ -233,14 +270,36 @@ pub fn get_exe_path_for_version(tool : Tool, version : String) -> String raise {
 ///|
 pub async fn get_tool_exe_path(tool : Tool) -> ToolExe? {
   let is_node_builtin_tools = @tool_def.Tool::is_node_builtin_tools(tool)
-  // 如果是查找npm，实际上是去找Node
-  let real_tool = if is_node_builtin_tools { @tool_def.Node } else { tool }
+  let is_rust_builtin_tools = @tool_def.Tool::is_rust_builtin_tools(tool)
+  let is_java_builtin_tools = @tool_def.Tool::is_java_builtin_tools(tool)
+  let is_kotlin_builtin_tools = @tool_def.Tool::is_kotlin_builtin_tools(tool)
+
+  // 内置工具需要查找所属的主工具版本
+  let real_tool = @tool_def.Tool::get_belonging_tools(tool)
   let res = _get_tool_exe_path(real_tool)
 
   if is_node_builtin_tools {
     guard res is Some(node_tool_exe) else { return None }
     return @tool_def.Node::get_node_builtin_tool_path_and_version(
       tool, node_tool_exe,
+    )
+  }
+  if is_rust_builtin_tools {
+    guard res is Some(rust_tool_exe) else { return None }
+    return @tool_def.Rust::get_rust_builtin_tool_path_and_version(
+      tool, rust_tool_exe,
+    )
+  }
+  if is_java_builtin_tools {
+    guard res is Some(java_tool_exe) else { return None }
+    return @tool_def.Java::get_java_builtin_tool_path_and_version(
+      tool, java_tool_exe,
+    )
+  }
+  if is_kotlin_builtin_tools {
+    guard res is Some(kotlin_tool_exe) else { return None }
+    return @tool_def.Kotlin::get_kotlin_builtin_tool_path_and_version(
+      tool, kotlin_tool_exe,
     )
   }
   res
@@ -260,6 +319,25 @@ pub async fn post_install(tool : Tool, target_dir : String) -> Unit {
       Bun => [@fs_ext.join_path(target_dir, "bun")]
       Go =>
         ["go", "gofmt"].map(name => @fs_ext.join_path(target_dir, "bin/\{name}"))
+      // Python 可执行文件在 bin 子目录下
+      Python => [@fs_ext.join_path(target_dir, "bin/python3")]
+      // Rust 的可执行文件在 bin 子目录下
+      Rust =>
+        ["rustc", "cargo"].map(name => {
+          @fs_ext.join_path(target_dir, "bin/\{name}")
+        })
+      // Deno 是单一二进制文件，无 bin 子目录
+      Deno => [@fs_ext.join_path(target_dir, "deno")]
+      // Java (JDK) 的可执行文件在 bin 子目录下
+      Java =>
+        ["java", "javac", "jar"].map(name => {
+          @fs_ext.join_path(target_dir, "bin/\{name}")
+        })
+      // Kotlin 编译器的可执行文件在 bin 子目录下
+      Kotlin =>
+        ["kotlinc", "kotlin"].map(name => {
+          @fs_ext.join_path(target_dir, "bin/\{name}")
+        })
       _ => []
     }
     // exe_files.insert(0, "+x")

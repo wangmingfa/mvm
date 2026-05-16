@@ -41,10 +41,7 @@ pub async fn Bun::get_target_version(
     version,
     version_count,
     Bun::_get_proper_version,
-    headers={
-      "User-Agent": "curl/8.7.1",
-      "Accept": "application/vnd.github+json",
-    },
+    headers=@request.github_headers(),
   )
 }
 

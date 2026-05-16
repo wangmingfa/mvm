@@ -19,7 +19,7 @@ mvm（Multi Version Manager）——One Tool to Manage Them All
 
 再也不用为不同语言安装不同的版本管理器而头疼了。
 
-mvm 是一款现代化的多语言版本管理工具，支持 Node.js、Bun、Zig、Go 以及更多语言。只需一条命令，你就可以在项目之间自由切换任意语言的版本，干净、高效、毫不妥协。
+mvm 是一款现代化的多语言版本管理工具，支持 Node.js、Bun、Zig、Go、Python、Rust、Deno、Java、Kotlin 以及更多语言。只需一条命令，你就可以在项目之间自由切换任意语言的版本，干净、高效、毫不妥协。
 
 简单、统一、极快 —— 这就是 mvm。
 
@@ -62,6 +62,11 @@ mvm install node
 mvm install bun
 mvm install zig
 mvm install go
+mvm install python
+mvm install rust
+mvm install deno
+mvm install java
+mvm install kotlin
 
 # 安装指定版本
 mvm install node@20
@@ -71,6 +76,11 @@ mvm install node@20.18.0
 mvm install bun@1.1.0
 mvm install zig@0.13.0
 mvm install go@1.23
+mvm install python@3.12
+mvm install rust@stable
+mvm install deno@1.40
+mvm install java@21
+mvm install kotlin@2.0
 ```
 
 2. `mvm use`——设置全局版本
@@ -83,6 +93,9 @@ mvm use node@20.18.0
 mvm use node
 mvm use bun
 mvm use go
+mvm use python
+mvm use rust
+mvm use deno
 ```
 
 3. `mvm unuse`——移除全局版本设置
@@ -90,6 +103,7 @@ mvm use go
 mvm unuse node
 mvm unuse bun
 mvm unuse go
+mvm unuse python
 ```
 
 4. `mvm pin`——项目级版本锁定（强烈推荐）
@@ -100,6 +114,8 @@ mvm pin node@20.18.0
 mvm pin bun@1.2.3
 mvm pin zig@0.15.2
 mvm pin go@1.23.4
+mvm pin python@3.12.4
+mvm pin rust@1.80.0
 ```
 
 5. `mvm list`——查看版本
@@ -111,6 +127,7 @@ mvm list
 mvm list node
 mvm list bun
 mvm list go
+mvm list python
 ```
 
 6. `mvm current`——查看当前使用版本
@@ -122,6 +139,7 @@ mvm current
 mvm current node
 mvm current bun
 mvm current go
+mvm current python
 ```
 
 7. `mvm uninstall`——卸载版本
@@ -129,6 +147,7 @@ mvm current go
 mvm uninstall node@18.17.0
 mvm uninstall zig@0.12.0
 mvm uninstall go@1.21.0
+mvm uninstall python@3.12.4
 ```
 
 8. `mvm which`——查看工具可执行文件路径
@@ -138,6 +157,7 @@ mvm which node
 mvm which bun
 mvm which zig
 mvm which go
+mvm which python
 ```
 
 9. `mvm run`——临时运行指定版本
@@ -180,12 +200,15 @@ mvm upgrade -r
 mvm config list
 mvm config ls
 
-# 中国大陆用户一键配置（GitHub 代理 + Node 镜像 + Go 镜像）
+# 中国大陆用户一键配置（GitHub 代理 + Node 镜像 + Go 镜像 + Python 镜像 + Rust 镜像 + Java 镜像）
 mvm config set china
 
 # 单独设置配置
 mvm config set node_mirror https://mirrors.aliyun.com/nodejs-release
 mvm config set go_mirror https://mirrors.aliyun.com/golang
+mvm config set python_mirror https://npmmirror.com/mirrors/python
+mvm config set rust_mirror https://mirrors.ustc.edu.cn/rust-static
+mvm config set java_mirror https://mirrors.aliyun.com/adoptium
 mvm config set github_proxy https://cdn.gh-proxy.org/$URL
 
 # 关闭/开启启动 logo 显示（默认显示）
@@ -204,7 +227,7 @@ mvm 的核心设计灵感来自 Volta，通过 **Shim 代理脚本 + 版本解�
 - **Unix（macOS/Linux）**：创建 shell 脚本，内容为 `#!/bin/sh\nmvm run node -- node "$@"`
 - **Windows**：创建 `.ps1` 和 `.cmd` 文件，内容类似 `mvm run node -- node %*`
 
-当你在终端输入 `node`、`bun`、`zig` 或 `go` 时，实际上执行的是这些代理脚本，它们会自动调用 `mvm run` 来解析正确的版本并执行对应的真实二进制文件。
+当你在终端输入 `node`、`bun`、`zig`、`go`、`python`、`rustc`、`deno`、`java`、`kotlinc` 等时，实际上执行的是这些代理脚本，它们会自动调用 `mvm run` 来解析正确的版本并执行对应的真实二进制文件。
 
 ### 2. PATH 配置
 
@@ -231,8 +254,8 @@ mvm 将 `$MVM_HOME/bin/` 添加到系统 PATH 中（通过修改 `.zshrc`、`.ba
 
 ### 5. 配置体系
 
-- **全局配置** `$MVM_HOME/config.json`：存储 logo 显示、GitHub 代理、Node 镜像、Go 镜像等设置
-- **项目配置** `mvm.json`：存储项目级别的工具版本锁定（node、bun、zig、go）
+- **全局配置** `$MVM_HOME/config.json`：存储 logo 显示、GitHub 代理、Node 镜像、Go 镜像、Python 镜像、Rust 镜像、Java 镜像等设置
+- **项目配置** `mvm.json`：存储项目级别的工具版本锁定（node、bun、zig、go、python、rust、deno、java、kotlin）
 
 ## Volta 兼容
 

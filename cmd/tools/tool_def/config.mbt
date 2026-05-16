@@ -27,6 +27,10 @@ pub(all) struct GlobalConfig {
   github_proxy : String?
   node_mirror : String?
   go_mirror : String?
+  python_mirror : String?
+  rust_mirror : String?
+  java_mirror : String?
+  // deno 和 kotlin 使用 github_proxy，无专属镜像
 } derive(FromJson, ToJson)
 
 ///|
@@ -36,11 +40,17 @@ pub fn make_global_config(
     github_proxy: None,
     node_mirror: None,
     go_mirror: None,
+    python_mirror: None,
+    rust_mirror: None,
+    java_mirror: None,
   },
   logo? : Bool? = None,
   github_proxy? : String? = None,
   node_mirror? : String? = None,
   go_mirror? : String? = None,
+  python_mirror? : String? = None,
+  rust_mirror? : String? = None,
+  java_mirror? : String? = None,
 ) -> GlobalConfig {
   // logo: None 表示不覆盖（保留原值），Some(true/false) 表示显式设置
   let logo = if logo is Some(v) { Some(v) } else { existing_config.logo }
@@ -59,7 +69,22 @@ pub fn make_global_config(
   } else {
     existing_config.go_mirror
   }
-  { logo, github_proxy, node_mirror, go_mirror }
+  let python_mirror = if python_mirror is Some(v) {
+    Some(v)
+  } else {
+    existing_config.python_mirror
+  }
+  let rust_mirror = if rust_mirror is Some(v) {
+    Some(v)
+  } else {
+    existing_config.rust_mirror
+  }
+  let java_mirror = if java_mirror is Some(v) {
+    Some(v)
+  } else {
+    existing_config.java_mirror
+  }
+  { logo, github_proxy, node_mirror, go_mirror, python_mirror, rust_mirror, java_mirror }
 }
 
 ///|
@@ -73,11 +98,17 @@ pub fn GlobalConfig::to_string(s : Self, indent? : Int = 0) -> String {
   let github_proxy = s.github_proxy.unwrap_or("")
   let node_mirror = s.node_mirror.unwrap_or("")
   let go_mirror = s.go_mirror.unwrap_or("")
+  let python_mirror = s.python_mirror.unwrap_or("")
+  let rust_mirror = s.rust_mirror.unwrap_or("")
+  let java_mirror = s.java_mirror.unwrap_or("")
   (
     $|\{indent_str}logo: \{logo}
     $|\{indent_str}github_proxy: \{github_proxy}
     $|\{indent_str}node_mirror: \{node_mirror}
     $|\{indent_str}go_mirror: \{go_mirror}
+    $|\{indent_str}python_mirror: \{python_mirror}
+    $|\{indent_str}rust_mirror: \{rust_mirror}
+    $|\{indent_str}java_mirror: \{java_mirror}
   )
 }
 
@@ -103,7 +134,7 @@ pub async fn get_global_config() -> (String, GlobalConfig) {
   } else {
     (
       config_path,
-      { logo: None, github_proxy: None, node_mirror: None, go_mirror: None },
+      { logo: None, github_proxy: None, node_mirror: None, go_mirror: None, python_mirror: None, rust_mirror: None, java_mirror: None },
     )
   }
 }
@@ -122,6 +153,11 @@ pub struct Config {
   bun : String?
   zig : String?
   go : String?
+  python : String?
+  rust : String?
+  deno : String?
+  java : String?
+  kotlin : String?
 } derive(FromJson, ToJson, Debug)
 
 ///|
@@ -132,7 +168,7 @@ impl Show for Config with output(s, logger) {
 ///|
 impl Show for Config with to_string(s) {
   (
-    $|{node: \{@utils.option_to_string(s.node)}, bun: \{@utils.option_to_string(s.bun)}, zig: \{@utils.option_to_string(s.zig)}, go: \{@utils.option_to_string(s.go)}}
+    $|{node: \{@utils.option_to_string(s.node)}, bun: \{@utils.option_to_string(s.bun)}, zig: \{@utils.option_to_string(s.zig)}, go: \{@utils.option_to_string(s.go)}, python: \{@utils.option_to_string(s.python)}, rust: \{@utils.option_to_string(s.rust)}, deno: \{@utils.option_to_string(s.deno)}, java: \{@utils.option_to_string(s.java)}, kotlin: \{@utils.option_to_string(s.kotlin)}}
   )
 }
 
@@ -143,6 +179,15 @@ pub fn Config::get_value(self : Self, tool : Tool) -> String? raise {
     Bun => self.bun
     Zig => self.zig
     Go => self.go
+    Python => self.python
+    Rust => self.rust
+    Deno => self.deno
+    Java => self.java
+    Kotlin => self.kotlin
+    // 内置工具使用主工具的配置
+    Cargo => self.rust
+    Javac | Jar => self.java
+    Kotlinc => self.kotlin
     _ => raise fail("不支持获取 \{tool} 的值")
   }
 }
@@ -207,6 +252,11 @@ async fn get_config_inner(
           bun: None,
           zig: None,
           go: None,
+          python: None,
+          rust: None,
+          deno: None,
+          java: None,
+          kotlin: None,
         }
         let volta_path = @fs_ext.join_path(dir, VOLTA_CONFIG_FILE)
         @log.debug(
@@ -346,12 +396,15 @@ pub async fn remove_global_config(tool : Tool) -> String {
 test "Config from_json" {
   let json : Json = { "node": "v20.1.1" }
   let config : Config = @json.from_json(json)
-  debug_inspect(
-    config,
-    content=(
-      #|{ node: Some("v20.1.1"), bun: None, zig: None, go: None }
-    ),
-  )
+  guard config.node is Some("v20.1.1") else {
+    fail("expected node = Some(\"v20.1.1\")")
+  }
+  guard config.bun is None else { fail("expected bun = None") }
+  guard config.python is None else { fail("expected python = None") }
+  guard config.rust is None else { fail("expected rust = None") }
+  guard config.deno is None else { fail("expected deno = None") }
+  guard config.java is None else { fail("expected java = None") }
+  guard config.kotlin is None else { fail("expected kotlin = None") }
 }
 
 ///|
@@ -384,6 +437,11 @@ test "Config get_value" {
     bun: Some("v1.2.3"),
     zig: None,
     go: None,
+    python: None,
+    rust: None,
+    deno: None,
+    java: None,
+    kotlin: None,
   }
   guard config.get_value(Node) is Some("v20.1.1") else {
     fail("expected Some(\"v20.1.1\")")
@@ -401,6 +459,9 @@ test "GlobalConfig to_string" {
     github_proxy: Some("https://proxy.org/$URL"),
     node_mirror: Some("https://mirrors.aliyun.com/nodejs-release"),
     go_mirror: None,
+    python_mirror: None,
+    rust_mirror: None,
+    java_mirror: None,
   }
   let str = config.to_string()
   guard str.contains("logo: true") else { fail("should contain 'logo: true'") }
@@ -420,6 +481,9 @@ test "make_global_config 覆盖逻辑" {
     github_proxy: Some("https://old-proxy.org/$URL"),
     node_mirror: None,
     go_mirror: None,
+    python_mirror: None,
+    rust_mirror: None,
+    java_mirror: None,
   }
   // 只覆盖 github_proxy，保留 logo
   let updated = make_global_config(

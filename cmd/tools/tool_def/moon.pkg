@@ -8,5 +8,6 @@ import {
   "moonbitlang/async/http",
   "moonbitlang/async/fs",
   "moonbitlang/core/json",
+  "moonbitlang/core/string",
   "moonbitlang/core/env",
 }

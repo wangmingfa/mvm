@@ -19,7 +19,7 @@
 
 No more headaches from installing different version managers for different languages.
 
-mvm is a modern multi-language version management tool that supports Node.js, Bun, Zig, Go, and more. With just one command, you can freely switch between any language versions across projects — clean, efficient, and uncompromising.
+mvm is a modern multi-language version management tool that supports Node.js, Bun, Zig, Go, Python, Rust, Deno, Java, Kotlin, and more. With just one command, you can freely switch between any language versions across projects — clean, efficient, and uncompromising.
 
 Simple, unified, and blazing fast —— that's mvm.
 
@@ -62,6 +62,11 @@ mvm install node
 mvm install bun
 mvm install zig
 mvm install go
+mvm install python
+mvm install rust
+mvm install deno
+mvm install java
+mvm install kotlin
 
 # Install specific version
 mvm install node@20
@@ -71,6 +76,11 @@ mvm install node@20.18.0
 mvm install bun@1.1.0
 mvm install zig@0.13.0
 mvm install go@1.23
+mvm install python@3.12
+mvm install rust@stable
+mvm install deno@1.40
+mvm install java@21
+mvm install kotlin@2.0
 ```
 
 2. `mvm use`——Set global version
@@ -83,6 +93,9 @@ mvm use node@20.18.0
 mvm use node
 mvm use bun
 mvm use go
+mvm use python
+mvm use rust
+mvm use deno
 ```
 
 3. `mvm unuse`——Remove global version setting
@@ -90,6 +103,7 @@ mvm use go
 mvm unuse node
 mvm unuse bun
 mvm unuse go
+mvm unuse python
 ```
 
 4. `mvm pin`——Project-level version lock (strongly recommended)
@@ -100,6 +114,8 @@ mvm pin node@20.18.0
 mvm pin bun@1.2.3
 mvm pin zig@0.15.2
 mvm pin go@1.23.4
+mvm pin python@3.12.4
+mvm pin rust@1.80.0
 ```
 
 5. `mvm list`——List versions
@@ -111,6 +127,7 @@ mvm list
 mvm list node
 mvm list bun
 mvm list go
+mvm list python
 ```
 
 6. `mvm current`——Show currently active version
@@ -122,6 +139,7 @@ mvm current
 mvm current node
 mvm current bun
 mvm current go
+mvm current python
 ```
 
 7. `mvm uninstall`——Uninstall a version
@@ -129,6 +147,7 @@ mvm current go
 mvm uninstall node@18.17.0
 mvm uninstall zig@0.12.0
 mvm uninstall go@1.21.0
+mvm uninstall python@3.12.4
 ```
 
 8. `mvm which`——View tool executable path
@@ -137,6 +156,7 @@ mvm which node
 mvm which bun
 mvm which zig
 mvm which go
+mvm which python
 ```
 
 9. `mvm run`——Temporarily run with a specific version
@@ -180,12 +200,15 @@ mvm config
 mvm config list
 mvm config ls
 
-# One-click setup for users in China (GitHub proxy + Node mirror + Go mirror)
+# One-click setup for users in China (GitHub proxy + Node mirror + Go mirror + Python mirror + Rust mirror + Java mirror)
 mvm config set china
 
 # Set individual configuration
 mvm config set node_mirror https://npm.taobao.org/mirrors/node
 mvm config set go_mirror https://mirrors.aliyun.com/golang
+mvm config set python_mirror https://npmmirror.com/mirrors/python
+mvm config set rust_mirror https://mirrors.ustc.edu.cn/rust-static
+mvm config set java_mirror https://mirrors.aliyun.com/adoptium
 mvm config set github_proxy https://cdn.gh-proxy.org/
 
 # Hide/show startup logo (shown by default)
@@ -204,7 +227,7 @@ When you run `mvm setup`, mvm creates lightweight proxy scripts (shims) in the `
 - **Unix (macOS/Linux)**: Creates shell scripts with content like `#!/bin/sh\nmvm run node -- node "$@"`
 - **Windows**: Creates `.ps1` and `.cmd` files with content like `mvm run node -- node %*`
 
-When you type `node`, `bun`, `zig`, or `go` in your terminal, you're actually executing these proxy scripts, which automatically call `mvm run` to resolve the correct version and execute the corresponding real binary.
+When you type `node`, `bun`, `zig`, `go`, `python`, `rustc`, `deno`, `java`, `kotlinc`, etc. in your terminal, you're actually executing these proxy scripts, which automatically call `mvm run` to resolve the correct version and execute the corresponding real binary.
 
 ### 2. PATH Configuration
 
@@ -231,8 +254,8 @@ When you run `mvm install node@20`:
 
 ### 5. Configuration System
 
-- **Global config** `$MVM_HOME/config.json`: Stores logo display, GitHub proxy, Node mirror, Go mirror settings
-- **Project config** `mvm.json`: Stores project-level tool version pins (node, bun, zig, go)
+- **Global config** `$MVM_HOME/config.json`: Stores logo display, GitHub proxy, Node mirror, Go mirror, Python mirror, Rust mirror, Java mirror settings
+- **Project config** `mvm.json`: Stores project-level tool version pins (node, bun, zig, go, python, rust, deno, java, kotlin)
 
 ## Volta Compatibility
 

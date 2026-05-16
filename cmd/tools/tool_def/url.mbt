@@ -55,6 +55,28 @@ pub fn apply_global_config(
     }
     _ => ()
   }
+  match config.python_mirror {
+    Some(mirror) if mirror != "" && ctx.tool == "python" => {
+      @log.debug("使用 Python 镜像: \{mirror}")
+      return url.replace(old=PYTHON_RELEASE_URL, new=mirror)
+    }
+    _ => ()
+  }
+  match config.rust_mirror {
+    Some(mirror) if mirror != "" && ctx.tool == "rust" => {
+      @log.debug("使用 Rust 镜像: \{mirror}")
+      return url.replace(old=RUST_RELEASE_URL, new=mirror)
+    }
+    _ => ()
+  }
+  match config.java_mirror {
+    Some(mirror) if mirror != "" && ctx.tool == "java" => {
+      @log.debug("使用 Java 镜像: \{mirror}")
+      return url.replace(old=JAVA_RELEASE_URL, new=mirror)
+    }
+    _ => ()
+  }
+  // Deno 和 Kotlin 使用 github_proxy，无专属镜像
   match config.github_proxy {
     Some(proxy) if proxy != "" && url.has_prefix("https://github.com/") => {
       @log.debug("使用 GitHub 代理: \{proxy}")
@@ -101,6 +123,9 @@ test "apply_global_config node_mirror" {
     github_proxy: None,
     node_mirror: Some("https://mirrors.aliyun.com/nodejs-release"),
     go_mirror: None,
+    python_mirror: None,
+    rust_mirror: None,
+    java_mirror: None,
   }
   let result = apply_global_config(ctx.url, config, ctx)
   guard result ==
@@ -120,6 +145,9 @@ test "apply_global_config go_mirror" {
     github_proxy: None,
     node_mirror: None,
     go_mirror: Some("https://mirrors.aliyun.com/golang"),
+    python_mirror: None,
+    rust_mirror: None,
+    java_mirror: None,
   }
   let result = apply_global_config(ctx.url, config, ctx)
   guard result ==
@@ -140,6 +168,9 @@ test "apply_global_config github_proxy" {
     github_proxy: Some("https://cdn.gh-proxy.org/$URL"),
     node_mirror: None,
     go_mirror: None,
+    python_mirror: None,
+    rust_mirror: None,
+    java_mirror: None,
   }
   let result = apply_global_config(ctx.url, config, ctx)
   guard result ==
@@ -160,6 +191,9 @@ test "apply_global_config no_config" {
     github_proxy: None,
     node_mirror: None,
     go_mirror: None,
+    python_mirror: None,
+    rust_mirror: None,
+    java_mirror: None,
   }
   let result = apply_global_config(ctx.url, config, ctx)
   guard result == ctx.url else {
@@ -179,10 +213,128 @@ test "apply_global_config node_mirror_priority" {
     github_proxy: Some("https://cdn.gh-proxy.org/$URL"),
     node_mirror: Some("https://mirrors.aliyun.com/nodejs-release"),
     go_mirror: None,
+    python_mirror: None,
+    rust_mirror: None,
+    java_mirror: None,
   }
   let result = apply_global_config(ctx.url, config, ctx)
   guard result ==
     "https://mirrors.aliyun.com/nodejs-release/v20.18.0/node-v20.18.0-darwin-arm64.tar.gz" else {
     fail("node_mirror should have priority over github_proxy: \{result}")
+  }
+}
+
+///|
+test "apply_global_config python_mirror" {
+  // python_mirror 分支：tool 为 python 时，替换 PYTHON_RELEASE_URL
+  let ctx = UrlReplaceContext::new(
+    "https://www.python.org/ftp/python/3.12.0/Python-3.12.0.tgz", "python",
+    "3.12.0", "linux", "x64",
+  )
+  let config = {
+    logo: None,
+    github_proxy: None,
+    node_mirror: None,
+    go_mirror: None,
+    python_mirror: Some("https://mirrors.aliyun.com/python"),
+    rust_mirror: None,
+    java_mirror: None,
+  }
+  let result = apply_global_config(ctx.url, config, ctx)
+  guard result ==
+    "https://mirrors.aliyun.com/python/3.12.0/Python-3.12.0.tgz" else {
+    fail("python_mirror replacement failed: \{result}")
+  }
+}
+
+///|
+test "apply_global_config rust_mirror" {
+  // rust_mirror 分支：tool 为 rust 时，替换 RUST_RELEASE_URL
+  let ctx = UrlReplaceContext::new(
+    "https://static.rust-lang.org/dist/rust-1.80.0-x86_64-apple-darwin.tar.gz",
+    "rust", "1.80.0", "darwin", "arm64",
+  )
+  let config = {
+    logo: None,
+    github_proxy: None,
+    node_mirror: None,
+    go_mirror: None,
+    python_mirror: None,
+    rust_mirror: Some("https://mirrors.aliyun.com/rustup"),
+    java_mirror: None,
+  }
+  let result = apply_global_config(ctx.url, config, ctx)
+  guard result ==
+    "https://mirrors.aliyun.com/rustup/rust-1.80.0-x86_64-apple-darwin.tar.gz" else {
+    fail("rust_mirror replacement failed: \{result}")
+  }
+}
+
+///|
+test "apply_global_config java_mirror" {
+  // java_mirror 分支：tool 为 java 时，替换 JAVA_RELEASE_URL
+  let ctx = UrlReplaceContext::new(
+    "https://api.adoptium.net/v3/binary/latest/21/mac/aarch64/jdk/hotspot/eclipse",
+    "java", "21", "mac", "aarch64",
+  )
+  let config = {
+    logo: None,
+    github_proxy: None,
+    node_mirror: None,
+    go_mirror: None,
+    python_mirror: None,
+    rust_mirror: None,
+    java_mirror: Some("https://mirrors.aliyun.com/adoptium"),
+  }
+  let result = apply_global_config(ctx.url, config, ctx)
+  guard result ==
+    "https://mirrors.aliyun.com/adoptium/v3/binary/latest/21/mac/aarch64/jdk/hotspot/eclipse" else {
+    fail("java_mirror replacement failed: \{result}")
+  }
+}
+
+///|
+test "apply_global_config deno uses github_proxy" {
+  // Deno 使用 github_proxy（无专属镜像）
+  let ctx = UrlReplaceContext::new(
+    "https://github.com/denoland/deno/releases/download/v1.40.0/deno-aarch64-apple-darwin.zip",
+    "deno", "v1.40.0", "darwin", "arm64",
+  )
+  let config = {
+    logo: None,
+    github_proxy: Some("https://cdn.gh-proxy.org/$URL"),
+    node_mirror: None,
+    go_mirror: None,
+    python_mirror: None,
+    rust_mirror: None,
+    java_mirror: None,
+  }
+  let result = apply_global_config(ctx.url, config, ctx)
+  guard result ==
+    "https://cdn.gh-proxy.org/https://github.com/denoland/deno/releases/download/v1.40.0/deno-aarch64-apple-darwin.zip" else {
+    fail("deno github_proxy replacement failed: \{result}")
+  }
+}
+
+///|
+test "apply_global_config kotlin uses github_proxy" {
+  // Kotlin 使用 github_proxy（无专属镜像）
+  let ctx = UrlReplaceContext::new(
+    "https://github.com/JetBrains/kotlin/releases/download/v2.0.0/kotlin-compiler-2.0.0.zip",
+    "kotlin", "v2.0.0", "darwin", "arm64",
+  )
+  let config = {
+    logo: None,
+    github_proxy: Some("https://cdn.gh-proxy.org/$URL"),
+    node_mirror: None,
+    go_mirror: None,
+    python_mirror: None,
+    rust_mirror: None,
+    java_mirror: None,
+  }
+  let result = apply_global_config(ctx.url, config, ctx)
+  guard result ==
+    "https://cdn.gh-proxy.org/https://github.com/JetBrains/kotlin/releases/download/v2.0.0/kotlin-compiler-2.0.0.zip" else {
+    fail("kotlin github_proxy replacement failed: \{result}")
   }
 }
