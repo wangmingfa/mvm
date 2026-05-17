@@ -82,9 +82,14 @@ pub async fn get_target_version_with_cache(
       }
     }
   }
-  let (res, data) = @http.get(url, headers=@request.merge_detault_headers(headers~))
+  let (res, data) = @http.get(
+    url,
+    headers=@request.merge_detault_headers(headers~),
+  )
   guard res.code is (200..<300) else {
-    raise fail("无法获取到\{tool_name}版本信息（HTTP \{res.code} \{res.reason}，URL: \{url}）")
+    raise fail(
+      "无法获取到\{tool_name}版本信息（HTTP \{res.code} \{res.reason}，URL: \{url}）",
+    )
   }
   let json = data.json()
   write_cache_file_content(cache_file, json.stringify(indent=2))

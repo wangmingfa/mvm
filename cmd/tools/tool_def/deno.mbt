@@ -1,7 +1,9 @@
-///| Deno GitHub 发布源
+///|
+/// Deno GitHub 发布源
 const DENO_RELEASE_URL = "https://github.com/denoland/deno/releases/download"
 
-///| Deno GitHub releases API
+///|
+/// Deno GitHub releases API
 const DENO_INDEX_URL = "https://api.github.com/repos/denoland/deno/tags?per_page=100"
 
 ///|
@@ -45,9 +47,7 @@ fn Deno::_get_proper_version(
   version_count : Int,
   json : Json,
 ) -> String raise {
-  guard json is Array(arr) else {
-    raise fail("Deno版本信息格式不对")
-  }
+  guard json is Array(arr) else { raise fail("Deno版本信息格式不对") }
   let infos : Array[DenoReleaseInfo] = arr.map(v => {
     @json.from_json(v) catch {
       e => raise fail("解析Deno版本信息失败，原因：\{e}")
@@ -57,7 +57,10 @@ fn Deno::_get_proper_version(
   let valid_versions = infos.filter(fn(v) {
     let name = v.name
     // 只保留以 v 开头后跟数字的标签（如 v2.0.0, v1.40.0）
-    name.has_prefix("v") && name.length() > 1 && name[1] >= '0' && name[1] <= '9'
+    name.has_prefix("v") &&
+    name.length() > 1 &&
+    name[1] >= '0' &&
+    name[1] <= '9'
   })
   guard valid_versions.length() > 0 else {
     raise fail("Deno版本信息为空")
@@ -69,10 +72,9 @@ fn Deno::_get_proper_version(
     }
   })
   match version {
-    "" | "lts" | "latest" => {
+    "" | "lts" | "latest" =>
       // 取最新版本
       valid_versions[0].name
-    }
     _ =>
       match version_count {
         1 | 2 | 3 => {
@@ -83,15 +85,17 @@ fn Deno::_get_proper_version(
           }
           if version_count == 3 {
             // 精确匹配
-            guard valid_versions.search_by(fn(v) { v.name == search_version }) is Some(idx) else {
+            guard valid_versions.search_by(fn(v) { v.name == search_version })
+              is Some(idx) else {
               raise fail("找不到版本：\{version}")
             }
             valid_versions[idx].name
           } else {
             // 前缀匹配
             guard valid_versions.search_by(fn(v) {
-              v.name.has_prefix(search_version + ".")
-            }) is Some(idx) else {
+                v.name.has_prefix(search_version + ".")
+              })
+              is Some(idx) else {
               raise fail("找不到版本：\{version}")
             }
             valid_versions[idx].name
@@ -112,21 +116,24 @@ pub fn Deno::get_download_info(
   let ver = if version.has_prefix("v") { version } else { "v\{version}" }
   // 构造目标三元组
   let target = match os_info.name {
-    MacOS => match os_info.arch {
-      Aarch64 => "aarch64-apple-darwin"
-      X86_64 => "x86_64-apple-darwin"
-      arch => raise fail("不支持的架构：\{arch}")
-    }
-    Linux => match os_info.arch {
-      X86_64 => "x86_64-unknown-linux-gnu"
-      Aarch64 => "aarch64-unknown-linux-gnu"
-      arch => raise fail("不支持的架构：\{arch}")
-    }
-    Windows => match os_info.arch {
-      X86_64 => "x86_64-pc-windows-msvc"
-      Aarch64 => "aarch64-pc-windows-msvc"
-      arch => raise fail("不支持的架构：\{arch}")
-    }
+    MacOS =>
+      match os_info.arch {
+        Aarch64 => "aarch64-apple-darwin"
+        X86_64 => "x86_64-apple-darwin"
+        arch => raise fail("不支持的架构：\{arch}")
+      }
+    Linux =>
+      match os_info.arch {
+        X86_64 => "x86_64-unknown-linux-gnu"
+        Aarch64 => "aarch64-unknown-linux-gnu"
+        arch => raise fail("不支持的架构：\{arch}")
+      }
+    Windows =>
+      match os_info.arch {
+        X86_64 => "x86_64-pc-windows-msvc"
+        Aarch64 => "aarch64-pc-windows-msvc"
+        arch => raise fail("不支持的架构：\{arch}")
+      }
     name => raise fail("不支持的操作系统：\{name}")
   }
   let url = "\{DENO_RELEASE_URL}/\{ver}/deno-\{target}.zip"

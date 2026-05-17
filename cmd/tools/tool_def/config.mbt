@@ -84,7 +84,15 @@ pub fn make_global_config(
   } else {
     existing_config.java_mirror
   }
-  { logo, github_proxy, node_mirror, go_mirror, python_mirror, rust_mirror, java_mirror }
+  {
+    logo,
+    github_proxy,
+    node_mirror,
+    go_mirror,
+    python_mirror,
+    rust_mirror,
+    java_mirror,
+  }
 }
 
 ///|
@@ -134,7 +142,15 @@ pub async fn get_global_config() -> (String, GlobalConfig) {
   } else {
     (
       config_path,
-      { logo: None, github_proxy: None, node_mirror: None, go_mirror: None, python_mirror: None, rust_mirror: None, java_mirror: None },
+      {
+        logo: None,
+        github_proxy: None,
+        node_mirror: None,
+        go_mirror: None,
+        python_mirror: None,
+        rust_mirror: None,
+        java_mirror: None,
+      },
     )
   }
 }
@@ -173,7 +189,7 @@ impl Show for Config with to_string(s) {
 }
 
 ///|
-pub fn Config::get_value(self : Self, tool : Tool) -> String? raise {
+pub fn Config::get_value(self : Self, tool : Tool) -> String? {
   match tool {
     Node => self.node
     Bun => self.bun
@@ -184,11 +200,6 @@ pub fn Config::get_value(self : Self, tool : Tool) -> String? raise {
     Deno => self.deno
     Java => self.java
     Kotlin => self.kotlin
-    // 内置工具使用主工具的配置
-    Cargo => self.rust
-    Javac | Jar => self.java
-    Kotlinc => self.kotlin
-    _ => raise fail("不支持获取 \{tool} 的值")
   }
 }
 

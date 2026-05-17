@@ -255,8 +255,8 @@ pub fn Node::get_exe_path(version : String) -> String raise {
 /// 获取node内置工具的路径，比如：npm、npx、corepack等
 pub async fn Node::get_node_builtin_tool_path_and_version(
   tool : Tool,
-  node_tool_exe : ToolExe,
-) -> ToolExe? {
+  node_tool_exe : CmdExeInfo,
+) -> CmdExeInfo? {
   let { path: node_exe_path, .. } = node_tool_exe
 
   // 处理node内置工具
@@ -278,23 +278,16 @@ pub async fn Node::get_node_builtin_tool_path_and_version(
   )
 
   let { root: node_dir, lib: lib_dir, .. } = Node::get_node_dir(node_exe_path)
-  // npm和npx共用一个package.json
-  let node_tool_name = if tool is Corepack {
-    tool.to_string()
-  } else {
-    Npm.to_string()
-  }
-  let node_tool_package_json_file_path = "\{lib_dir}/node_modules/\{node_tool_name}/package.json"
+  // npm、npx、corepack 共用 npm 的 package.json
+  let node_tool_package_json_file_path = "\{lib_dir}/node_modules/npm/package.json"
   let node_tool_version = if @fs.exists(node_tool_package_json_file_path) {
     let json = @fs.read_file(node_tool_package_json_file_path).json()
     guard json is Object(map) else {
-      @log.error("\{node_tool_name} 的 package.json 文件格式不对")
+      @log.error("npm 的 package.json 文件格式不对")
       return None
     }
     guard map.get("version") is Some(String(node_tool_version)) else {
-      @log.error(
-        "\{node_tool_name} 的 package.json 中的 version 格式不对",
-      )
+      @log.error("npm 的 package.json 中的 version 格式不对")
       return None
     }
     // return Some(
@@ -315,7 +308,7 @@ pub async fn Node::get_node_builtin_tool_path_and_version(
   // )
   // None
   Some(
-    ToolExe::new_node_builtin_tool(
+    CmdExeInfo::new_node_builtin_tool(
       tool,
       node_tool_exe,
       tool_path,
@@ -329,7 +322,7 @@ pub async fn Node::get_node_builtin_tool_path_and_version(
 /// 获取npm全局安装的第三方包的路径和版本
 pub async fn Node::get_npm_global_pkg_path_and_version(
   npm_pkg_name : String,
-  node_tool_exe : ToolExe,
+  node_tool_exe : CmdExeInfo,
 ) -> NpmPkgExe? {
   // 在 node 的 bin 目录下查找与包名同名的软连接
   let node_dir = Node::get_node_dir(node_tool_exe.path)

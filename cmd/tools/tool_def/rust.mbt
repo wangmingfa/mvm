@@ -1,13 +1,17 @@
-///| Rust 官方发布源
+///|
+/// Rust 官方发布源
 const RUST_RELEASE_URL = "https://static.rust-lang.org/dist"
 
-///| Rust stable 通道 manifest URL
+///|
+/// Rust stable 通道 manifest URL
 const RUST_STABLE_MANIFEST_URL = "https://static.rust-lang.org/dist/channel-rust-stable.toml"
 
-///| Rust nightly 通道 manifest URL
+///|
+/// Rust nightly 通道 manifest URL
 const RUST_NIGHTLY_MANIFEST_URL = "https://static.rust-lang.org/dist/channel-rust-nightly.toml"
 
-///| Rust beta 通道 manifest URL
+///|
+/// Rust beta 通道 manifest URL
 const RUST_BETA_MANIFEST_URL = "https://static.rust-lang.org/dist/channel-rust-beta.toml"
 
 ///|
@@ -16,7 +20,8 @@ const RUST_INDEX_CACHE_FILE = "rust_stable_manifest.toml"
 ///|
 struct Rust {}
 
-///| 存储 manifest 中提取的下载信息（URL + SHA256 hash）
+///|
+/// 存储 manifest 中提取的下载信息（URL + SHA256 hash）
 /// 供 get_download_info 和 get_expected_checksum 同步读取
 /// 格式: Some((url, hash)) 或 None
 let rust_manifest_target_info : Ref[(String, String)?] = Ref(None)
@@ -30,21 +35,24 @@ test "Rust" {
 /// 构造 Rust 目标三元组（如 aarch64-apple-darwin）
 fn _build_rust_target(os_info : @os.OsInfo) -> String raise {
   match os_info.name {
-    MacOS => match os_info.arch {
-      Aarch64 => "aarch64-apple-darwin"
-      X86_64 => "x86_64-apple-darwin"
-      arch => raise fail("不支持的架构：\{arch}")
-    }
-    Linux => match os_info.arch {
-      X86_64 => "x86_64-unknown-linux-gnu"
-      Aarch64 => "aarch64-unknown-linux-gnu"
-      arch => raise fail("不支持的架构：\{arch}")
-    }
-    Windows => match os_info.arch {
-      X86_64 => "x86_64-pc-windows-msvc"
-      Aarch64 => "aarch64-pc-windows-msvc"
-      arch => raise fail("不支持的架构：\{arch}")
-    }
+    MacOS =>
+      match os_info.arch {
+        Aarch64 => "aarch64-apple-darwin"
+        X86_64 => "x86_64-apple-darwin"
+        arch => raise fail("不支持的架构：\{arch}")
+      }
+    Linux =>
+      match os_info.arch {
+        X86_64 => "x86_64-unknown-linux-gnu"
+        Aarch64 => "aarch64-unknown-linux-gnu"
+        arch => raise fail("不支持的架构：\{arch}")
+      }
+    Windows =>
+      match os_info.arch {
+        X86_64 => "x86_64-pc-windows-msvc"
+        Aarch64 => "aarch64-pc-windows-msvc"
+        arch => raise fail("不支持的架构：\{arch}")
+      }
     name => raise fail("不支持的操作系统：\{name}")
   }
 }
@@ -56,15 +64,27 @@ pub async fn Rust::get_target_version(
   _version_count : Int,
 ) -> String {
   match version {
-    "" | "stable" | "lts" | "latest" => {
-      Rust::_get_channel_version(os, "stable", RUST_STABLE_MANIFEST_URL, RUST_INDEX_CACHE_FILE)
-    }
-    "nightly" => {
-      Rust::_get_channel_version(os, "nightly", RUST_NIGHTLY_MANIFEST_URL, "rust_nightly_manifest.toml")
-    }
-    "beta" => {
-      Rust::_get_channel_version(os, "beta", RUST_BETA_MANIFEST_URL, "rust_beta_manifest.toml")
-    }
+    "" | "stable" | "lts" | "latest" =>
+      Rust::_get_channel_version(
+        os,
+        "stable",
+        RUST_STABLE_MANIFEST_URL,
+        RUST_INDEX_CACHE_FILE,
+      )
+    "nightly" =>
+      Rust::_get_channel_version(
+        os,
+        "nightly",
+        RUST_NIGHTLY_MANIFEST_URL,
+        "rust_nightly_manifest.toml",
+      )
+    "beta" =>
+      Rust::_get_channel_version(
+        os,
+        "beta",
+        RUST_BETA_MANIFEST_URL,
+        "rust_beta_manifest.toml",
+      )
     _ => {
       // 具体版本号，加 v 前缀；同时清空 manifest 缓存（指定版本时无 manifest 数据）
       rust_manifest_target_info.val = None
@@ -88,7 +108,13 @@ async fn Rust::_get_channel_version(
     None => {
       // 应用镜像配置
       let (_, global_config) = get_global_config()
-      let ctx = UrlReplaceContext::new(manifest_url, "rust", "stable", os.name.to_string(), os.arch.to_string())
+      let ctx = UrlReplaceContext::new(
+        manifest_url,
+        "rust",
+        "stable",
+        os.name.to_string(),
+        os.arch.to_string(),
+      )
       let manifest_url = apply_global_config(manifest_url, global_config, ctx)
 
       let (res, data) = @http.get(
@@ -96,7 +122,9 @@ async fn Rust::_get_channel_version(
         headers=@request.merge_detault_headers(),
       )
       if !(res.code is (200..<300)) {
-        raise fail("无法获取 Rust \{channel} manifest（HTTP \{res.code} \{res.reason}，URL: \{manifest_url}）")
+        raise fail(
+          "无法获取 Rust \{channel} manifest（HTTP \{res.code} \{res.reason}，URL: \{manifest_url}）",
+        )
       }
       let content = data.text()
       write_cache_file_content(cache_file, content)
@@ -108,7 +136,7 @@ async fn Rust::_get_channel_version(
   let version = _extract_rust_version(manifest_content)
 
   // 同时提取当前平台的下载 URL 和 SHA256 hash，供后续同步函数使用
-  let target = try { _build_rust_target(os) } catch { _ => "" }
+  let target = _build_rust_target(os) catch { _ => "" }
   if !target.is_blank() {
     let url = _extract_rust_target_url(manifest_content, target)
     let hash = _extract_rust_target_hash(manifest_content, target)
@@ -227,9 +255,8 @@ pub fn Rust::get_download_info(
   // 优先使用 manifest 缓存中的 URL（包含日期路径，更可靠）
   let cached_info = rust_manifest_target_info.val
   match cached_info {
-    Some((manifest_url, _)) => {
+    Some((manifest_url, _)) =>
       { url: manifest_url, headers: {}, root_path_depth: 1 }
-    }
     None => {
       // 无缓存时手动构造 URL（适用于指定具体版本号的场景）
       let ext = if os_info.name is Windows { "zip" } else { "tar.gz" }
@@ -264,13 +291,11 @@ pub fn Rust::get_exe_path(version : String) -> String raise {
 /// 获取 Rust 内置工具（Cargo）的路径和版本
 pub fn Rust::get_rust_builtin_tool_path_and_version(
   tool : Tool,
-  rust_tool_exe : ToolExe,
-) -> ToolExe? {
+  rust_tool_exe : CmdExeInfo,
+) -> CmdExeInfo? {
   let { path: rust_exe_path, .. } = rust_tool_exe
 
-  let rust_bin_dir : String? = try {
-    @fs_ext.get_parent_dir(rust_exe_path)
-  } catch {
+  let rust_bin_dir : String? = @fs_ext.get_parent_dir(rust_exe_path) catch {
     _ => {
       @log.error("无法获取到 rust 的 bin 目录")
       return None
@@ -288,7 +313,7 @@ pub fn Rust::get_rust_builtin_tool_path_and_version(
   let tool_path = @fs_ext.join_path(rust_bin_dir, "\{tool_name}\{suffix}")
 
   Some(
-    ToolExe::new_node_builtin_tool(
+    CmdExeInfo::new_node_builtin_tool(
       tool,
       rust_tool_exe,
       tool_path,

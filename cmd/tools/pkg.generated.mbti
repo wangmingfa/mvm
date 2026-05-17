@@ -17,6 +17,8 @@ pub async fn create_tool_cmd_unix(@tool_def.Tool, String, file_name? : String, c
 
 pub async fn create_tool_cmd_windows(@tool_def.Tool, String, file_name? : String, cmd_dir? : String) -> Unit
 
+pub async fn get_cmd_exe_path(@tool_def.Tool) -> @tool_def.CmdExeInfo?
+
 pub async fn get_config(tool? : @tool_def.Tool, dir? : String, search_upwards? : Bool, fallback_to_global_config? : Bool) -> (String, @tool_def.Config)?
 
 pub fn get_download_info(@os.OsInfo, @tool_def.Tool, String) -> @tool_def.DownloadInfo raise
@@ -29,13 +31,11 @@ pub async fn get_global_config() -> (String, @tool_def.GlobalConfig)
 
 pub async fn get_target_version(@os.OsInfo, @tool_def.Tool, String) -> String
 
-pub async fn get_tool_exe_path(@tool_def.Tool) -> @tool_def.ToolExe?
-
 pub async fn is_installed(@tool_def.Tool, String) -> Bool
 
 pub fn is_no_cache_mode() -> Bool
 
-pub fn make_global_config(existing_config? : @tool_def.GlobalConfig, logo? : Bool?, github_proxy? : String?, node_mirror? : String?, go_mirror? : String?) -> @tool_def.GlobalConfig
+pub fn make_global_config(existing_config? : @tool_def.GlobalConfig, logo? : Bool?, github_proxy? : String?, node_mirror? : String?, go_mirror? : String?, python_mirror? : String?, rust_mirror? : String?, java_mirror? : String?) -> @tool_def.GlobalConfig
 
 pub fn match_version(@tool_def.Tool, String, String) -> Bool
 
@@ -66,6 +66,8 @@ pub async fn write_project_config(@tool_def.Tool, String) -> String
 // Types and methods
 
 // Type aliases
+pub using @tool_def {type CmdExeInfo}
+
 pub using @tool_def {type DownloadInfo}
 
 pub using @tool_def {type GlobalConfig}

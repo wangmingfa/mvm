@@ -11,7 +11,7 @@ pub async fn run_which(tool : @tools.Tool) -> Unit {
         )
       }
       // 通过已有的公共 API 获取可执行文件路径
-      let tool_exe = @tools.get_tool_exe_path(tool)
+      let tool_exe = @tools.get_cmd_exe_path(tool)
       guard tool_exe is Some({ path: exe_path, .. }) else {
         raise fail("无法获取 \{tool}@\{version} 的可执行文件路径")
       }

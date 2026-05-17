@@ -78,7 +78,12 @@ pub async fn run_run(
     // 要执行的命令和指定版本的工具不相等，比如：
     // mvm run node@18 -- npm -v
     // 目前只考虑node内置的工具（npm、npx、corepack）以及npm安装的全局包
-    let node_exe = @tool_def.ToolExe::new(tool, exe_path, target_version)
+    let node_exe = @tool_def.CmdExeInfo::new(
+      tool.to_str(),
+      Some(tool),
+      exe_path,
+      target_version,
+    )
     if @tool_def.Tool::from_string_with_option_result(exec_program)
       is Some(node_builtin_tool) {
       // node内置的工具

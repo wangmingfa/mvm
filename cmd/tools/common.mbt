@@ -4,7 +4,6 @@ using @tool_def {
   type Bun,
   type Zig,
   type Go,
-  type ToolExe,
   type Python,
   type Rust,
   type Deno,
@@ -15,6 +14,7 @@ using @tool_def {
 ///|
 pub using @tool_def {
   type Tool,
+  type CmdExeInfo,
   type DownloadInfo,
   set_no_cache_mode,
   is_no_cache_mode,
@@ -79,7 +79,6 @@ pub async fn get_target_version(
     Deno => Deno::get_target_version(os_info, version, version_count)
     Java => Java::get_target_version(os_info, version, version_count)
     Kotlin => Kotlin::get_target_version(os_info, version, version_count)
-    _ => raise fail("不支持的工具：\{tool}")
   }
 }
 
@@ -101,7 +100,6 @@ pub async fn get_expected_checksum(
     Java => Java::get_expected_checksum(os_info, version)
     // Deno 和 Kotlin 无官方校验文件
     Deno | Kotlin => None
-    _ => None
   }
 }
 
@@ -153,7 +151,6 @@ pub fn match_version(
       }
       false
     }
-    _ => false
   }
 }
 
@@ -230,19 +227,18 @@ pub fn get_download_info(
     Deno => Deno::get_download_info(os_info, version)
     Java => Java::get_download_info(os_info, version)
     Kotlin => Kotlin::get_download_info(os_info, version)
-    _ => raise fail("无法获取 \{tool} 的下载信息")
   }
 }
 
 ///|
 /// 获取工具的运行路径，返回路径、版本和运行此命令需要的环境变量
-async fn _get_tool_exe_path(tool : Tool) -> ToolExe? {
+async fn _get_tool_exe_path(tool : Tool) -> CmdExeInfo? {
   guard get_config(tool~) is Some((_, config)) &&
     config.get_value(tool) is Some(version) else {
     return None
   }
   let path = get_exe_path_for_version(tool, version)
-  Some(ToolExe::new(tool, path, version))
+  Some(CmdExeInfo::new(tool.to_str(), Some(tool), path, version))
 }
 
 ///|
@@ -258,45 +254,35 @@ pub fn get_exe_path_for_version(tool : Tool, version : String) -> String raise {
     Deno => Deno::get_exe_path(version)
     Java => Java::get_exe_path(version)
     Kotlin => Kotlin::get_exe_path(version)
-    // 内置工具跟随主工具的路径结构
-    Cargo => Rust::get_exe_path(version)
-    Javac | Jar => Java::get_exe_path(version)
-    Kotlinc => Kotlin::get_exe_path(version)
-    _ => raise fail("不支持的工具：\{tool}")
   }
   @fs_ext.canonicalize_path(path)
 }
 
 ///|
-pub async fn get_tool_exe_path(tool : Tool) -> ToolExe? {
-  let is_node_builtin_tools = @tool_def.Tool::is_node_builtin_tools(tool)
-  let is_rust_builtin_tools = @tool_def.Tool::is_rust_builtin_tools(tool)
-  let is_java_builtin_tools = @tool_def.Tool::is_java_builtin_tools(tool)
-  let is_kotlin_builtin_tools = @tool_def.Tool::is_kotlin_builtin_tools(tool)
-
+pub async fn get_cmd_exe_path(tool : Tool) -> CmdExeInfo? {
   // 内置工具需要查找所属的主工具版本
-  let real_tool = @tool_def.Tool::get_belonging_tools(tool)
+  let real_tool = @tool_def.Tool::get_belonging_tools(tool.to_str())
   let res = _get_tool_exe_path(real_tool)
 
-  if is_node_builtin_tools {
+  if @tool_def.Tool::is_node_builtin_tools(tool) {
     guard res is Some(node_tool_exe) else { return None }
     return @tool_def.Node::get_node_builtin_tool_path_and_version(
       tool, node_tool_exe,
     )
   }
-  if is_rust_builtin_tools {
+  if @tool_def.Tool::is_rust_builtin_tools(tool) {
     guard res is Some(rust_tool_exe) else { return None }
     return @tool_def.Rust::get_rust_builtin_tool_path_and_version(
       tool, rust_tool_exe,
     )
   }
-  if is_java_builtin_tools {
+  if @tool_def.Tool::is_java_builtin_tools(tool) {
     guard res is Some(java_tool_exe) else { return None }
     return @tool_def.Java::get_java_builtin_tool_path_and_version(
       tool, java_tool_exe,
     )
   }
-  if is_kotlin_builtin_tools {
+  if @tool_def.Tool::is_kotlin_builtin_tools(tool) {
     guard res is Some(kotlin_tool_exe) else { return None }
     return @tool_def.Kotlin::get_kotlin_builtin_tool_path_and_version(
       tool, kotlin_tool_exe,
@@ -338,7 +324,6 @@ pub async fn post_install(tool : Tool, target_dir : String) -> Unit {
         ["kotlinc", "kotlin"].map(name => {
           @fs_ext.join_path(target_dir, "bin/\{name}")
         })
-      _ => []
     }
     // exe_files.insert(0, "+x")
     let msg = exe_files.join(",")

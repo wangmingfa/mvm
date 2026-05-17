@@ -1,4 +1,5 @@
-///| Python 官方发布源
+///|
+/// Python 官方发布源
 const PYTHON_RELEASE_URL = "https://www.python.org/ftp/python"
 
 ///|
@@ -51,17 +52,13 @@ fn Python::_get_proper_version(
   version_count : Int,
   json : Json,
 ) -> String raise {
-  guard json is Array(arr) else {
-    raise fail("Python版本信息格式不对")
-  }
+  guard json is Array(arr) else { raise fail("Python版本信息格式不对") }
   let infos : Array[PythonVersionInfo] = arr.map(v => {
     @json.from_json(v) catch {
       e => raise fail("解析Python版本信息失败，原因：\{e}")
     }
   })
-  guard infos.length() > 0 else {
-    raise fail("Python版本信息为空")
-  }
+  guard infos.length() > 0 else { raise fail("Python版本信息为空") }
   // 按版本号倒序排序
   infos.sort_by((a, b) => {
     @utils.compare_version(b.latest, a.latest) catch {
@@ -164,7 +161,9 @@ pub async fn Python::get_expected_checksum(
 
   // 应用镜像/代理配置
   let (_, global_config) = get_global_config()
-  let ctx = UrlReplaceContext::new(sha256_url, "python", version, "linux", "x64")
+  let ctx = UrlReplaceContext::new(
+    sha256_url, "python", version, "linux", "x64",
+  )
   let sha256_url = apply_global_config(sha256_url, global_config, ctx)
 
   let cache_file = "python_sha256_\{ver}.txt"

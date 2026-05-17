@@ -228,8 +228,8 @@ test "apply_global_config node_mirror_priority" {
 test "apply_global_config python_mirror" {
   // python_mirror 分支：tool 为 python 时，替换 PYTHON_RELEASE_URL
   let ctx = UrlReplaceContext::new(
-    "https://www.python.org/ftp/python/3.12.0/Python-3.12.0.tgz", "python",
-    "3.12.0", "linux", "x64",
+    "https://www.python.org/ftp/python/3.12.0/Python-3.12.0.tgz", "python", "3.12.0",
+    "linux", "x64",
   )
   let config = {
     logo: None,
@@ -241,8 +241,7 @@ test "apply_global_config python_mirror" {
     java_mirror: None,
   }
   let result = apply_global_config(ctx.url, config, ctx)
-  guard result ==
-    "https://mirrors.aliyun.com/python/3.12.0/Python-3.12.0.tgz" else {
+  guard result == "https://mirrors.aliyun.com/python/3.12.0/Python-3.12.0.tgz" else {
     fail("python_mirror replacement failed: \{result}")
   }
 }
@@ -251,8 +250,8 @@ test "apply_global_config python_mirror" {
 test "apply_global_config rust_mirror" {
   // rust_mirror 分支：tool 为 rust 时，替换 RUST_RELEASE_URL
   let ctx = UrlReplaceContext::new(
-    "https://static.rust-lang.org/dist/rust-1.80.0-x86_64-apple-darwin.tar.gz",
-    "rust", "1.80.0", "darwin", "arm64",
+    "https://static.rust-lang.org/dist/rust-1.80.0-x86_64-apple-darwin.tar.gz", "rust",
+    "1.80.0", "darwin", "arm64",
   )
   let config = {
     logo: None,

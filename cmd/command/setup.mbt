@@ -52,7 +52,7 @@ async fn cleanup_tool_shims(bin_dir : String, tools : Array[Tool]) -> Unit {
 async fn create_tool_shims(tools : Array[Tool], prefix_str : String) -> Unit {
   let os = @os.get_os_name()
   for tool in tools {
-    let belonging_tool = @tools.Tool::get_belonging_tools(tool)
+    let belonging_tool = @tools.Tool::get_belonging_tools(tool.to_string())
     let cmd_name = tool.to_string()
     match os {
       MacOS | Linux =>

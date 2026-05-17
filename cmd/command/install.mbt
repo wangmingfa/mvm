@@ -26,11 +26,6 @@ pub async fn run_install(
     return
   }
 
-  // npm 随 node 安装
-  if tool is @tools.Tool::Npm {
-    raise fail("npm 会随 node 自动安装，请先安装 node")
-  }
-
   @log.info("安装 \{@utils.yellow(tool)} \{@utils.yellow(version)}")
 
   // 确保目录存在
@@ -125,9 +120,8 @@ pub async fn run_install(
         }
         @log.success("SHA256 校验通过")
       }
-      None => {
+      None =>
         @log.warn("\{tool} 不支持 SHA256 校验，跳过校验继续安装")
-      }
     }
   }
 
@@ -216,14 +210,14 @@ pub async fn download_file(
   @log.info("保存到：\{dest}")
   // 优先使用 MoonBit HTTP 客户端下载，失败时回退到系统原生命令下载
   // 用户手动取消（Ctrl+C）不回退：用户意图是停止整个操作，而非切换下载方式
-  try {
-    @request.download(url, dest, dest_is_file=true, headers~, show_progress~)
-  } catch {
+  @request.download(url, dest, dest_is_file=true, headers~, show_progress~) catch {
     e => {
       if @sys.is_cancelled(e) {
         raise e // 用户手动取消，不回退到原生命令
       }
-      @log.warn("HTTP 客户端下载失败，尝试使用系统原生命令下载...")
+      @log.warn(
+        "HTTP 客户端下载失败，尝试使用系统原生命令下载...",
+      )
       @request.download_by_native_command(url, dest, headers~, show_progress~)
     }
   }
