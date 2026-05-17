@@ -242,6 +242,102 @@ fn _parse_node_shasums(content : String, filename : String) -> String? {
 }
 
 ///|
+pub async fn Node::get_program_exe_info(
+  program : String,
+  version : String,
+) -> ProgramExeInfo? {
+  if program.is_blank() || version.is_blank() {
+    return None
+  }
+  let { root, lib: lib_dir, .. } = NodeDir(version)
+  let node_exists = @fs.exists(root)
+  match program {
+    "node" => {
+      return Some(ProgramExeInfo(
+        program,
+        Node::get_exe_path(version),
+        version,
+        envs={},
+        node_exists,
+        Tool::Node,
+        node_exists,
+      ))
+    }
+    _ => {
+      // 运行的程序不一定能对应到lib目录下的包，例如：
+      //   vite安装后，程序名称就是vite
+      //   docsify-cli安装后，程序名称是docsify
+      // 所以要去lib目录下找所有的包，找到对应的bin目录，去找有没有这个程序
+      for lib in @fs.readdir(lib_dir) {
+        if @fs.kind(lib) is Directory {
+          let package_json_path = @fs_ext.join_path(lib, "package.json")
+          guard @fs.exists(package_json_path) else { continue }
+          let json = @fs.read_file(package_json_path).json() catch {
+            e => {
+              @log.warn("解析 \{package_json_path} 失败，原因：\{e}")
+              continue
+            }
+          }
+          guard json is Object(map) else {
+            @log.warn(
+              "解析 \{package_json_path} 失败，原因：返回的不是对象",
+            )
+            continue
+          }
+          let version = match map.get("version") {
+            Some(String(v)) => v
+            _ => {
+              @log.warn(
+                "解析 \{package_json_path} 失败，原因：没有version字段或者version字段不是字符串",
+              )
+              continue
+            }
+          }
+          let bin = map.get("bin")
+          guard bin is Some(Object(bin_map)) else {
+            @log.warn(
+              "解析 \{package_json_path} 失败，原因：没有bin字段或者bin字段不是对象",
+            )
+            continue
+          }
+          for key, value in bin_map {
+            if key == program {
+              let bin_path = match value {
+                String(s) => @fs_ext.join_path(lib, s)
+                Object(map) => {
+                  match map.get("default") {
+                    Some(String(s)) => @fs_ext.join_path(lib, s)
+                    _ => continue
+                  }
+                }
+                _ => continue
+              }
+              let bin_path = @fs_ext.join_path(lib_dir, bin_path)
+              guard @fs.exists(bin_path) else {
+                @log.warn(
+                  "程序 \{program} 在 \{package_json_path} 中声明的路径 \{bin_path} 不存在",
+                )
+                continue
+              }
+              return Some(ProgramExeInfo(
+                program,
+                bin_path,
+                version,
+                envs={},
+                true,
+                Tool::Node,
+                node_exists,
+              ))
+            }
+          }
+        }
+      }
+      None
+    }
+  }
+}
+
+///|
 pub fn Node::get_exe_path(version : String) -> String raise {
   let os = @os.get_os_name()
   let sub_dir = if os is Windows { "" } else { "bin" }
@@ -250,160 +346,6 @@ pub fn Node::get_exe_path(version : String) -> String raise {
   .filter(v => !v.is_blank())
   .join("/")
 }
-
-///|
-/// 获取node内置工具的路径，比如：npm、npx、corepack等
-pub async fn Node::get_node_builtin_tool_path_and_version(
-  tool : Tool,
-  node_tool_exe : CmdExeInfo,
-) -> CmdExeInfo? {
-  let { path: node_exe_path, .. } = node_tool_exe
-
-  // 处理node内置工具
-
-  guard @fs_ext.get_parent_dir(node_exe_path) is Some(node_bin_dir) else {
-    @log.error("无法获取到 node 的 bin 目录")
-    return None
-  }
-
-  // 路径：直接替换node为对应工具名称
-  let name = @fs_ext.get_path_name(node_exe_path)
-  let os = @os.get_os_name()
-  // 如果是windows，则需要将exe转为ps1后缀
-  let old = if os is Windows { "node.exe" } else { "node" }
-  let tool_ext = if os is Windows { ".ps1" } else { "" }
-  let tool_path = @fs_ext.join_path(
-    node_bin_dir,
-    name.replace(old~, new="\{tool}\{tool_ext}"),
-  )
-
-  let { root: node_dir, lib: lib_dir, .. } = Node::get_node_dir(node_exe_path)
-  // npm、npx、corepack 共用 npm 的 package.json
-  let node_tool_package_json_file_path = "\{lib_dir}/node_modules/npm/package.json"
-  let node_tool_version = if @fs.exists(node_tool_package_json_file_path) {
-    let json = @fs.read_file(node_tool_package_json_file_path).json()
-    guard json is Object(map) else {
-      @log.error("npm 的 package.json 文件格式不对")
-      return None
-    }
-    guard map.get("version") is Some(String(node_tool_version)) else {
-      @log.error("npm 的 package.json 中的 version 格式不对")
-      return None
-    }
-    // return Some(
-    //   ToolExe::new_node_builtin_tool(
-    //     tool,
-    //     node_tool_exe,
-    //     tool_path,
-    //     node_tool_version,
-    //     envs={ "NPM_CONFIG_PREFIX": node_dir },
-    //   ),
-    // )
-    node_tool_version
-  } else {
-    ""
-  }
-  // @log.error(
-  //   "无法从 \{node_tool_package_json_file_path} 获取到 \{tool} 的版本",
-  // )
-  // None
-  Some(
-    CmdExeInfo::new_node_builtin_tool(
-      tool,
-      node_tool_exe,
-      tool_path,
-      node_tool_version,
-      envs={ "NPM_CONFIG_PREFIX": node_dir },
-    ),
-  )
-}
-
-///|
-/// 获取npm全局安装的第三方包的路径和版本
-pub async fn Node::get_npm_global_pkg_path_and_version(
-  npm_pkg_name : String,
-  node_tool_exe : CmdExeInfo,
-) -> NpmPkgExe? {
-  // 在 node 的 bin 目录下查找与包名同名的软连接
-  let node_dir = Node::get_node_dir(node_tool_exe.path)
-
-  @log.debug("node目录 \{node_dir.to_string()}")
-
-  let bin_file_path = node_dir.get_bin_file_path(npm_pkg_name)
-
-  let target_path = match @os.get_os_name() {
-    MacOS | Linux => {
-      // MacOS和linux使用的是软连接
-      let symlink_path = bin_file_path
-      if !@fs.exists(symlink_path) {
-        raise fail(
-          "NPM 包 \{npm_pkg_name} 在 node@\{node_tool_exe.version} 未安装",
-        )
-      }
-
-      @log.debug("NPM包 \{npm_pkg_name} 的运行文件路径 \{symlink_path}")
-
-      // 解析软连接得到实际文件路径
-      let target_path = match @fs_ext.readlink_target(symlink_path) {
-        Some(s) => {
-          @log.debug("获取到的实际文件路径 \{s}")
-          // 如果目标路径是相对路径，拼接 bin 目录
-          if s.has_prefix("/") {
-            s
-          } else {
-            node_dir.join_with_bin([s])
-          }
-        }
-        None => raise fail("无法解析软连接 \{symlink_path} 的目标")
-      }
-      target_path
-    }
-    Windows =>
-      // windows下是直接运行的node的bin目录下的xxx.ps1
-      bin_file_path
-    _ => raise fail("不支持的操作系统")
-  }
-
-  @log.debug(
-    "NPM包 \{npm_pkg_name} 的实际运行文件路径 \{target_path}",
-  )
-
-  let pkg_root_dir = node_dir.get_pkg_root_dir(npm_pkg_name)
-
-  // 读取 package.json 获取版本号
-  let pkg_json_path = @fs_ext.join_path(pkg_root_dir, "package.json")
-  if !@fs.exists(pkg_json_path) {
-    @log.debug(
-      "NPM 包 \{npm_pkg_name} 的 package.json 不存在：\{pkg_json_path}",
-    )
-    raise fail(
-      "NPM 包 \{npm_pkg_name} 在 node@\{node_tool_exe.version} 未安装",
-    )
-  }
-
-  let json = @fs.read_file(pkg_json_path).json()
-  guard json is Object(map) else {
-    raise fail("NPM 包 \{npm_pkg_name} 的 package.json 格式不对")
-  }
-  let version = match map.get("version") {
-    Some(String(v)) => v
-    _ =>
-      raise fail(
-        "NPM 包 \{npm_pkg_name} 的 package.json 中缺少 version 字段",
-      )
-  }
-
-  let target_path = @fs_ext.canonicalize_path(target_path)
-  Some({ path: target_path, version })
-}
-
-///|
-pub struct NpmPkgExe {
-  // 包的可执行文件路径
-  path : String
-  // 包的版本
-  version : String
-} derive(Debug)
 
 ///|
 /// 在MacOS、Linux下：root下面有lib和bin目录
@@ -415,22 +357,14 @@ pub struct NodeDir {
 }
 
 ///|
-fn NodeDir::to_string(self : Self) -> String {
-  let { root, lib, bin } = self
-  "root: \{root}, lib: \{lib}, bin: \{bin}"
-}
-
-///|
-pub fn Node::get_node_dir(exe_path : String) -> NodeDir raise {
+fn NodeDir::NodeDir(version : String) -> NodeDir raise {
+  let node_dir = version_dir(Tool::Node, version)
   let os = @os.get_os_name()
-  guard @fs_ext.get_parent_dir(exe_path) is Some(node_bin_dir) else {
-    raise fail("无法获取到 node 的 bin 目录")
-  }
   // windows下的node_bin_dir和node_dir是一样的，linux和mac下node_bin_dir是node_dir/bin
-  let node_dir = if os is Windows {
-    node_bin_dir
+  let node_bin_dir = if os is Windows {
+    node_dir
   } else {
-    @fs_ext.join_path(node_bin_dir, "../")
+    @fs_ext.join_path(node_dir, "bin")
   }
   // windows下，没有lib目录，直接在node_dir下找
   let lib_dir = if os is Windows {
@@ -458,4 +392,34 @@ pub fn NodeDir::get_bin_file_path(self : Self, file_name : String) -> String {
 ///|
 pub fn NodeDir::join_with_bin(self : Self, paths : ArrayView[String]) -> String {
   @fs_ext.join_paths([self.bin, ..paths])
+}
+
+///|
+/// 从npm可执行文件路径获取NodeDir
+pub fn Node::get_node_dir(npm_exe_path : String) -> NodeDir raise {
+  // npm通常位于Node的bin目录下
+  // Windows: node_dir/npm.exe
+  // macOS/Linux: node_dir/bin/npm
+  let os = @os.get_os_name()
+  let node_dir = if os is Windows {
+    // Windows下直接取父目录
+    @fs_ext.get_parent_dir(npm_exe_path)
+  } else {
+    // macOS/Linux下取bin目录的父目录
+    let bin_dir = @fs_ext.get_parent_dir(npm_exe_path)
+    match bin_dir {
+      Some(bin_dir) => @fs_ext.get_parent_dir(bin_dir)
+      None => None
+    }
+  }
+  
+  guard node_dir is Some(node_dir) else {
+    raise fail("无法从 \{npm_exe_path} 推断Node安装目录")
+  }
+  
+  // 从node_dir中提取版本号（目录名）
+  let version = @fs_ext.get_path_name(node_dir)
+  
+  // 使用版本号构造NodeDir
+  NodeDir(version)
 }

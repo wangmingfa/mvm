@@ -291,8 +291,8 @@ pub fn Rust::get_exe_path(version : String) -> String raise {
 /// 获取 Rust 内置工具（Cargo）的路径和版本
 pub fn Rust::get_rust_builtin_tool_path_and_version(
   tool : Tool,
-  rust_tool_exe : CmdExeInfo,
-) -> CmdExeInfo? {
+  rust_tool_exe : ProgramExeInfo,
+) -> ProgramExeInfo? {
   let { path: rust_exe_path, .. } = rust_tool_exe
 
   let rust_bin_dir : String? = @fs_ext.get_parent_dir(rust_exe_path) catch {
@@ -313,11 +313,61 @@ pub fn Rust::get_rust_builtin_tool_path_and_version(
   let tool_path = @fs_ext.join_path(rust_bin_dir, "\{tool_name}\{suffix}")
 
   Some(
-    CmdExeInfo::new_node_builtin_tool(
-      tool,
-      rust_tool_exe,
+    ProgramExeInfo(
+      tool.to_str(),
       tool_path,
       rust_tool_exe.version,
+      envs=rust_tool_exe.envs,
+      true,
+      rust_tool_exe.tool,
+      rust_tool_exe.tool_exists,
     ),
   )
+}
+
+///|
+pub async fn Rust::get_program_exe_info(
+  program : String,
+  version : String,
+) -> ProgramExeInfo? {
+  if program.is_blank() || version.is_blank() {
+    return None
+  }
+  let tool_dir = version_dir(Tool::Rust, version)
+  let exists = @fs.exists(tool_dir)
+  let rustc_info = ProgramExeInfo(
+    "rustc",
+    Rust::get_exe_path(version),
+    version,
+    envs={},
+    exists,
+    Tool::Rust,
+    exists,
+  )
+  let prog_low = program.to_lower()
+  if prog_low == "rustc" {
+    return Some(rustc_info)
+  } else if prog_low == "cargo" {
+    // 直接构造 ProgramExeInfo
+    let os = @os.get_os_name()
+    let suffix = if os is Windows { ".exe" } else { "" }
+    let rust_bin_dir = @fs_ext.get_parent_dir(rustc_info.path)
+    match rust_bin_dir {
+      Some(dir) => {
+        let tool_path = @fs_ext.join_path(dir, "\{prog_low}\{suffix}")
+        let exists = @fs.exists(tool_path)
+        return Some(ProgramExeInfo(
+          prog_low,
+          tool_path,
+          version,
+          envs={},
+          exists,
+          Tool::Rust,
+          exists,
+        ))
+      }
+      _ => ()
+    }
+  }
+  None
 }

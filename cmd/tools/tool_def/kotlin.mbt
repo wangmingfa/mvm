@@ -133,8 +133,8 @@ pub fn Kotlin::get_exe_path(version : String) -> String raise {
 /// 获取 Kotlin 内置工具（kotlinc）的路径和版本
 pub fn Kotlin::get_kotlin_builtin_tool_path_and_version(
   tool : Tool,
-  kotlin_tool_exe : CmdExeInfo,
-) -> CmdExeInfo? {
+  kotlin_tool_exe : ProgramExeInfo,
+) -> ProgramExeInfo? {
   let { path: kotlin_exe_path, .. } = kotlin_tool_exe
 
   let kotlin_bin_dir : String? = @fs_ext.get_parent_dir(kotlin_exe_path) catch {
@@ -155,11 +155,61 @@ pub fn Kotlin::get_kotlin_builtin_tool_path_and_version(
   let tool_path = @fs_ext.join_path(kotlin_bin_dir, "\{tool_name}\{suffix}")
 
   Some(
-    CmdExeInfo::new_node_builtin_tool(
-      tool,
-      kotlin_tool_exe,
+    ProgramExeInfo(
+      tool.to_str(),
       tool_path,
       kotlin_tool_exe.version,
+      envs=kotlin_tool_exe.envs,
+      true,
+      kotlin_tool_exe.tool,
+      kotlin_tool_exe.tool_exists,
     ),
   )
+}
+
+///|
+pub async fn Kotlin::get_program_exe_info(
+  program : String,
+  version : String,
+) -> ProgramExeInfo? {
+  if program.is_blank() || version.is_blank() {
+    return None
+  }
+  let tool_dir = version_dir(Tool::Kotlin, version)
+  let exists = @fs.exists(tool_dir)
+  let kotlin_info = ProgramExeInfo(
+    "kotlin",
+    Kotlin::get_exe_path(version),
+    version,
+    envs={},
+    exists,
+    Tool::Kotlin,
+    exists,
+  )
+  let prog_low = program.to_lower()
+  if prog_low == "kotlin" {
+    return Some(kotlin_info)
+  } else if prog_low == "kotlinc" {
+    // 直接构造 ProgramExeInfo
+    let os = @os.get_os_name()
+    let suffix = if os is Windows { ".bat" } else { "" }
+    let kotlin_bin_dir = @fs_ext.get_parent_dir(kotlin_info.path)
+    match kotlin_bin_dir {
+      Some(dir) => {
+        let tool_path = @fs_ext.join_path(dir, "\{prog_low}\{suffix}")
+        let exists = @fs.exists(tool_path)
+        return Some(ProgramExeInfo(
+          prog_low,
+          tool_path,
+          version,
+          envs={},
+          exists,
+          Tool::Kotlin,
+          exists,
+        ))
+      }
+      _ => ()
+    }
+  }
+  None
 }

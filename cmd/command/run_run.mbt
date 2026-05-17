@@ -61,50 +61,19 @@ pub async fn run_run(
     run_install(tool, Some(target_version), false, false)
   }
 
-  // 获取可执行文件路径
-  let exe_path = @tools.get_exe_path_for_version(tool, target_version)
-  if !@fs.exists(exe_path) {
-    raise fail(
-      "\{tool}@\{target_version} 的可执行文件不存在：\{@utils.yellow(exe_path)}",
-    )
+  // 使用统一的 get_program_exe_info 获取程序信息
+  let program_info = @tools.get_program_exe_info(
+    tool,
+    exec_program,
+    target_version,
+  )
+  guard program_info is Some({ name:_, path, version:_, envs, program_exists, tool_exists:_, .. }) else {
+    raise fail("找不到要执行的程序 \{exec_program}")
   }
-
-  // 处理exec_program
-  let (exec_program_path, envs) = if exec_program == tool.to_string() {
-    // 要执行的命令和指定版本的工具相等，比如：
-    // mvm run node@18 -- node -v
-    (exe_path, {})
-  } else {
-    // 要执行的命令和指定版本的工具不相等，比如：
-    // mvm run node@18 -- npm -v
-    // 目前只考虑node内置的工具（npm、npx、corepack）以及npm安装的全局包
-    let node_exe = @tool_def.CmdExeInfo::new(
-      tool.to_str(),
-      Some(tool),
-      exe_path,
-      target_version,
-    )
-    if @tool_def.Tool::from_string_with_option_result(exec_program)
-      is Some(node_builtin_tool) {
-      // node内置的工具
-      let node_builtin_exe = @tool_def.Node::get_node_builtin_tool_path_and_version(
-        node_builtin_tool, node_exe,
-      )
-      guard node_builtin_exe is Some({ path, envs, .. }) else {
-        raise fail("找不到要执行的程序 \{exec_program}")
-      }
-      (path, envs)
-    } else {
-      // npm安装的全局包
-      let npm_pkg_exe = @tool_def.Node::get_npm_global_pkg_path_and_version(
-        exec_program, node_exe,
-      )
-      guard npm_pkg_exe is Some({ path, .. }) else {
-        raise fail("找不到要执行的程序 \{exec_program}")
-      }
-      (path, {})
-    }
+  if !program_exists {
+    raise fail("要执行的程序 \{exec_program} 不存在")
   }
+  let (exec_program_path, exec_envs) = (path, envs)
 
   let exec_tool = @tools.Tool::from_string_with_option_result(exec_program)
   let before_run_result = if exec_tool is Some(exec_tool) {
@@ -119,7 +88,7 @@ pub async fn run_run(
     @log.clear_all_lines()
   }
 
-  let exit_code = @mvm_cmd.run(exec_program_path, exec_args, extra_env=envs)
+  let exit_code = @mvm_cmd.run(exec_program_path, exec_args, extra_env=exec_envs)
   if exit_code != 0 {
     @log.debug("\{tool} 退出码: \{exit_code}")
   } else if exec_tool is Some(exec_tool) {

@@ -200,3 +200,45 @@ pub fn Python::get_exe_path(version : String) -> String raise {
     _ => raise fail("不支持的操作系统")
   }
 }
+
+///|
+pub async fn Python::get_program_exe_info(
+  program : String,
+  version : String,
+) -> ProgramExeInfo? {
+  if program.is_blank() || version.is_blank() {
+    return None
+  }
+  let tool_dir = version_dir(Tool::Python, version)
+  let exists = @fs.exists(tool_dir)
+  let os = @os.get_os_name()
+  let prog_low = program.to_lower()
+  if prog_low == "python" || prog_low == "python3" {
+    return Some(ProgramExeInfo(
+      "python",
+      Python::get_exe_path(version),
+      version,
+      envs={},
+      exists,
+      Tool::Python,
+      exists,
+    ))
+  } else if prog_low == "pip" || prog_low == "pip3" {
+    let pip_path = match os {
+      Windows => [tool_dir, "Scripts", "pip.exe"].join("/")
+      MacOS | Linux => [tool_dir, "bin", "pip3"].join("/")
+      _ => ""
+    }
+    let pip_exists = @fs.exists(pip_path)
+    return Some(ProgramExeInfo(
+      "pip",
+      pip_path,
+      version,
+      envs={},
+      pip_exists,
+      Tool::Python,
+      exists,
+    ))
+  }
+  None
+}

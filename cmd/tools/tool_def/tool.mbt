@@ -165,100 +165,100 @@ impl Eq for Tool with equal(a, b) {
 }
 
 ///|
-let node_executable_names : ReadOnlyArray[String] = [
+let node_executable_programs : ReadOnlyArray[String] = [
   "node", "npm", "npx", "corepack",
 ]
 
 ///|
-let bun_executable_names : ReadOnlyArray[String] = ["bun", "bunx"]
+let bun_executable_programs : ReadOnlyArray[String] = ["bun", "bunx"]
 
 ///|
-let zig_executable_names : ReadOnlyArray[String] = ["zig"]
+let zig_executable_programs : ReadOnlyArray[String] = ["zig"]
 
 ///|
-let go_executable_names : ReadOnlyArray[String] = ["go", "gofmt"]
+let go_executable_programs : ReadOnlyArray[String] = ["go", "gofmt"]
 
 ///|
-let python_executable_names : ReadOnlyArray[String] = ["python3", "python"]
+let python_executable_programs : ReadOnlyArray[String] = ["python3", "python"]
 
 ///|
-let rust_executable_names : ReadOnlyArray[String] = [
+let rust_executable_programs : ReadOnlyArray[String] = [
   "rustc", "cargo", "rustfmt", "cargo-fmt", "clippy-driver", "cargo-clippy", "rustdoc",
 ]
 
 ///|
-let deno_executable_names : ReadOnlyArray[String] = ["deno"]
+let deno_executable_programs : ReadOnlyArray[String] = ["deno"]
 
 ///|
-let java_executable_names : ReadOnlyArray[String] = [
+let java_executable_programs : ReadOnlyArray[String] = [
   "java", "javac", "jar", "javadoc", "jps", "jcmd", "jstat", "keytool",
 ]
 
 ///|
-let kotlin_executable_names : ReadOnlyArray[String] = ["kotlin", "kotlinc"]
+let kotlin_executable_programs : ReadOnlyArray[String] = ["kotlin", "kotlinc"]
 
 ///|
 /// 获取工具的所有可执行命令名
 /// 例如 Rust 的可执行命令是 rustc、cargo 等（rust 本身不是可执行命令）
 /// 用于创建 shim 脚本和设置可执行权限
-pub fn Tool::get_executable_names(tool : Tool) -> ReadOnlyArray[String] {
+pub fn Tool::get_executable_programs(tool : Tool) -> ReadOnlyArray[String] {
   match tool {
-    Node => node_executable_names
-    Bun => bun_executable_names
-    Zig => zig_executable_names
-    Go => go_executable_names
-    Python => python_executable_names
+    Node => node_executable_programs
+    Bun => bun_executable_programs
+    Zig => zig_executable_programs
+    Go => go_executable_programs
+    Python => python_executable_programs
     // Rust 本身不是可执行命令，实际可执行的是 rustc、cargo 等
-    Rust => rust_executable_names
-    Deno => deno_executable_names
-    Java => java_executable_names
-    Kotlin => kotlin_executable_names
+    Rust => rust_executable_programs
+    Deno => deno_executable_programs
+    Java => java_executable_programs
+    Kotlin => kotlin_executable_programs
   }
 }
 
 ///|
-pub fn Tool::get_belonging_tools(name : String) -> Tool raise {
-  let lower_name = name.to_lower()
-  if node_executable_names.contains(lower_name) {
+pub fn Tool::get_belonging_tool(cmd : String) -> Tool raise {
+  let lower_name = cmd.to_lower()
+  if node_executable_programs.contains(lower_name) {
     Node
-  } else if bun_executable_names.contains(lower_name) {
+  } else if bun_executable_programs.contains(lower_name) {
     Bun
-  } else if zig_executable_names.contains(lower_name) {
+  } else if zig_executable_programs.contains(lower_name) {
     Zig
-  } else if go_executable_names.contains(lower_name) {
+  } else if go_executable_programs.contains(lower_name) {
     Go
-  } else if python_executable_names.contains(lower_name) {
+  } else if python_executable_programs.contains(lower_name) {
     Python
-  } else if rust_executable_names.contains(lower_name) {
+  } else if rust_executable_programs.contains(lower_name) {
     Rust
-  } else if deno_executable_names.contains(lower_name) {
+  } else if deno_executable_programs.contains(lower_name) {
     Deno
-  } else if java_executable_names.contains(lower_name) {
+  } else if java_executable_programs.contains(lower_name) {
     Java
-  } else if kotlin_executable_names.contains(lower_name) {
+  } else if kotlin_executable_programs.contains(lower_name) {
     Kotlin
   } else {
-    raise fail("无法识别的工具命令：\{name}")
+    raise fail("无法识别的工具命令：\{cmd}")
   }
 }
 
 ///|
-pub fn Tool::is_node_builtin_tools(tool : Tool) -> Bool {
-  node_executable_names.contains(tool.to_str()) && tool != Node
+pub fn Tool::is_node_program(tool : Tool) -> Bool {
+  node_executable_programs.contains(tool.to_str()) && tool != Node
 }
 
 ///|
-pub fn Tool::is_rust_builtin_tools(tool : Tool) -> Bool {
+pub fn Tool::is_rust_program(tool : Tool) -> Bool {
   tool.to_str() == "cargo"
 }
 
 ///|
-pub fn Tool::is_java_builtin_tools(tool : Tool) -> Bool {
-  java_executable_names.contains(tool.to_str()) && tool != Java
+pub fn Tool::is_java_program(tool : Tool) -> Bool {
+  java_executable_programs.contains(tool.to_str()) && tool != Java
 }
 
 ///|
-pub fn Tool::is_kotlin_builtin_tools(tool : Tool) -> Bool {
+pub fn Tool::is_kotlin_builtin_tool(tool : Tool) -> Bool {
   tool.to_str() == "kotlinc"
 }
 
@@ -319,51 +319,33 @@ test "Tool::from_string_with_option_result" {
 }
 
 ///|
-/// 工具的可执行文件信息结构体
-pub struct CmdExeInfo {
+/// 程序的可执行文件信息结构体
+pub struct ProgramExeInfo {
   // 命令的名称，例如 node、npm、cargo 等
   name : String
-  // 工具名称，如果是内置工具，则是主工具名称。如果是工具附带的一些命令，则可以没有这个字段
-  tool : Tool?
-  // 工具的可执行文件路径
+  // 程序的可执行文件路径
   path : String
-  // 工具的版本
+  // 程序的版本
   version : String
-  // 运行工具需要的环境变量
+  // 运行程序需要的环境变量
   envs : Map[String, String]
-  // 依赖的其它工具
-  // 比如npm、npx、corepack是依赖node的
-  dependent_tool_cmd : CmdExeInfo?
+  program_exists : Bool
+  // 命令对应的工具
+  tool : Tool
+  tool_exists : Bool
 } derive(Debug)
 
 ///|
-pub fn CmdExeInfo::new(
+pub fn ProgramExeInfo::ProgramExeInfo(
   name : String,
-  tool : Tool?,
   path : String,
   version : String,
   envs? : Map[String, String] = {},
-  dependent_tool_cmd? : CmdExeInfo? = None,
-) -> CmdExeInfo {
-  { name, tool, path, version, envs, dependent_tool_cmd }
-}
-
-///|
-pub fn CmdExeInfo::new_node_builtin_tool(
+  program_exists : Bool,
   tool : Tool,
-  node_tool_exe : CmdExeInfo,
-  path : String,
-  version : String,
-  envs? : Map[String, String] = {},
-) -> CmdExeInfo {
-  CmdExeInfo::new(
-    tool.to_str(),
-    Some(tool),
-    path,
-    version,
-    envs~,
-    dependent_tool_cmd=Some(node_tool_exe),
-  )
+  tool_exists : Bool,
+) -> ProgramExeInfo {
+  { name, tool, path, version, envs, program_exists, tool_exists }
 }
 
 ///|

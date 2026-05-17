@@ -264,3 +264,27 @@ pub fn Bun::get_exe_path(version : String) -> String raise {
   // let suffix = if os is Windows { ".exe" } else { "" }
   [version_dir(Tool::Bun, version), "bun"].filter(v => !v.is_blank()).join("/")
 }
+
+///|
+pub async fn Bun::get_program_exe_info(
+  program : String,
+  version : String,
+) -> ProgramExeInfo? {
+  if program.is_blank() || version.is_blank() {
+    return None
+  }
+  let tool_dir = version_dir(Tool::Bun, version)
+  let exists = @fs.exists(tool_dir)
+  if program.to_lower() == "bun" {
+    return Some(ProgramExeInfo(
+      "bun",
+      Bun::get_exe_path(version),
+      version,
+      envs={},
+      exists,
+      Tool::Bun,
+      exists,
+    ))
+  }
+  None
+}

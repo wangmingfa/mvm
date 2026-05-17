@@ -7,10 +7,23 @@ pub async fn run_setup(use_prefix : Bool) -> Unit {
   let bin_dir = @tool_def.mvm_bin_home()
   let npm_dir = @tool_def.mvm_npm_pkg_home()
   let tools = Tool::all_tools()
+  let delete_names = []
+  let add_names = []
+  for tool in tools {
+    delete_names.push(tool.to_string())
+    let executable_names = tool.get_executable_programs()
+    delete_names.append(executable_names)
+    add_names.append(executable_names)
+  }
 
   // 确保 bin 目录和 npm-pkg 目录存在
   @fs_ext.ensure_dir(bin_dir)
   @fs_ext.ensure_dir(npm_dir)
+
+  // 清理旧的工具
+  cleanup_old_shims(bin_dir, delete_names)
+  // 创建新的工具
+  create_new_shims(add_names, prefix_str)
 
   match os {
     MacOS | Linux => setup_unix(bin_dir, npm_dir, tools, prefix_str)
@@ -20,16 +33,15 @@ pub async fn run_setup(use_prefix : Bool) -> Unit {
 }
 
 ///|
-async fn remove_tools(
+async fn remove_names(
   bin_dir : String,
-  tools : Array[Tool],
+  delete_names : Array[String],
   exts? : Array[String] = [""],
 ) -> Unit {
-  for tool in tools {
-    let tool_name = tool.to_string()
+  for name in delete_names {
     for prefix in ["", TOOL_PREFIX] {
       for ext in exts {
-        let prefixed = @fs_ext.join_path(bin_dir, prefix + tool_name + ext)
+        let prefixed = @fs_ext.join_path(bin_dir, prefix + name + ext)
         let _ = @fs_ext.remove_if_exists(prefixed) catch {
           e => @log.warn("无法删除 \{prefixed} \{e}")
         }
@@ -39,21 +51,27 @@ async fn remove_tools(
 }
 
 ///|
-async fn cleanup_tool_shims(bin_dir : String, tools : Array[Tool]) -> Unit {
+async fn cleanup_old_shims(
+  bin_dir : String,
+  delete_names : Array[String],
+) -> Unit {
   // 清除旧版本的 executor 脚本（已更名为 debug）
-  for ext in [".sh", ".ps1"] {
+  for ext in [".sh", ".ps1", ".cmd", ""] {
     let executor_path = @fs_ext.join_path(bin_dir, "executor\{ext}")
     @fs_ext.remove_if_exists(executor_path)
   }
-  remove_tools(bin_dir, tools, exts=["", ".ps1", ".cmd"])
+  remove_names(bin_dir, delete_names, exts=["", ".ps1", ".cmd"])
 }
 
 ///|
-async fn create_tool_shims(tools : Array[Tool], prefix_str : String) -> Unit {
+async fn create_new_shims(
+  add_names : Array[String],
+  prefix_str : String,
+) -> Unit {
   let os = @os.get_os_name()
-  for tool in tools {
-    let belonging_tool = @tools.Tool::get_belonging_tools(tool.to_string())
-    let cmd_name = tool.to_string()
+  for name in add_names {
+    let belonging_tool = @tools.Tool::get_belonging_tool(name)
+    let cmd_name = name
     match os {
       MacOS | Linux =>
         @tools.create_tool_cmd_unix(
@@ -79,12 +97,6 @@ async fn setup_unix(
   tools : Array[Tool],
   prefix_str : String,
 ) -> Unit {
-  // 清理旧的工具
-  cleanup_tool_shims(bin_dir, tools)
-
-  // 创建新的工具
-  create_tool_shims(tools, prefix_str)
-
   // 配置 PATH
   configure_path_unix(bin_dir, npm_dir)
 
@@ -165,12 +177,6 @@ async fn setup_windows(
   tools : Array[Tool],
   prefix_str : String,
 ) -> Unit {
-  // 清理旧的 shim 文件
-  cleanup_tool_shims(bin_dir, tools)
-
-  // 创建新的 shim 文件
-  create_tool_shims(tools, prefix_str)
-
   // 配置 PATH
   configure_path_windows(bin_dir, npm_dir)
 

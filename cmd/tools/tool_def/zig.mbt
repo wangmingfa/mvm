@@ -208,3 +208,27 @@ pub fn Zig::get_exe_path(version : String) -> String raise {
   // let suffix = if os is Windows { ".exe" } else { "" }
   [version_dir(Tool::Zig, version), "zig"].filter(v => !v.is_blank()).join("/")
 }
+
+///|
+pub async fn Zig::get_program_exe_info(
+  program : String,
+  version : String,
+) -> ProgramExeInfo? {
+  if program.is_blank() || version.is_blank() {
+    return None
+  }
+  let tool_dir = version_dir(Tool::Zig, version)
+  let exists = @fs.exists(tool_dir)
+  if program.to_lower() == "zig" {
+    return Some(ProgramExeInfo(
+      "zig",
+      Zig::get_exe_path(version),
+      version,
+      envs={},
+      exists,
+      Tool::Zig,
+      exists,
+    ))
+  }
+  None
+}

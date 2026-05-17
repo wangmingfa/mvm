@@ -293,3 +293,44 @@ pub fn Go::get_exe_path(version : String) -> String raise {
   .filter(v => !v.is_blank())
   .join("/")
 }
+
+///|
+pub async fn Go::get_program_exe_info(
+  program : String,
+  version : String,
+) -> ProgramExeInfo? {
+  if program.is_blank() || version.is_blank() {
+    return None
+  }
+  let tool_dir = version_dir(Tool::Go, version)
+  let exists = @fs.exists(tool_dir)
+  let os = @os.get_os_name()
+  let suffix = if os is Windows { ".exe" } else { "" }
+  let prog_low = program.to_lower()
+  if prog_low == "go" {
+    return Some(ProgramExeInfo(
+      "go",
+      Go::get_exe_path(version),
+      version,
+      envs={},
+      exists,
+      Tool::Go,
+      exists,
+    ))
+  } else if prog_low == "gofmt" {
+    let gofmt_path = [tool_dir, "bin", "gofmt\{suffix}"]
+    .filter(v => !v.is_blank())
+    .join("/")
+    let gofmt_exists = @fs.exists(gofmt_path)
+    return Some(ProgramExeInfo(
+      "gofmt",
+      gofmt_path,
+      version,
+      envs={},
+      gofmt_exists,
+      Tool::Go,
+      exists,
+    ))
+  }
+  None
+}

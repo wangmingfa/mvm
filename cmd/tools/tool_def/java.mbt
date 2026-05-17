@@ -208,8 +208,8 @@ pub fn Java::get_exe_path(version : String) -> String raise {
 /// 获取 Java 内置工具（javac、jar）的路径和版本
 pub fn Java::get_java_builtin_tool_path_and_version(
   tool : Tool,
-  java_tool_exe : CmdExeInfo,
-) -> CmdExeInfo? {
+  java_tool_exe : ProgramExeInfo,
+) -> ProgramExeInfo? {
   let { path: java_exe_path, .. } = java_tool_exe
 
   let java_bin_dir : String? = @fs_ext.get_parent_dir(java_exe_path) catch {
@@ -230,11 +230,61 @@ pub fn Java::get_java_builtin_tool_path_and_version(
   let tool_path = @fs_ext.join_path(java_bin_dir, "\{tool_name}\{suffix}")
 
   Some(
-    CmdExeInfo::new_node_builtin_tool(
-      tool,
-      java_tool_exe,
+    ProgramExeInfo(
+      tool.to_str(),
       tool_path,
       java_tool_exe.version,
+      envs=java_tool_exe.envs,
+      true,
+      java_tool_exe.tool,
+      java_tool_exe.tool_exists,
     ),
   )
+}
+
+///|
+pub async fn Java::get_program_exe_info(
+  program : String,
+  version : String,
+) -> ProgramExeInfo? {
+  if program.is_blank() || version.is_blank() {
+    return None
+  }
+  let tool_dir = version_dir(Tool::Java, version)
+  let exists = @fs.exists(tool_dir)
+  let java_info = ProgramExeInfo(
+    "java",
+    Java::get_exe_path(version),
+    version,
+    envs={},
+    exists,
+    Tool::Java,
+    exists,
+  )
+  let prog_low = program.to_lower()
+  if prog_low == "java" {
+    return Some(java_info)
+  } else if prog_low == "javac" || prog_low == "jar" {
+    // 直接构造 ProgramExeInfo，不用 Tool 枚举
+    let os = @os.get_os_name()
+    let suffix = if os is Windows { ".exe" } else { "" }
+    let java_bin_dir = @fs_ext.get_parent_dir(java_info.path)
+    match java_bin_dir {
+      Some(dir) => {
+        let tool_path = @fs_ext.join_path(dir, "\{prog_low}\{suffix}")
+        let exists = @fs.exists(tool_path)
+        return Some(ProgramExeInfo(
+          prog_low,
+          tool_path,
+          version,
+          envs={},
+          exists,
+          Tool::Java,
+          exists,
+        ))
+      }
+      _ => ()
+    }
+  }
+  None
 }

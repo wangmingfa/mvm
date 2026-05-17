@@ -14,7 +14,7 @@ using @tool_def {
 ///|
 pub using @tool_def {
   type Tool,
-  type CmdExeInfo,
+  type ProgramExeInfo,
   type DownloadInfo,
   set_no_cache_mode,
   is_no_cache_mode,
@@ -232,13 +232,24 @@ pub fn get_download_info(
 
 ///|
 /// 获取工具的运行路径，返回路径、版本和运行此命令需要的环境变量
-async fn _get_tool_exe_path(tool : Tool) -> CmdExeInfo? {
+async fn _get_tool_exe_path(tool : Tool) -> ProgramExeInfo? {
   guard get_config(tool~) is Some((_, config)) &&
     config.get_value(tool) is Some(version) else {
     return None
   }
   let path = get_exe_path_for_version(tool, version)
-  Some(CmdExeInfo::new(tool.to_str(), Some(tool), path, version))
+  let exists = @fs.exists(path)
+  Some(
+    ProgramExeInfo(
+      tool.to_str(),
+      path,
+      version,
+      envs={},
+      exists,
+      tool,
+      exists,
+    ),
+  )
 }
 
 ///|
@@ -259,36 +270,34 @@ pub fn get_exe_path_for_version(tool : Tool, version : String) -> String raise {
 }
 
 ///|
-pub async fn get_cmd_exe_path(tool : Tool) -> CmdExeInfo? {
-  // 内置工具需要查找所属的主工具版本
-  let real_tool = @tool_def.Tool::get_belonging_tools(tool.to_str())
-  let res = _get_tool_exe_path(real_tool)
-
-  if @tool_def.Tool::is_node_builtin_tools(tool) {
-    guard res is Some(node_tool_exe) else { return None }
-    return @tool_def.Node::get_node_builtin_tool_path_and_version(
-      tool, node_tool_exe,
-    )
+/// 获取某个工具下的命令的可执行文件路径和版本信息
+/// 比如 mvm run node@18 -- node -v 中，tool就是node，program也是node
+/// 比如 mvm run node@18 -- npm -v 中，tool就是node，program就是npm
+pub async fn get_program_exe_info(
+  tool : Tool,
+  program : String,
+  version : String,
+) -> ProgramExeInfo? {
+  let effective_version = if version.is_blank() {
+    guard get_config(tool~) is Some((_, config)) &&
+      config.get_value(tool) is Some(v) else {
+      return None
+    }
+    v
+  } else {
+    version
   }
-  if @tool_def.Tool::is_rust_builtin_tools(tool) {
-    guard res is Some(rust_tool_exe) else { return None }
-    return @tool_def.Rust::get_rust_builtin_tool_path_and_version(
-      tool, rust_tool_exe,
-    )
+  match tool {
+    Node => Node::get_program_exe_info(program, effective_version)
+    Bun => Bun::get_program_exe_info(program, effective_version)
+    Zig => Zig::get_program_exe_info(program, effective_version)
+    Go => Go::get_program_exe_info(program, effective_version)
+    Python => Python::get_program_exe_info(program, effective_version)
+    Rust => Rust::get_program_exe_info(program, effective_version)
+    Deno => Deno::get_program_exe_info(program, effective_version)
+    Java => Java::get_program_exe_info(program, effective_version)
+    Kotlin => Kotlin::get_program_exe_info(program, effective_version)
   }
-  if @tool_def.Tool::is_java_builtin_tools(tool) {
-    guard res is Some(java_tool_exe) else { return None }
-    return @tool_def.Java::get_java_builtin_tool_path_and_version(
-      tool, java_tool_exe,
-    )
-  }
-  if @tool_def.Tool::is_kotlin_builtin_tools(tool) {
-    guard res is Some(kotlin_tool_exe) else { return None }
-    return @tool_def.Kotlin::get_kotlin_builtin_tool_path_and_version(
-      tool, kotlin_tool_exe,
-    )
-  }
-  res
 }
 
 ///|
