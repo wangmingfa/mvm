@@ -6,8 +6,6 @@ import {
 }
 
 // Values
-pub fn[T : Show] array_to_string(Array[T]) -> String
-
 pub fn[T : ToStr] blue(T) -> String
 
 pub fn[T : ToStr] colored_spans(Array[(Color, T)], joiner? : String) -> String
@@ -45,12 +43,6 @@ pub fn parse_version(String) -> FixedArray[Int] raise
 pub fn print_logo() -> Unit
 
 pub fn[T : ToStr] red(T) -> String
-
-pub fn[T : Show] show_to_string(T) -> String
-
-pub fn[T : ToStr] styled(Color, T) -> String
-
-pub fn to_debug_string(String) -> String
 
 pub fn[T : ToStr] yellow(T) -> String
 

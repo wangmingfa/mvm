@@ -7,7 +7,7 @@ extern "C" fn c_progress_bar(
 ) -> Unit = "progress_bar"
 
 ///|
-pub extern "C" fn clear_progress() -> Unit = "clear_progress"
+extern "C" fn clear_progress() -> Unit = "clear_progress"
 
 ///|
 pub fn progress_bar(completed : Int64, total : Int64, suffix? : String) -> Unit {
@@ -35,7 +35,7 @@ async test "progress_bar" {
 }
 
 ///|
-pub fn progress_bar_with_detailed_info(
+fn progress_bar_with_detailed_info(
   completed~ : Int64,
   total~ : Int64,
   start_time~ : Int64,

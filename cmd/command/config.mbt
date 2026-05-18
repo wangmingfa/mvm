@@ -1,6 +1,6 @@
 ///|
 /// 执行查看配置命令
-pub async fn run_config() -> Unit {
+async fn run_config() -> Unit {
   let (config_path, config) = @tools.get_global_config()
 
   println("MVM 配置:")
@@ -69,7 +69,7 @@ fn validate_config_url(key : String, value : String) -> Unit raise {
 
 ///|
 /// 执行设置配置命令
-pub async fn run_config_set(key : String, value : String) -> Unit {
+async fn run_config_set(key : String, value : String) -> Unit {
   let (_, existing_config) = @tools.get_global_config()
   match key {
     "github_proxy" => {
@@ -198,7 +198,7 @@ fn get_preset_config(name : String) -> @tools.GlobalConfig? {
 
 ///|
 /// 执行预设配置命令
-pub async fn run_config_preset(name : String) -> Unit {
+async fn run_config_preset(name : String) -> Unit {
   match get_preset_config(name) {
     Some(preset) => {
       let config_path = @tools.save_global_config(preset)

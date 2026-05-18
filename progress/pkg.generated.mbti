@@ -2,11 +2,7 @@
 package "username/mvm/progress"
 
 // Values
-pub fn clear_progress() -> Unit
-
 pub fn progress_bar(Int64, Int64, suffix? : String) -> Unit
-
-pub fn progress_bar_with_detailed_info(completed~ : Int64, total~ : Int64, start_time~ : Int64, period~ : Int64, completed_in_period~ : Int64) -> Unit
 
 // Errors
 

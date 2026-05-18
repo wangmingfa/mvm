@@ -1,5 +1,10 @@
 ///|
-pub struct Path(String)
+priv struct Path(String)
+
+///|
+test "Path" {
+  let _ = Path("")
+}
 
 ///|
 fn Path::join(self : Self, path : String) -> Self {

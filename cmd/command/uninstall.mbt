@@ -1,6 +1,6 @@
 ///|
 /// 执行卸载命令
-pub async fn run_uninstall(tool : @tools.Tool, version : String?) -> Unit {
+async fn run_uninstall(tool : @tools.Tool, version : String?) -> Unit {
   let versions = get_installed(tool)
 
   if versions.is_empty() {

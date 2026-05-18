@@ -1,14 +1,4 @@
 ///|
-pub fn[T : Show] show_to_string(s : T) -> String {
-  Show::to_string(s)
-}
-
-///|
-pub fn[T : Show] array_to_string(a : Array[T]) -> String {
-  a.map(a => show_to_string(a)).join(", ")
-}
-
-///|
 pub(open) trait ToStr {
   to_str(Self) -> String
 }

@@ -42,7 +42,7 @@ pub fn print_logo() -> Unit {
 
 ///|
 /// 用指定颜色包裹文本，自动处理嵌套颜色（内层颜色结束后自动恢复外层颜色）
-pub fn[T : ToStr] styled(color : Color, msg : T) -> String {
+fn[T : ToStr] styled(color : Color, msg : T) -> String {
   let color = color.to_cololr_str()
   let content = msg.to_str()
   let patched = content

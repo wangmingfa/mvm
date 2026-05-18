@@ -14,8 +14,6 @@ pub fn canonicalize_path(String) -> String
 
 pub async fn copy(String, String) -> Unit
 
-pub async fn copy_dir(String, String, include_root? : Bool) -> Unit
-
 pub async fn ensure_dir(String) -> Unit
 
 pub fn get_parent_dir(String, levels? : Int) -> String? raise
@@ -39,7 +37,7 @@ pub fn symlink_status(String) -> SymlinkStatus
 // Errors
 
 // Types and methods
-pub struct Path(String)
+type Path
 
 pub enum SymlinkStatus {
   SymlinkNone

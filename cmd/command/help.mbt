@@ -1,6 +1,6 @@
 ///|
 /// 显示帮助信息
-pub fn run_help() -> Unit {
+fn run_help() -> Unit {
   println(
     "mvm (Multi Version Manager) \{VERSION} —— One Tool to Manage Them All",
   )

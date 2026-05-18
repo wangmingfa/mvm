@@ -1,6 +1,6 @@
 ///|
 /// 执行 run 命令，用指定版本临时运行命令
-pub async fn run_run(
+async fn run_run(
   tool : @tools.Tool,
   version : String,
   args : Array[String],

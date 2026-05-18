@@ -1,6 +1,6 @@
 ///|
 /// 执行项目锁定命令
-pub async fn run_pin(tool : @tools.Tool, version : String) -> Unit {
+async fn run_pin(tool : @tools.Tool, version : String) -> Unit {
   let os = @os.get_os_info()
   let version = @tools.get_target_version(os, tool, version)
 

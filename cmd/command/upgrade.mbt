@@ -34,7 +34,7 @@ async fn check_version_exists(version : String) -> Bool {
 
 ///|
 /// 执行 upgrade 命令，可指定目标版本；reinstall 为 true 时重新安装当前版本
-pub async fn run_upgrade(version : String?, reinstall : Bool) -> Unit {
+async fn run_upgrade(version : String?, reinstall : Bool) -> Unit {
   // 确定目标版本：指定版本需验证存在性，未指定则获取最新版本
   let target_version = match version {
     Some(v) => {
@@ -135,7 +135,7 @@ fn extract_all_tag_names(body : String) -> Array[String] {
 
 ///|
 /// 查询所有可用的 mvm 版本
-pub async fn run_upgrade_list() -> Unit {
+async fn run_upgrade_list() -> Unit {
   @log.info("正在获取所有可用的 mvm 版本...")
   let (res, data) = @request.github_get(GITHUB_API_RELEASES)
   if res.code != 200 {

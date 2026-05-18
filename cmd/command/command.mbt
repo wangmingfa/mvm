@@ -285,15 +285,6 @@ fn[T : Show] get_arg_value_from_args(
 }
 
 ///|
-pub fn get_arg_value(key : String, default? : String) -> String? {
-  let args = @env.args()[1:].to_owned()
-  if default is Some(default) {
-    return get_arg_value_from_args(args, key, default~)
-  }
-  get_arg_value_from_args(args, key)
-}
-
-///|
 test "get_arg_value" {
   let args = [
     "--log-level=debug", // key=value

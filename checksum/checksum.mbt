@@ -7,7 +7,7 @@ extern "c" fn c_sha256_file(path : Bytes) -> String = "sha256_file"
 ///|
 /// 计算文件的 SHA256 值
 /// 使用 C FFI 实现，无需依赖外部命令（certutil/shasum/sha256sum）
-pub fn compute_file_sha256(file_path : String) -> String raise {
+fn compute_file_sha256(file_path : String) -> String raise {
   let path = @ffi.string_to_c_bytes(file_path)
   let hash = c_sha256_file(path)
   guard hash.length() == 64 else {

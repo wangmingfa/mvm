@@ -37,7 +37,7 @@ pub fn mvm_npm_pkg_home() -> String raise {
 
 ///|
 /// 工具安装目录
-pub fn tools_dir() -> String raise {
+fn tools_dir() -> String raise {
   "\{mvm_home()}/tools"
 }
 
@@ -69,17 +69,6 @@ pub struct DownloadInfo {
 /// 检查版本是否已安装
 pub async fn is_installed(tool : Tool, version : String) -> Bool {
   @fs.exists(version_dir(tool, version))
-}
-
-///|
-/// 获取已安装的所有版本
-pub async fn installed_versions(tool : Tool) -> Array[String] {
-  let dir = tool_dir(tool)
-  if @fs.exists(dir) {
-    @fs.readdir(dir)
-  } else {
-    []
-  }
 }
 
 ///|
@@ -144,24 +133,9 @@ pub fn Tool::from_string(tool : String) -> Tool raise {
 }
 
 ///|
-pub fn Tool::from_string_with_option_result(tool : String) -> Tool? {
+fn Tool::from_string_with_option_result(tool : String) -> Tool? {
   let tool = Tool::from_string(tool) catch { _ => return None }
   Some(tool)
-}
-
-///|
-impl Eq for Tool with equal(a, b) {
-  match a {
-    Node => b is Node
-    Bun => b is Bun
-    Zig => b is Zig
-    Go => b is Go
-    Python => b is Python
-    Rust => b is Rust
-    Deno => b is Deno
-    Java => b is Java
-    Kotlin => b is Kotlin
-  }
 }
 
 ///|
@@ -240,26 +214,6 @@ pub fn Tool::get_belonging_tool(cmd : String) -> Tool raise {
   } else {
     raise fail("无法识别的工具命令：\{cmd}")
   }
-}
-
-///|
-pub fn Tool::is_node_program(tool : Tool) -> Bool {
-  node_executable_programs.contains(tool.to_str()) && tool != Node
-}
-
-///|
-pub fn Tool::is_rust_program(tool : Tool) -> Bool {
-  tool.to_str() == "cargo"
-}
-
-///|
-pub fn Tool::is_java_program(tool : Tool) -> Bool {
-  java_executable_programs.contains(tool.to_str()) && tool != Java
-}
-
-///|
-pub fn Tool::is_kotlin_builtin_tool(tool : Tool) -> Bool {
-  tool.to_str() == "kotlinc"
 }
 
 ///|
@@ -351,7 +305,7 @@ pub fn ProgramExeInfo::ProgramExeInfo(
 ///|
 /// Format OS compatibility error message with template variables
 /// Supported variables: {version}, {os.name}, {os.arch}
-pub fn format_os_compat_error(
+fn format_os_compat_error(
   error_msg_tpl : String,
   version : String,
   os : @os.OsInfo,

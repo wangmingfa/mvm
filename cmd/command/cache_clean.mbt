@@ -1,6 +1,6 @@
 ///|
 /// 执行 cache clean 命令，清理缓存和临时文件
-pub async fn run_cache_clean() -> Unit {
+async fn run_cache_clean() -> Unit {
   let cache_dir = @tools.cache_dir()
   let temp_dir = @tools.temp_dir()
 

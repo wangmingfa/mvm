@@ -30,58 +30,58 @@ pub async fn copy(src : String, dest : String) -> Unit {
 }
 
 ///|
-pub async fn copy_dir(
-  from : String,
-  to : String,
-  include_root? : Bool = true,
-) -> Unit {
-  let dest_dir = if include_root {
-    let name = get_path_name(from)
-    let dest_dir = get_dest_path(to, name)
-    ensure_dir(dest_dir)
-    dest_dir
-  } else {
-    ensure_dir(to)
-    to
-  }
-  let entries = @fs.readdir(from)
-  for entry in entries {
-    let src_path = "\{from}/\{entry}"
-    let kind = @fs.kind(src_path)
-    match kind {
-      Regular => {
-        let dest_path = "\{dest_dir}/\{entry}"
-        copy(src_path, dest_path)
-      }
-      Directory => copy_dir(src_path, dest_dir)
-      _ => ignore(())
-    }
-  }
-}
+// async fn copy_dir(
+//   from : String,
+//   to : String,
+//   include_root? : Bool = true,
+// ) -> Unit {
+//   let dest_dir = if include_root {
+//     let name = get_path_name(from)
+//     let dest_dir = get_dest_path(to, name)
+//     ensure_dir(dest_dir)
+//     dest_dir
+//   } else {
+//     ensure_dir(to)
+//     to
+//   }
+//   let entries = @fs.readdir(from)
+//   for entry in entries {
+//     let src_path = "\{from}/\{entry}"
+//     let kind = @fs.kind(src_path)
+//     match kind {
+//       Regular => {
+//         let dest_path = "\{dest_dir}/\{entry}"
+//         copy(src_path, dest_path)
+//       }
+//       Directory => copy_dir(src_path, dest_dir)
+//       _ => ignore(())
+//     }
+//   }
+// }
 
 ///|
-async fn get_dest_path(dest : String, name : String) -> String {
-  let mut count = 0
-  while count >= 0 {
-    let path = if count > 0 {
-      let arr = name.split(".").to_array()
-      let len = arr.length()
-      let prefix = arr[0:len - 1].join(".")
-      let suffix = arr[len - 1]
-      let suffix = if suffix.is_blank() { "" } else { ".\{suffix}" }
-      "\{dest}/\{prefix}-\{count}\{suffix}"
-    } else {
-      "\{dest}/\{name}"
-    }
-    if @fs.exists(path) {
-      count += 1
-      continue
-    }
-    break path
-  } nobreak {
-    "\{dest}/\{name}"
-  }
-}
+// async fn get_dest_path(dest : String, name : String) -> String {
+//   let mut count = 0
+//   while count >= 0 {
+//     let path = if count > 0 {
+//       let arr = name.split(".").to_array()
+//       let len = arr.length()
+//       let prefix = arr[0:len - 1].join(".")
+//       let suffix = arr[len - 1]
+//       let suffix = if suffix.is_blank() { "" } else { ".\{suffix}" }
+//       "\{dest}/\{prefix}-\{count}\{suffix}"
+//     } else {
+//       "\{dest}/\{name}"
+//     }
+//     if @fs.exists(path) {
+//       count += 1
+//       continue
+//     }
+//     break path
+//   } nobreak {
+//     "\{dest}/\{name}"
+//   }
+// }
 
 ///|
 async fn get_all_sub_dir_or_file_path(

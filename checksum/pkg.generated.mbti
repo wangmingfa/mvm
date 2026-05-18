@@ -2,8 +2,6 @@
 package "username/mvm/checksum"
 
 // Values
-pub fn compute_file_sha256(String) -> String raise
-
 pub fn verify_file_checksum(String, String) -> Bool
 
 // Errors

@@ -1,7 +1,7 @@
 ///|
 /// 执行 setup 命令：创建工具 wrapper 脚本，配置 PATH
 /// use_prefix=true 使用固定前缀 TOOL_PREFIX，use_prefix=false 不使用前缀（默认）
-pub async fn run_setup(use_prefix : Bool) -> Unit {
+async fn run_setup(use_prefix : Bool) -> Unit {
   let prefix_str = if use_prefix { TOOL_PREFIX } else { "" }
   let os = @os.get_os_name()
   let bin_dir = @tool_def.mvm_bin_home()

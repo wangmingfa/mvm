@@ -8,21 +8,13 @@ import {
 // Values
 pub fn add_log_lines(lines? : Int) -> Unit
 
-pub fn add_log_lines_by_content(String) -> Int
-
 pub fn clear_all_lines() -> Unit
-
-pub fn clear_lines(Int) -> Unit
 
 #callsite(autofill(loc))
 pub fn[T : @utils.ToStr] debug(T, loc~ : SourceLoc) -> Unit
 
-pub fn enter_alternate_screen_on_release_mode() -> Unit
-
 #callsite(autofill(loc))
 pub fn[T : @utils.ToStr] error(T, loc~ : SourceLoc) -> Unit
-
-pub fn exit_alternate_screen_on_release_mode() -> Unit
 
 #callsite(autofill(loc))
 pub fn[T : @utils.ToStr] info(T, loc~ : SourceLoc) -> Unit
@@ -30,8 +22,6 @@ pub fn[T : @utils.ToStr] info(T, loc~ : SourceLoc) -> Unit
 pub fn is_debug_log_level() -> Bool
 
 pub fn println_error(Error) -> Unit
-
-pub fn set_log_level(LogLevel) -> Unit
 
 #callsite(autofill(loc))
 pub fn[T : @utils.ToStr] success(T, loc~ : SourceLoc) -> Unit
@@ -48,9 +38,7 @@ pub(all) enum LogLevel {
   Warn
   Error
 }
-pub fn LogLevel::from_string(String) -> Self raise
 pub fn LogLevel::from_string_with_default(String, Self) -> Self
-pub fn LogLevel::to_int(Self) -> Int
 
 // Type aliases
 

@@ -1,6 +1,6 @@
 ///|
 /// 执行 which 命令，查看当前使用的工具可执行文件路径
-pub async fn run_which(tool : @tools.Tool) -> Unit {
+async fn run_which(tool : @tools.Tool) -> Unit {
   // 获取配置信息（包含配置文件路径）
   let config_info = @tools.get_config(tool~)
   match config_info {

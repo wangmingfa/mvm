@@ -7,51 +7,9 @@ import {
 }
 
 // Values
-pub async fn download_file(String, String, headers? : Map[String, String], show_progress? : Bool) -> Unit
-
-pub async fn extract_file(String, String) -> Unit
-
-pub fn get_arg_value(String, default? : String) -> String?
-
 pub fn get_command(ArrayView[String]) -> Command raise
 
 pub async fn run(Command) -> Unit
-
-pub async fn run_cache_clean() -> Unit
-
-pub async fn run_config() -> Unit
-
-pub async fn run_config_preset(String) -> Unit
-
-pub async fn run_config_set(String, String) -> Unit
-
-pub async fn run_current(@tool_def.Tool?) -> Unit
-
-pub fn run_help() -> Unit
-
-pub async fn run_install(@tool_def.Tool, String?, Bool, Bool) -> Unit
-
-pub async fn run_list(@tool_def.Tool?) -> Unit
-
-pub async fn run_pin(@tool_def.Tool, String) -> Unit
-
-pub async fn run_run(@tool_def.Tool, String, Array[String]) -> Unit
-
-pub async fn run_setup(Bool) -> Unit
-
-pub async fn run_uninstall(@tool_def.Tool, String?) -> Unit
-
-pub async fn run_unuse(@tool_def.Tool) -> Unit
-
-pub async fn run_upgrade(String?, Bool) -> Unit
-
-pub async fn run_upgrade_list() -> Unit
-
-pub async fn run_use(@tool_def.Tool, String?) -> Unit
-
-pub fn run_version() -> Unit
-
-pub async fn run_which(@tool_def.Tool) -> Unit
 
 // Errors
 

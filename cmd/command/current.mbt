@@ -1,6 +1,6 @@
 ///|
 /// 执行 current 命令，查看当前使用的工具版本
-pub async fn run_current(tool : @tools.Tool?) -> Unit {
+async fn run_current(tool : @tools.Tool?) -> Unit {
   let tools = if tool is Some(tool) {
     [tool]
   } else {

@@ -15,15 +15,11 @@ pub fn apply_global_config(String, GlobalConfig, UrlReplaceContext) -> String
 
 pub fn cache_dir() -> String raise
 
-pub fn format_os_compat_error(String, String, @os.OsInfo) -> String
-
 pub async fn get_config(tool? : Tool, dir? : String, search_upwards? : Bool, fallback_to_global_config? : Bool) -> (String, Config)?
 
 pub async fn get_global_config() -> (String, GlobalConfig)
 
 pub async fn get_target_version_with_cache(String, String, String, @os.OsInfo, String, Int, (@os.OsInfo, String, Int, Json) -> String raise, headers? : Map[String, String]) -> String
-
-pub async fn installed_versions(Tool) -> Array[String]
 
 pub async fn is_installed(Tool, String) -> Bool
 
@@ -51,8 +47,6 @@ pub fn temp_dir() -> String raise
 
 pub fn tool_dir(Tool) -> String raise
 
-pub fn tools_dir() -> String raise
-
 pub fn version_dir(Tool, String) -> String raise
 
 pub async fn write_cache_file_content(String, String) -> Unit
@@ -69,22 +63,12 @@ pub struct Bun {
 pub fn Bun::get_download_info(@os.OsInfo, String) -> DownloadInfo raise
 pub fn Bun::get_exe_path(String) -> String raise
 pub async fn Bun::get_expected_checksum(@os.OsInfo, String) -> String?
+pub async fn Bun::get_program_exe_info(String, String) -> ProgramExeInfo
 pub async fn Bun::get_target_version(@os.OsInfo, String, Int) -> String
 
 type BunAssetInfo derive(@json.FromJson)
 
 type BunReleaseInfo derive(@json.FromJson)
-
-pub struct CmdExeInfo {
-  name : String
-  tool : Tool?
-  path : String
-  version : String
-  envs : Map[String, String]
-  dependent_tool_cmd : CmdExeInfo?
-} derive(@debug.Debug)
-pub fn CmdExeInfo::new(String, Tool?, String, String, envs? : Map[String, String], dependent_tool_cmd? : Self?) -> Self
-pub fn CmdExeInfo::new_node_builtin_tool(Tool, Self, String, String, envs? : Map[String, String]) -> Self
 
 pub struct Config {
   node : String?
@@ -97,12 +81,13 @@ pub struct Config {
   java : String?
   kotlin : String?
 } derive(ToJson, @debug.Debug, @json.FromJson)
-pub fn Config::get_value(Self, Tool) -> String? raise
+pub fn Config::get_value(Self, Tool) -> String?
 
 type Deno
 pub fn Deno::get_download_info(@os.OsInfo, String) -> DownloadInfo raise
 pub fn Deno::get_exe_path(String) -> String raise
 pub fn Deno::get_expected_checksum(@os.OsInfo, String) -> String?
+pub async fn Deno::get_program_exe_info(String, String) -> ProgramExeInfo
 pub async fn Deno::get_target_version(@os.OsInfo, String, Int) -> String
 
 type DenoReleaseInfo derive(@json.FromJson)
@@ -129,13 +114,15 @@ pub struct Go {
 pub fn Go::get_download_info(@os.OsInfo, String) -> DownloadInfo raise
 pub fn Go::get_exe_path(String) -> String raise
 pub async fn Go::get_expected_checksum(@os.OsInfo, String) -> String?
+pub async fn Go::get_program_exe_info(String, String) -> ProgramExeInfo
 pub async fn Go::get_target_version(@os.OsInfo, String, Int) -> String
 
 type Java
 pub fn Java::get_download_info(@os.OsInfo, String) -> DownloadInfo
 pub fn Java::get_exe_path(String) -> String raise
 pub fn Java::get_expected_checksum(@os.OsInfo, String) -> String?
-pub fn Java::get_java_builtin_tool_path_and_version(Tool, CmdExeInfo) -> CmdExeInfo?
+pub fn Java::get_java_builtin_tool_path_and_version(Tool, ProgramExeInfo) -> ProgramExeInfo?
+pub async fn Java::get_program_exe_info(String, String) -> ProgramExeInfo
 pub async fn Java::get_target_version(@os.OsInfo, String, Int) -> String
 
 type JavaAvailableReleases derive(@json.FromJson)
@@ -144,40 +131,46 @@ type Kotlin
 pub fn Kotlin::get_download_info(@os.OsInfo, String) -> DownloadInfo
 pub fn Kotlin::get_exe_path(String) -> String raise
 pub fn Kotlin::get_expected_checksum(@os.OsInfo, String) -> String?
-pub fn Kotlin::get_kotlin_builtin_tool_path_and_version(Tool, CmdExeInfo) -> CmdExeInfo?
+pub fn Kotlin::get_kotlin_builtin_tool_path_and_version(Tool, ProgramExeInfo) -> ProgramExeInfo?
+pub async fn Kotlin::get_program_exe_info(String, String) -> ProgramExeInfo
 pub async fn Kotlin::get_target_version(@os.OsInfo, String, Int) -> String
 
 type KotlinReleaseInfo derive(@json.FromJson)
 
 type Node
 pub fn Node::get_download_info(@os.OsInfo, String) -> DownloadInfo raise
-pub fn Node::get_exe_path(String) -> String raise
 pub async fn Node::get_expected_checksum(@os.OsInfo, String) -> String?
-pub async fn Node::get_node_builtin_tool_path_and_version(Tool, CmdExeInfo) -> CmdExeInfo?
-pub fn Node::get_node_dir(String) -> NodeDir raise
-pub async fn Node::get_npm_global_pkg_path_and_version(String, CmdExeInfo) -> NpmPkgExe?
+pub fn Node::get_node_dir(String) -> NodePath raise
+pub async fn Node::get_program_exe_info(String, String) -> ProgramExeInfo
 pub async fn Node::get_target_version(@os.OsInfo, String, Int) -> String
 
-pub struct NodeDir {
+type NodeJsInfo derive(@json.FromJson)
+
+pub struct NodePath {
   root : String
   lib : String
   bin : String
 }
-pub fn NodeDir::get_bin_file_path(Self, String) -> String
-pub fn NodeDir::get_pkg_root_dir(Self, String) -> String
-pub fn NodeDir::join_with_bin(Self, ArrayView[String]) -> String
+pub fn NodePath::get_bin_file_path(Self, String) -> String
+pub fn NodePath::get_pkg_root_dir(Self, String) -> String
+pub fn NodePath::join_with_bin(Self, ArrayView[String]) -> String
 
-type NodeJsInfo derive(@json.FromJson)
-
-pub struct NpmPkgExe {
+pub struct ProgramExeInfo {
+  name : String
   path : String
   version : String
+  envs : Map[String, String]
+  program_exists : Bool
+  tool : Tool
+  tool_exists : Bool
 } derive(@debug.Debug)
+pub fn ProgramExeInfo::ProgramExeInfo(String, String, String, envs? : Map[String, String], Bool, Tool, Bool) -> Self
 
 type Python
 pub fn Python::get_download_info(@os.OsInfo, String) -> DownloadInfo raise
 pub fn Python::get_exe_path(String) -> String raise
 pub async fn Python::get_expected_checksum(@os.OsInfo, String) -> String?
+pub async fn Python::get_program_exe_info(String, String) -> ProgramExeInfo
 pub async fn Python::get_target_version(@os.OsInfo, String, Int) -> String
 
 type PythonVersionInfo derive(@json.FromJson)
@@ -186,7 +179,8 @@ type Rust
 pub fn Rust::get_download_info(@os.OsInfo, String) -> DownloadInfo raise
 pub fn Rust::get_exe_path(String) -> String raise
 pub fn Rust::get_expected_checksum(@os.OsInfo, String) -> String?
-pub fn Rust::get_rust_builtin_tool_path_and_version(Tool, CmdExeInfo) -> CmdExeInfo?
+pub async fn Rust::get_program_exe_info(String, String) -> ProgramExeInfo
+pub fn Rust::get_rust_builtin_tool_path_and_version(Tool, ProgramExeInfo) -> ProgramExeInfo?
 pub async fn Rust::get_target_version(@os.OsInfo, String, Int) -> String
 
 pub(all) enum Tool {
@@ -202,14 +196,9 @@ pub(all) enum Tool {
 } derive(@debug.Debug)
 pub fn Tool::all_tools() -> Array[Self]
 pub fn Tool::from_string(String) -> Self raise
-pub fn Tool::from_string_with_option_result(String) -> Self?
-pub fn Tool::get_belonging_tools(String) -> Self raise
-pub fn Tool::get_executable_names(Self) -> ReadOnlyArray[String]
+pub fn Tool::get_belonging_tool(String) -> Self raise
+pub fn Tool::get_executable_programs(Self) -> ReadOnlyArray[String]
 pub fn Tool::installable_tools() -> Array[Self]
-pub fn Tool::is_java_builtin_tools(Self) -> Bool
-pub fn Tool::is_kotlin_builtin_tools(Self) -> Bool
-pub fn Tool::is_node_builtin_tools(Self) -> Bool
-pub fn Tool::is_rust_builtin_tools(Self) -> Bool
 pub impl Show for Tool
 pub impl @utils.ToStr for Tool
 
@@ -227,6 +216,7 @@ pub struct Zig {
 pub fn Zig::get_download_info(@os.OsInfo, String) -> DownloadInfo raise
 pub fn Zig::get_exe_path(String) -> String raise
 pub async fn Zig::get_expected_checksum(@os.OsInfo, String) -> String?
+pub async fn Zig::get_program_exe_info(String, String) -> ProgramExeInfo
 pub async fn Zig::get_target_version(@os.OsInfo, String, Int) -> String
 
 // Type aliases

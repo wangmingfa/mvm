@@ -7,7 +7,7 @@ pub(all) enum LogLevel {
 }
 
 ///|
-pub fn LogLevel::to_int(self : LogLevel) -> Int = "%identity"
+fn LogLevel::to_int(self : LogLevel) -> Int = "%identity"
 
 ///|
 impl Show for LogLevel with output(s, logger) {
@@ -25,17 +25,6 @@ impl Show for LogLevel with to_string(s) {
 }
 
 ///|
-pub fn LogLevel::from_string(s : String) -> Self raise {
-  match s {
-    "info" => Info
-    "debug" => Debug
-    "warn" => Warn
-    "error" => Error
-    _ => raise fail("无效的值 \{s}")
-  }
-}
-
-///|
 pub fn LogLevel::from_string_with_default(s : String, default : Self) -> Self {
   match s.to_lower() {
     "info" => Info
@@ -48,11 +37,6 @@ pub fn LogLevel::from_string_with_default(s : String, default : Self) -> Self {
 
 ///|
 const LOG_LEVEL_ENV_KEY = "MVM_LOG_LEVEL"
-
-///|
-pub fn set_log_level(level : LogLevel) -> Unit {
-  @env.set_env_var(LOG_LEVEL_ENV_KEY, level.to_string())
-}
 
 ///|
 fn get_log_level() -> LogLevel {

@@ -108,7 +108,7 @@ async test "get_best_downloader" {
 }
 
 ///|
-pub fn get_cmd_and_args(
+fn get_cmd_and_args(
   cmd : String,
   args : ArrayView[String],
 ) -> (String, ArrayView[String]) {
@@ -153,7 +153,7 @@ pub async fn chmod_x(file_paths : Array[String]) -> Unit {
 }
 
 ///|
-pub fn join_args(args : ArrayView[String]) -> String {
+fn join_args(args : ArrayView[String]) -> String {
   // 如果有空格，则使用引号包裹
   args.map(v => if v.contains(" ") { "\"\{v}\"" } else { v }).join(" ")
 }

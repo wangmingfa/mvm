@@ -10,7 +10,7 @@ pub fn add_log_lines(lines? : Int = 1) -> Unit {
 }
 
 ///|
-pub fn add_log_lines_by_content(content : String) -> Int {
+fn add_log_lines_by_content(content : String) -> Int {
   let lines = content.split("\n").to_array().length()
   add_log_lines(lines~)
   lines
@@ -140,7 +140,7 @@ extern "C" fn c_enter_alternate_screen() -> Unit = "enter_alternate_screen"
 extern "C" fn c_exit_alternate_screen() -> Unit = "exit_alternate_screen"
 
 ///|
-pub extern "C" fn clear_lines(lines : Int) -> Unit = "clear_lines"
+extern "C" fn clear_lines(lines : Int) -> Unit = "clear_lines"
 
 ///|
 pub fn clear_all_lines() -> Unit {
@@ -160,18 +160,18 @@ fn exit_alternate_screen() -> Unit {
 }
 
 ///|
-pub fn enter_alternate_screen_on_release_mode() -> Unit {
-  if is_release() {
-    enter_alternate_screen()
-  }
-}
+// fn enter_alternate_screen_on_release_mode() -> Unit {
+//   if is_release() {
+//     enter_alternate_screen()
+//   }
+// }
 
 ///|
-pub fn exit_alternate_screen_on_release_mode() -> Unit {
-  if is_release() {
-    exit_alternate_screen()
-  }
-}
+// fn exit_alternate_screen_on_release_mode() -> Unit {
+//   if is_release() {
+//     exit_alternate_screen()
+//   }
+// }
 
 ///|
 test "alternate_screen" {
