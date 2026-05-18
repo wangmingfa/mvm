@@ -152,11 +152,13 @@ async fn run_config_set(key : String, value : String) -> CommandResult {
       print_to(result, "设置 logo = \{label}")
     }
     _ => {
-      println(@utils.colored_spans([
-        (Red, "错误: "),
-        (Yellow, "不支持的配置项 "),
-        (Cyan, key),
-      ]))
+      println(
+        @utils.colored_spans([
+          (Red, "错误: "),
+          (Yellow, "不支持的配置项 "),
+          (Cyan, key),
+        ]),
+      )
       println("支持的配置项:")
       println("  logo - 是否显示启动 logo（true/false）")
       println("  github_proxy - GitHub 代理地址")
@@ -203,7 +205,9 @@ async fn run_config_preset(name : String) -> CommandResult {
     }
     _ => {
       println("支持的预设配置:")
-      println("  china - 中国大陆快速配置（GitHub 代理 + Node/Go/Python/Rust/Java 镜像）")
+      println(
+        "  china - 中国大陆快速配置（GitHub 代理 + Node/Go/Python/Rust/Java 镜像）",
+      )
       raise fail("不支持的预设配置: \{name}")
     }
   }

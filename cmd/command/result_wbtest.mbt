@@ -1,3 +1,4 @@
+///|
 test "CommandResult::success 创建成功结果" {
   let result = CommandResult::success()
   debug_inspect(
@@ -8,6 +9,7 @@ test "CommandResult::success 创建成功结果" {
   )
 }
 
+///|
 test "CommandResult::success_with_output 创建带输出的成功结果" {
   let result = CommandResult::success_with_output("v0.0.1")
   debug_inspect(
@@ -18,6 +20,7 @@ test "CommandResult::success_with_output 创建带输出的成功结果" {
   )
 }
 
+///|
 test "CommandResult::failure 创建失败结果（默认退出码）" {
   let result = CommandResult::failure("未安装")
   debug_inspect(
@@ -28,6 +31,7 @@ test "CommandResult::failure 创建失败结果（默认退出码）" {
   )
 }
 
+///|
 test "CommandResult::failure 创建失败结果（指定退出码）" {
   let result = CommandResult::failure("参数错误", exit_code=2)
   debug_inspect(
@@ -38,6 +42,7 @@ test "CommandResult::failure 创建失败结果（指定退出码）" {
   )
 }
 
+///|
 test "CommandResult::write 追加输出内容" {
   let result = CommandResult::success()
   result.write("hello\n")
@@ -50,6 +55,7 @@ test "CommandResult::write 追加输出内容" {
   )
 }
 
+///|
 test "CommandResult::is_success 判断是否成功" {
   let ok = CommandResult::success()
   debug_inspect(
@@ -67,6 +73,7 @@ test "CommandResult::is_success 判断是否成功" {
   )
 }
 
+///|
 test "print_to 同时打印并捕获" {
   let result = CommandResult::success()
   print_to(result, "hello")
@@ -79,6 +86,7 @@ test "print_to 同时打印并捕获" {
   )
 }
 
+///|
 async test "run 空参数返回 CommandResult::failure" {
   let result = run(Run(Node, "", []))
   debug_inspect(

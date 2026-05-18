@@ -167,7 +167,10 @@ fn print_success_unix(
   print_to(result, "")
   print_to(result, "安装完成！可执行文件已安装到 \{bin_dir}")
   print_to(result, "  - mvm         (主命令)")
-  print_to(result, "  - npm-pkg 目录    (npm 全局包安装路径：\{npm_dir})")
+  print_to(
+    result,
+    "  - npm-pkg 目录    (npm 全局包安装路径：\{npm_dir})",
+  )
   print_to(result, "  工具软连接：\{tools_str}")
   print_to(result, "")
   print_to(
@@ -233,7 +236,10 @@ fn print_success_windows(
   print_to(result, "")
   print_to(result, "安装完成！可执行文件已安装到 \{bin_dir}")
   print_to(result, "  - mvm.exe         (主命令)")
-  print_to(result, "  - npm-pkg 目录    (npm 全局包安装路径：\{npm_dir})")
+  print_to(
+    result,
+    "  - npm-pkg 目录    (npm 全局包安装路径：\{npm_dir})",
+  )
   print_to(result, "  工具脚本：\{tools_str}")
   print_to(result, "  (.ps1 for PowerShell, .cmd for cmd.exe/npm postinstall)")
   print_to(result, "")

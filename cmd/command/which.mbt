@@ -32,7 +32,10 @@ async fn run_which(tool : @tools.Tool) -> CommandResult {
           result,
           "\{exe_path} (\{source_label}: \{config_path}) - \{not_installed_label}",
         )
-        print_to(result, "请使用 mvm install \{tool}@\{version} 安装该版本")
+        print_to(
+          result,
+          "请使用 mvm install \{tool}@\{version} 安装该版本",
+        )
       }
       result
     }

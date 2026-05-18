@@ -20,7 +20,7 @@ pub async fn run(command : Command) -> CommandResult {
     // logo 仅打印到控制台，不写入 CommandResult.output
     @utils.print_logo()
   }
-  {
+  try {
     match command {
       Help => run_help()
       Version => run_version()
@@ -36,8 +36,7 @@ pub async fn run(command : Command) -> CommandResult {
       Uninstall(tool, version) => run_uninstall(tool, version)
       Which(tool) => run_which(tool)
       Current(tool_opt) => run_current(tool_opt)
-      Run(tool, version, args) =>
-        run_run(tool, version, args)
+      Run(tool, version, args) => run_run(tool, version, args)
       CacheClean => run_cache_clean()
       ConfigList => run_config()
       ConfigSet(key, value) => run_config_set(key, value)

@@ -1,4 +1,5 @@
 import {
   "username/mvm/cmd/command",
+  "username/mvm/cmd/tools/tool_def",
   "moonbitlang/async",
 } for "wbtest"

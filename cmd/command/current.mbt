@@ -37,7 +37,10 @@ async fn run_current(tool : @tools.Tool?) -> CommandResult {
         let installed = @tools.is_installed(tool, version)
         let not_installed_label = @utils.yellow("未安装")
         if installed {
-          print_to(result, "\{label}: \{@utils.green(version)} (\{source_label})")
+          print_to(
+            result,
+            "\{label}: \{@utils.green(version)} (\{source_label})",
+          )
         } else {
           print_to(
             result,
