@@ -1,6 +1,7 @@
 ///|
 /// 执行 which 命令，查看当前使用的工具可执行文件路径
-async fn run_which(tool : @tools.Tool) -> Unit {
+async fn run_which(tool : @tools.Tool) -> CommandResult {
+  let result = CommandResult::success()
   // 获取配置信息（包含配置文件路径）
   let config_info = @tools.get_config(tool~)
   match config_info {
@@ -25,13 +26,15 @@ async fn run_which(tool : @tools.Tool) -> Unit {
       let installed = @fs.exists(exe_path)
       let not_installed_label = @utils.yellow("未安装")
       if installed {
-        println("\{exe_path} (\{source_label}: \{config_path})")
+        print_to(result, "\{exe_path} (\{source_label}: \{config_path})")
       } else {
-        println(
+        print_to(
+          result,
           "\{exe_path} (\{source_label}: \{config_path}) - \{not_installed_label}",
         )
-        println("请使用 mvm install \{tool}@\{version} 安装该版本")
+        print_to(result, "请使用 mvm install \{tool}@\{version} 安装该版本")
       }
+      result
     }
     None =>
       raise fail(

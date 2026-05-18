@@ -1,6 +1,7 @@
 ///|
 /// 执行 current 命令，查看当前使用的工具版本
-async fn run_current(tool : @tools.Tool?) -> Unit {
+async fn run_current(tool : @tools.Tool?) -> CommandResult {
+  let result = CommandResult::success()
   let tools = if tool is Some(tool) {
     [tool]
   } else {
@@ -24,7 +25,7 @@ async fn run_current(tool : @tools.Tool?) -> Unit {
     match config_info {
       Some((config_path, config)) => {
         guard config.get_value(tool) is Some(version) else {
-          println("\{label}: (未设置)")
+          print_to(result, "\{label}: (未设置)")
           continue
         }
         let mvm_home = @tools.mvm_home()
@@ -36,14 +37,16 @@ async fn run_current(tool : @tools.Tool?) -> Unit {
         let installed = @tools.is_installed(tool, version)
         let not_installed_label = @utils.yellow("未安装")
         if installed {
-          println("\{label}: \{@utils.green(version)} (\{source_label})")
+          print_to(result, "\{label}: \{@utils.green(version)} (\{source_label})")
         } else {
-          println(
+          print_to(
+            result,
             "\{label}: \{version} (\{source_label}) \{not_installed_label}",
           )
         }
       }
-      None => println("\{label}: (未设置)")
+      None => print_to(result, "\{label}: (未设置)")
     }
   }
+  result
 }

@@ -18,3 +18,7 @@ import {
   "username/mvm/command" @mvm_cmd,
   "moonbitlang/async/io",
 }
+
+import {
+  "moonbitlang/async",
+} for "wbtest"

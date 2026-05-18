@@ -1,1 +1,4 @@
-
+import {
+  "username/mvm/cmd/command",
+  "moonbitlang/async",
+} for "wbtest"

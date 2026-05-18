@@ -1,6 +1,13 @@
 import {
   "moonbitlang/async",
   "moonbitlang/async/process",
+  "moonbitlang/core/encoding/utf8",
   "username/mvm/os",
   "username/mvm/log",
+  "username/mvm/ffi",
 }
+
+options(
+  "native-stub": [ "run_capture.c" ],
+  targets: { "ffi.mbt": [ "native" ] },
+)

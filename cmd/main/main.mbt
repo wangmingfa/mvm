@@ -9,9 +9,17 @@ async fn main {
   let args = @env.args()
   let arg_str = @utils.yellow(args)
   @log.debug("运行: \{arg_str}")
+  // get_command 可能 raise，run 内部已捕获错误返回 CommandResult
   try {
     let command = get_command(args[1:])
-    run(command)
+    let result = run(command)
+    if result.error is Some(_) {
+      // 错误信息打印到 stderr
+      @log.println_error(Failure::Failure(result.error.unwrap()))
+    }
+    if result.exit_code != 0 {
+      @sys.exit(result.exit_code)
+    }
   } catch {
     e => {
       @log.println_error(e)

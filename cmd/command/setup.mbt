@@ -1,7 +1,8 @@
 ///|
 /// 执行 setup 命令：创建工具 wrapper 脚本，配置 PATH
 /// use_prefix=true 使用固定前缀 TOOL_PREFIX，use_prefix=false 不使用前缀（默认）
-async fn run_setup(use_prefix : Bool) -> Unit {
+async fn run_setup(use_prefix : Bool) -> CommandResult {
+  let result = CommandResult::success()
   let prefix_str = if use_prefix { TOOL_PREFIX } else { "" }
   let os = @os.get_os_name()
   let bin_dir = @tool_def.mvm_bin_home()
@@ -26,10 +27,11 @@ async fn run_setup(use_prefix : Bool) -> Unit {
   create_new_shims(add_names, prefix_str)
 
   match os {
-    MacOS | Linux => setup_unix(bin_dir, npm_dir, tools, prefix_str)
-    Windows => setup_windows(bin_dir, npm_dir, tools, prefix_str)
+    MacOS | Linux => setup_unix(bin_dir, npm_dir, tools, prefix_str, result)
+    Windows => setup_windows(bin_dir, npm_dir, tools, prefix_str, result)
     _ => raise fail("不支持的操作系统：\{os}")
   }
+  result
 }
 
 ///|
@@ -96,12 +98,13 @@ async fn setup_unix(
   npm_dir : String,
   tools : Array[Tool],
   prefix_str : String,
+  result : CommandResult,
 ) -> Unit {
   // 配置 PATH
   configure_path_unix(bin_dir, npm_dir)
 
   // 打印成功消息
-  print_success_unix(bin_dir, npm_dir, tools, prefix_str)
+  print_success_unix(bin_dir, npm_dir, tools, prefix_str, result)
 }
 
 ///|
@@ -142,8 +145,10 @@ async fn configure_path_unix(bin_dir : String, npm_dir : String) -> Unit {
   if new_lines != "" {
     let new_content = content + new_lines + "\n"
     @fs.write_file(profile_path, new_content, create_mode=CreateOrTruncate)
+    // @log 日志不捕获到 CommandResult
     @log.info("已将 PATH 配置写入 \{profile_path}")
   } else {
+    // @log 日志不捕获到 CommandResult
     @log.info("PATH 已配置，无需修改 \{profile_path}")
   }
 }
@@ -154,20 +159,22 @@ fn print_success_unix(
   npm_dir : String,
   tools : Array[Tool],
   prefix_str : String,
+  result : CommandResult,
 ) -> Unit {
   let display_names = tools.map(tool => prefix_str + tool.to_string())
   let tools_str = display_names.join(" ")
   let profile_path = detect_shell_profile()
-  println("")
-  println("安装完成！可执行文件已安装到 \{bin_dir}")
-  println("  - mvm         (主命令)")
-  println("  - npm-pkg 目录    (npm 全局包安装路径：\{npm_dir})")
-  println("  工具软连接：\{tools_str}")
-  println("")
-  println(
+  print_to(result, "")
+  print_to(result, "安装完成！可执行文件已安装到 \{bin_dir}")
+  print_to(result, "  - mvm         (主命令)")
+  print_to(result, "  - npm-pkg 目录    (npm 全局包安装路径：\{npm_dir})")
+  print_to(result, "  工具软连接：\{tools_str}")
+  print_to(result, "")
+  print_to(
+    result,
     @utils.yellow("如果 mvm 命令无效，请重启终端或执行："),
   )
-  println(@utils.yellow("   source \{profile_path}"))
+  print_to(result, @utils.yellow("   source \{profile_path}"))
 }
 
 ///|
@@ -176,12 +183,13 @@ async fn setup_windows(
   npm_dir : String,
   tools : Array[Tool],
   prefix_str : String,
+  result : CommandResult,
 ) -> Unit {
   // 配置 PATH
   configure_path_windows(bin_dir, npm_dir)
 
   // 打印成功消息
-  print_success_windows(bin_dir, npm_dir, tools, prefix_str)
+  print_success_windows(bin_dir, npm_dir, tools, prefix_str, result)
 }
 
 ///|
@@ -208,6 +216,7 @@ async fn configure_path_windows(bin_dir : String, npm_dir : String) -> Unit {
   ])
   // 清理临时文件
   let _ = @fs.remove(temp_script) catch { _ => () }
+  // @log 日志不捕获到 CommandResult
   @log.info("已将 PATH 配置写入 Windows 用户环境变量")
 }
 
@@ -217,19 +226,21 @@ fn print_success_windows(
   npm_dir : String,
   tools : Array[Tool],
   prefix_str : String,
+  result : CommandResult,
 ) -> Unit {
   let display_names = tools.map(tool => prefix_str + tool.to_string())
   let tools_str = display_names.join(", ")
-  println("")
-  println("安装完成！可执行文件已安装到 \{bin_dir}")
-  println("  - mvm.exe         (主命令)")
-  println("  - npm-pkg 目录    (npm 全局包安装路径：\{npm_dir})")
-  println("  工具脚本：\{tools_str}")
-  println("  (.ps1 for PowerShell, .cmd for cmd.exe/npm postinstall)")
-  println("")
-  println(
+  print_to(result, "")
+  print_to(result, "安装完成！可执行文件已安装到 \{bin_dir}")
+  print_to(result, "  - mvm.exe         (主命令)")
+  print_to(result, "  - npm-pkg 目录    (npm 全局包安装路径：\{npm_dir})")
+  print_to(result, "  工具脚本：\{tools_str}")
+  print_to(result, "  (.ps1 for PowerShell, .cmd for cmd.exe/npm postinstall)")
+  print_to(result, "")
+  print_to(
+    result,
     @utils.yellow("如果 mvm 命令无效，请重启终端或执行："),
   )
   let path_hint = "$env:PATH = [Environment]::GetEnvironmentVariable(\"PATH\",\"User\") + \";\" + $env:PATH"
-  println(@utils.yellow("   \{path_hint}"))
+  print_to(result, @utils.yellow("   \{path_hint}"))
 }

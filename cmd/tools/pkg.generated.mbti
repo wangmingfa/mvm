@@ -17,17 +17,15 @@ pub async fn create_tool_cmd_unix(@tool_def.Tool, String, file_name? : String, c
 
 pub async fn create_tool_cmd_windows(@tool_def.Tool, String, file_name? : String, cmd_dir? : String) -> Unit
 
-pub async fn get_cmd_exe_path(@tool_def.Tool) -> @tool_def.CmdExeInfo?
-
 pub async fn get_config(tool? : @tool_def.Tool, dir? : String, search_upwards? : Bool, fallback_to_global_config? : Bool) -> (String, @tool_def.Config)?
 
 pub fn get_download_info(@os.OsInfo, @tool_def.Tool, String) -> @tool_def.DownloadInfo raise
 
-pub fn get_exe_path_for_version(@tool_def.Tool, String) -> String raise
-
 pub async fn get_expected_checksum(@os.OsInfo, @tool_def.Tool, String) -> String?
 
 pub async fn get_global_config() -> (String, @tool_def.GlobalConfig)
+
+pub async fn get_program_exe_info(@tool_def.Tool, String, String) -> @tool_def.ProgramExeInfo
 
 pub async fn get_target_version(@os.OsInfo, @tool_def.Tool, String) -> String
 
@@ -66,11 +64,11 @@ pub async fn write_project_config(@tool_def.Tool, String) -> String
 // Types and methods
 
 // Type aliases
-pub using @tool_def {type CmdExeInfo}
-
 pub using @tool_def {type DownloadInfo}
 
 pub using @tool_def {type GlobalConfig}
+
+pub using @tool_def {type ProgramExeInfo}
 
 pub using @tool_def {type Tool}
 

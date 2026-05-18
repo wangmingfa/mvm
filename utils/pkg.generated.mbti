@@ -26,6 +26,8 @@ pub fn get_duration_and_total_time(current_size~ : Int64, file_size~ : Int64, st
 
 pub fn get_from_map_ignore_case(Map[String, String], String) -> String?
 
+pub fn get_logo_text() -> String
+
 pub fn get_readable_file_size(Int64) -> String
 
 pub fn get_readable_time(Int64) -> String
@@ -43,6 +45,8 @@ pub fn parse_version(String) -> FixedArray[Int] raise
 pub fn print_logo() -> Unit
 
 pub fn[T : ToStr] red(T) -> String
+
+pub fn to_debug_string(String) -> String
 
 pub fn[T : ToStr] yellow(T) -> String
 

@@ -4,6 +4,8 @@ const VERSION = "v0.0.1"
 
 ///|
 /// 执行 version 命令
-fn run_version() -> Unit {
-  println(VERSION)
+fn run_version() -> CommandResult {
+  let result = CommandResult::success()
+  print_to(result, VERSION)
+  result
 }

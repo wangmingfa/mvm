@@ -11,5 +11,5 @@
   "license": "Apache-2.0",
   "keywords": ["mvm", "version-manager", "node", "bun", "zig", "go"],
   "description": "Multi Version Manager - One tool to manage Node.js, Bun, Zig, Go versions",
-  "preferred-target": "native"
-}
+    "preferred-target": "native"
+  }

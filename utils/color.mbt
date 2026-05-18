@@ -35,7 +35,13 @@ const LOGO =
   #| ╚═╝     ╚═╝  ╚═══╝  ╚═╝     ╚═╝
 
 ///|
-/// 打印 MVM logo
+/// 获取 MVM logo 纯文本（不带 ANSI 颜色代码）
+pub fn get_logo_text() -> String {
+  LOGO
+}
+
+///|
+/// 打印 MVM logo（带青色样式）
 pub fn print_logo() -> Unit {
   println(styled(Cyan, LOGO))
 }
@@ -114,6 +120,43 @@ pub fn to_debug_string(msg : String) -> String {
   }
   result = result.replace_all(old=RESET, new="<RESET>")
   to_repr(result).to_string()
+}
+
+///|
+/// 去除字符串中的 ANSI 颜色控制码，返回纯文本
+/// 移除 RESET 和所有 Color 枚举对应的 ANSI SGR 序列
+pub fn strip_colors(text : String) -> String {
+  let mut result = text.replace_all(old=RESET, new="")
+  for item in [Red, Green, Yellow, Blue, Cyan] {
+    result = result.replace_all(old=item.to_cololr_str(), new="")
+  }
+  result
+}
+
+///|
+test "strip_colors 基础颜色剥离" {
+  let colored = red("红色") + green("绿色") + blue("蓝色")
+  debug_inspect(
+    strip_colors(colored),
+    content=(
+      #|"红色绿色蓝色"
+    ),
+  )
+  // 嵌套颜色
+  let nested = red("红" + blue("蓝") + "红2")
+  debug_inspect(
+    strip_colors(nested),
+    content=(
+      #|"红蓝红2"
+    ),
+  )
+  // 无颜色文本不受影响
+  debug_inspect(
+    strip_colors("纯文本"),
+    content=(
+      #|"纯文本"
+    ),
+  )
 }
 
 ///|

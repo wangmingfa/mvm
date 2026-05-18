@@ -9,12 +9,12 @@ import {
 // Values
 pub fn get_command(ArrayView[String]) -> Command raise
 
-pub async fn run(Command) -> Unit
+pub async fn run(Command) -> CommandResult
 
 // Errors
 
 // Types and methods
-pub enum Command {
+pub(all) enum Command {
   Help
   Version
   Upgrade(String?, Bool)
@@ -35,6 +35,17 @@ pub enum Command {
   ConfigPreset(String)
 } derive(@debug.Debug)
 pub impl Show for Command
+
+pub(all) struct CommandResult {
+  mut output : String
+  exit_code : Int
+  error : String?
+}
+pub fn CommandResult::failure(String, exit_code? : Int) -> Self
+pub fn CommandResult::is_success(Self) -> Bool
+pub fn CommandResult::success() -> Self
+pub fn CommandResult::success_with_output(String) -> Self
+pub fn CommandResult::write(Self, String) -> Unit
 
 // Type aliases
 

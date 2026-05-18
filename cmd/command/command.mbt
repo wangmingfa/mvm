@@ -1,5 +1,5 @@
 ///|
-pub enum Command {
+pub(all) enum Command {
   Help
   Version
   Upgrade(String?, Bool) // 可指定升级目标版本号，None 表示升级到最新版；Bool 为是否重新安装当前版本

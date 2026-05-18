@@ -10,7 +10,8 @@ async fn run_install(
   version : String?,
   skip_verify : Bool,
   no_cache : Bool,
-) -> Unit {
+) -> CommandResult {
+  let result = CommandResult::success()
   // 设置全局 no_cache 模式（影响 read_cache_file_content 等缓存读写）
   @tools.set_no_cache_mode(no_cache)
   // 如果version为空，则默认为lts
@@ -20,10 +21,11 @@ async fn run_install(
 
   // 检查是否已安装
   if @tools.is_installed(tool, version) {
+    // @log 日志不捕获到 CommandResult
     @log.warn("\{tool}@\{version} 已安装")
     // 修复installed.json里面缺失已安装的版本的问题
     add_installed(tool, version)
-    return
+    return result
   }
 
   @log.info("安装 \{@utils.yellow(tool)} \{@utils.yellow(version)}")
@@ -193,7 +195,9 @@ async fn run_install(
   // 记录安装成功的工具
   add_installed(tool, version)
 
+  // @log 日志不捕获到 CommandResult
   @log.success("\{tool} \{version} 安装成功")
+  result
 }
 
 ///|

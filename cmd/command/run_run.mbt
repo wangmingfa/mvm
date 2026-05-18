@@ -1,10 +1,11 @@
 ///|
 /// 执行 run 命令，用指定版本临时运行命令
+/// 使用 C FFI run_with_output 同时流式输出到控制台并捕获 stdout
 async fn run_run(
   tool : @tools.Tool,
   version : String,
   args : Array[String],
-) -> Unit {
+) -> CommandResult {
   @log.debug("run_run参数 \{tool} \{version} \{to_repr(args)}")
   // 参数不能为空
   if args.is_empty() {
@@ -36,9 +37,12 @@ async fn run_run(
 
   @log.debug("使用 \{tool}@\{target_version} 运行命令: \{to_repr(args)}")
   // 检查工具是否安装，未安装则自动安装
-  guard tool_exists is true else {
+  if !tool_exists {
     @log.info("\{tool}@\{target_version} 未安装，正在自动安装...")
-    run_install(tool, Some(target_version), false, false)
+    let install_result = run_install(tool, Some(target_version), false, false)
+    if !install_result.is_success() {
+      raise fail(install_result.error.unwrap_or("安装失败"))
+    }
   }
 
   if !program_exists {
@@ -51,18 +55,25 @@ async fn run_run(
     @log.clear_all_lines()
   }
 
-  let exit_code = @mvm_cmd.run(
+  // 使用 C FFI 执行子进程，同时流式输出到控制台 + 捕获 stdout
+  let run_output = @mvm_cmd.run_with_output(
     exec_program_path,
     exec_args,
     extra_env=exec_envs,
   )
-  if exit_code != 0 {
-    @log.debug("\{tool} 退出码: \{exit_code}")
+
+  let result = CommandResult::success_with_output(run_output.output)
+  result.exit_code = run_output.exit_code
+
+  if run_output.exit_code != 0 {
+    @log.debug("\{tool} 退出码: \{run_output.exit_code}")
   } else {
     // 运行成功之后的处理
     // 比如使用npm安装了全局包
     after_run(before_run_result, program_exe_info, exec_args)
   }
+
+  result
 }
 
 ///|

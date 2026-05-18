@@ -1,14 +1,16 @@
 ///|
 /// 显示帮助信息
-fn run_help() -> Unit {
-  println(
+fn run_help() -> CommandResult {
+  let result = CommandResult::success()
+  print_to(
+    result,
     "mvm (Multi Version Manager) \{VERSION} —— One Tool to Manage Them All",
   )
-  println("")
-  println("用法:")
-  println("  mvm <命令> [参数]")
-  println("")
-  println("命令:")
+  print_to(result, "")
+  print_to(result, "用法:")
+  print_to(result, "  mvm <命令> [参数]")
+  print_to(result, "")
+  print_to(result, "命令:")
   let commands = [
     ("install, i", "安装指定版本", "mvm install node@20"),
     ("use", "设置全局版本", "mvm use node@20 / mvm use node"),
@@ -43,10 +45,10 @@ fn run_help() -> Unit {
     let (name, desc, example) = cmd
     let padded_name = @utils.pad_right("  " + name, max_name_w + 4)
     let padded_desc = @utils.pad_right(desc, max_desc_w + 2)
-    println("\{padded_name}\{padded_desc}\{example}")
+    print_to(result, "\{padded_name}\{padded_desc}\{example}")
   }
-  println("")
-  println("选项:")
+  print_to(result, "")
+  print_to(result, "选项:")
   let options = [
     ("--help, -h", "显示帮助信息"),
     ("--version, -v", "显示版本号"),
@@ -65,10 +67,10 @@ fn run_help() -> Unit {
   for opt_item in options {
     let (opt, desc) = opt_item
     let padded_opt = @utils.pad_right("  " + opt, max_opt_w + 4)
-    println("\{padded_opt}\{desc}")
+    print_to(result, "\{padded_opt}\{desc}")
   }
-  println("")
-  println("示例:")
+  print_to(result, "")
+  print_to(result, "示例:")
   let examples = [
     ("mvm install node@lts", "安装 Node.js LTS 版本"),
     ("mvm install python@3.12", "安装 Python 3.12"),
@@ -93,6 +95,7 @@ fn run_help() -> Unit {
   for ex_item in examples {
     let (ex, desc) = ex_item
     let padded_ex = @utils.pad_right("  " + ex, max_ex_w + 4)
-    println("\{padded_ex}\{desc}")
+    print_to(result, "\{padded_ex}\{desc}")
   }
+  result
 }

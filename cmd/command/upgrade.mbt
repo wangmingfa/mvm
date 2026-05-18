@@ -34,7 +34,8 @@ async fn check_version_exists(version : String) -> Bool {
 
 ///|
 /// 执行 upgrade 命令，可指定目标版本；reinstall 为 true 时重新安装当前版本
-async fn run_upgrade(version : String?, reinstall : Bool) -> Unit {
+async fn run_upgrade(version : String?, reinstall : Bool) -> CommandResult {
+  let result = CommandResult::success()
   // 确定目标版本：指定版本需验证存在性，未指定则获取最新版本
   let target_version = match version {
     Some(v) => {
@@ -62,8 +63,9 @@ async fn run_upgrade(version : String?, reinstall : Bool) -> Unit {
           "当前版本：\{@utils.yellow(VERSION)}，最新版本：\{@utils.yellow(latest)}",
         )
         if latest == VERSION {
+          // @log 日志不捕获到 CommandResult
           @log.success("已是最新版本，无需升级")
-          return
+          return result
         }
         latest
       }
@@ -90,9 +92,12 @@ async fn run_upgrade(version : String?, reinstall : Bool) -> Unit {
     }
   }
   match code {
-    0 => @log.success("升级成功！当前版本：\{target_version}")
+    0 =>
+      // @log 日志不捕获到 CommandResult
+      @log.success("升级成功！当前版本：\{target_version}")
     _ => raise fail("升级失败，请尝试手动执行安装命令")
   }
+  result
 }
 
 ///|
@@ -135,7 +140,9 @@ fn extract_all_tag_names(body : String) -> Array[String] {
 
 ///|
 /// 查询所有可用的 mvm 版本
-async fn run_upgrade_list() -> Unit {
+async fn run_upgrade_list() -> CommandResult {
+  let result = CommandResult::success()
+  // @log 日志不捕获到 CommandResult
   @log.info("正在获取所有可用的 mvm 版本...")
   let (res, data) = @request.github_get(GITHUB_API_RELEASES)
   if res.code != 200 {
@@ -148,11 +155,13 @@ async fn run_upgrade_list() -> Unit {
   if versions.is_empty() {
     raise fail("未找到任何版本信息")
   }
+  // @log 日志不捕获到 CommandResult
   @log.info("可用的 mvm 版本（共 \{versions.length()} 个）：")
   for v in versions {
     let marker = if v == VERSION { " ← 当前版本" } else { "" }
-    println("  \{@utils.yellow(v)}\{marker}")
+    print_to(result, "  \{@utils.yellow(v)}\{marker}")
   }
+  result
 }
 
 ///|

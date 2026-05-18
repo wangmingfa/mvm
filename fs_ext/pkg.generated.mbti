@@ -37,8 +37,6 @@ pub fn symlink_status(String) -> SymlinkStatus
 // Errors
 
 // Types and methods
-type Path
-
 pub enum SymlinkStatus {
   SymlinkNone
   SymlinkBroken

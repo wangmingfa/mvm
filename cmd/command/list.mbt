@@ -1,6 +1,7 @@
 ///|
 /// 执行查看版本命令
-async fn run_list(tool : @tools.Tool?) -> Unit {
+async fn run_list(tool : @tools.Tool?) -> CommandResult {
+  let result = CommandResult::success()
   // 如果没有指定tool，则查全部
   let tools = if tool is Some(tool) {
     [tool]
@@ -27,6 +28,7 @@ async fn run_list(tool : @tools.Tool?) -> Unit {
       None
     }
 
+    // @log 日志不捕获到 CommandResult（仅用于排查问题）
     @log.debug(
       "\{tool} 当前目录版本 \{@utils.option_to_string(cwd_tool_version)}",
     )
@@ -34,9 +36,9 @@ async fn run_list(tool : @tools.Tool?) -> Unit {
       "\{tool} 全局版本 \{@utils.option_to_string(global_tool_version)}",
     )
 
-    println("\{tool}:")
+    print_to(result, "\{tool}:")
     if versions.is_empty() {
-      println("  (暂无)")
+      print_to(result, "  (暂无)")
     } else {
       for version in versions {
         let version_tips = if cwd_tool_version is Some(v) && v == version {
@@ -46,8 +48,9 @@ async fn run_list(tool : @tools.Tool?) -> Unit {
         } else {
           ""
         }
-        println("  - \{version}\{version_tips}")
+        print_to(result, "  - \{version}\{version_tips}")
       }
     }
   }
+  result
 }
