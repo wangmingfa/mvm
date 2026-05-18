@@ -298,9 +298,9 @@ pub fn Go::get_exe_path(version : String) -> String raise {
 pub async fn Go::get_program_exe_info(
   program : String,
   version : String,
-) -> ProgramExeInfo? {
+) -> ProgramExeInfo {
   if program.is_blank() || version.is_blank() {
-    return None
+    raise fail("请指定 program 或 version")
   }
   let tool_dir = version_dir(Tool::Go, version)
   let exists = @fs.exists(tool_dir)
@@ -308,7 +308,7 @@ pub async fn Go::get_program_exe_info(
   let suffix = if os is Windows { ".exe" } else { "" }
   let prog_low = program.to_lower()
   if prog_low == "go" {
-    return Some(ProgramExeInfo(
+    return ProgramExeInfo(
       "go",
       Go::get_exe_path(version),
       version,
@@ -316,13 +316,13 @@ pub async fn Go::get_program_exe_info(
       exists,
       Tool::Go,
       exists,
-    ))
+    )
   } else if prog_low == "gofmt" {
     let gofmt_path = [tool_dir, "bin", "gofmt\{suffix}"]
-    .filter(v => !v.is_blank())
-    .join("/")
+      .filter(v => !v.is_blank())
+      .join("/")
     let gofmt_exists = @fs.exists(gofmt_path)
-    return Some(ProgramExeInfo(
+    return ProgramExeInfo(
       "gofmt",
       gofmt_path,
       version,
@@ -330,7 +330,7 @@ pub async fn Go::get_program_exe_info(
       gofmt_exists,
       Tool::Go,
       exists,
-    ))
+    )
   }
-  None
+  raise fail("找不到 \{program}@\{version} 的可执行文件信息")
 }

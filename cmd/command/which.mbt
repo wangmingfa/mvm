@@ -11,10 +11,11 @@ pub async fn run_which(tool : @tools.Tool) -> Unit {
         )
       }
       // 通过已有的公共 API 获取可执行文件路径
-      let tool_exe = @tools.get_program_exe_info(tool, tool.to_string(), version)
-      guard tool_exe is Some({ path: exe_path, .. }) else {
-        raise fail("无法获取 \{tool}@\{version} 的可执行文件路径")
-      }
+      let { path: exe_path, .. } = @tools.get_program_exe_info(
+        tool,
+        tool.to_string(),
+        version,
+      )
       let mvm_home = @tools.mvm_home()
       let source_label = if config_path.has_prefix(mvm_home) {
         "全局"

@@ -205,16 +205,16 @@ pub fn Python::get_exe_path(version : String) -> String raise {
 pub async fn Python::get_program_exe_info(
   program : String,
   version : String,
-) -> ProgramExeInfo? {
+) -> ProgramExeInfo {
   if program.is_blank() || version.is_blank() {
-    return None
+    raise fail("请指定 program 或 version")
   }
   let tool_dir = version_dir(Tool::Python, version)
   let exists = @fs.exists(tool_dir)
   let os = @os.get_os_name()
   let prog_low = program.to_lower()
   if prog_low == "python" || prog_low == "python3" {
-    return Some(ProgramExeInfo(
+    return ProgramExeInfo(
       "python",
       Python::get_exe_path(version),
       version,
@@ -222,7 +222,7 @@ pub async fn Python::get_program_exe_info(
       exists,
       Tool::Python,
       exists,
-    ))
+    )
   } else if prog_low == "pip" || prog_low == "pip3" {
     let pip_path = match os {
       Windows => [tool_dir, "Scripts", "pip.exe"].join("/")
@@ -230,7 +230,7 @@ pub async fn Python::get_program_exe_info(
       _ => ""
     }
     let pip_exists = @fs.exists(pip_path)
-    return Some(ProgramExeInfo(
+    return ProgramExeInfo(
       "pip",
       pip_path,
       version,
@@ -238,7 +238,7 @@ pub async fn Python::get_program_exe_info(
       pip_exists,
       Tool::Python,
       exists,
-    ))
+    )
   }
-  None
+  raise fail("找不到 \{program}@\{version} 的可执行文件信息")
 }

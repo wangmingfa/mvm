@@ -231,45 +231,6 @@ pub fn get_download_info(
 }
 
 ///|
-/// 获取工具的运行路径，返回路径、版本和运行此命令需要的环境变量
-async fn _get_tool_exe_path(tool : Tool) -> ProgramExeInfo? {
-  guard get_config(tool~) is Some((_, config)) &&
-    config.get_value(tool) is Some(version) else {
-    return None
-  }
-  let path = get_exe_path_for_version(tool, version)
-  let exists = @fs.exists(path)
-  Some(
-    ProgramExeInfo(
-      tool.to_str(),
-      path,
-      version,
-      envs={},
-      exists,
-      tool,
-      exists,
-    ),
-  )
-}
-
-///|
-/// 根据指定的版本获取工具可执行文件路径（不依赖配置文件，直接使用传入的版本）
-pub fn get_exe_path_for_version(tool : Tool, version : String) -> String raise {
-  let path = match tool {
-    Node => Node::get_exe_path(version)
-    Bun => Bun::get_exe_path(version)
-    Zig => Zig::get_exe_path(version)
-    Go => Go::get_exe_path(version)
-    Python => Python::get_exe_path(version)
-    Rust => Rust::get_exe_path(version)
-    Deno => Deno::get_exe_path(version)
-    Java => Java::get_exe_path(version)
-    Kotlin => Kotlin::get_exe_path(version)
-  }
-  @fs_ext.canonicalize_path(path)
-}
-
-///|
 /// 获取某个工具下的命令的可执行文件路径和版本信息
 /// 比如 mvm run node@18 -- node -v 中，tool就是node，program也是node
 /// 比如 mvm run node@18 -- npm -v 中，tool就是node，program就是npm
@@ -277,11 +238,21 @@ pub async fn get_program_exe_info(
   tool : Tool,
   program : String,
   version : String,
-) -> ProgramExeInfo? {
+) -> ProgramExeInfo {
   let effective_version = if version.is_blank() {
     guard get_config(tool~) is Some((_, config)) &&
       config.get_value(tool) is Some(v) else {
-      return None
+      // 找不到合适的版本
+      let msg = [
+        "未指定",
+        @utils.yellow(program),
+        "的版本，请使用",
+        @utils.yellow("mvm use \{program}@version"),
+        "指定版本，或使用",
+        @utils.yellow("mvm use \{program}"),
+        "指定为最新版",
+      ].join(" ")
+      raise fail(msg)
     }
     v
   } else {

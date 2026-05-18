@@ -246,9 +246,9 @@ pub fn Java::get_java_builtin_tool_path_and_version(
 pub async fn Java::get_program_exe_info(
   program : String,
   version : String,
-) -> ProgramExeInfo? {
+) -> ProgramExeInfo {
   if program.is_blank() || version.is_blank() {
-    return None
+    raise fail("请指定 program 或 version")
   }
   let tool_dir = version_dir(Tool::Java, version)
   let exists = @fs.exists(tool_dir)
@@ -263,7 +263,7 @@ pub async fn Java::get_program_exe_info(
   )
   let prog_low = program.to_lower()
   if prog_low == "java" {
-    return Some(java_info)
+    return java_info
   } else if prog_low == "javac" || prog_low == "jar" {
     // 直接构造 ProgramExeInfo，不用 Tool 枚举
     let os = @os.get_os_name()
@@ -273,7 +273,7 @@ pub async fn Java::get_program_exe_info(
       Some(dir) => {
         let tool_path = @fs_ext.join_path(dir, "\{prog_low}\{suffix}")
         let exists = @fs.exists(tool_path)
-        return Some(ProgramExeInfo(
+        return ProgramExeInfo(
           prog_low,
           tool_path,
           version,
@@ -281,10 +281,10 @@ pub async fn Java::get_program_exe_info(
           exists,
           Tool::Java,
           exists,
-        ))
+        )
       }
       _ => ()
     }
   }
-  None
+  raise fail("找不到 \{program}@\{version} 的可执行文件信息")
 }

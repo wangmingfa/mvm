@@ -162,14 +162,14 @@ pub fn Deno::get_exe_path(version : String) -> String raise {
 pub async fn Deno::get_program_exe_info(
   program : String,
   version : String,
-) -> ProgramExeInfo? {
+) -> ProgramExeInfo {
   if program.is_blank() || version.is_blank() {
-    return None
+    raise fail("请指定 program 或 version")
   }
   let tool_dir = version_dir(Tool::Deno, version)
   let exists = @fs.exists(tool_dir)
   if program.to_lower() == "deno" {
-    return Some(ProgramExeInfo(
+    return ProgramExeInfo(
       "deno",
       Deno::get_exe_path(version),
       version,
@@ -177,7 +177,7 @@ pub async fn Deno::get_program_exe_info(
       exists,
       Tool::Deno,
       exists,
-    ))
+    )
   }
-  None
+  raise fail("找不到 \{program}@\{version} 的可执行文件信息")
 }

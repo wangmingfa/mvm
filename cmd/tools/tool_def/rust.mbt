@@ -329,9 +329,9 @@ pub fn Rust::get_rust_builtin_tool_path_and_version(
 pub async fn Rust::get_program_exe_info(
   program : String,
   version : String,
-) -> ProgramExeInfo? {
+) -> ProgramExeInfo {
   if program.is_blank() || version.is_blank() {
-    return None
+    raise fail("请指定 program 或 version")
   }
   let tool_dir = version_dir(Tool::Rust, version)
   let exists = @fs.exists(tool_dir)
@@ -346,7 +346,7 @@ pub async fn Rust::get_program_exe_info(
   )
   let prog_low = program.to_lower()
   if prog_low == "rustc" {
-    return Some(rustc_info)
+    return rustc_info
   } else if prog_low == "cargo" {
     // 直接构造 ProgramExeInfo
     let os = @os.get_os_name()
@@ -356,7 +356,7 @@ pub async fn Rust::get_program_exe_info(
       Some(dir) => {
         let tool_path = @fs_ext.join_path(dir, "\{prog_low}\{suffix}")
         let exists = @fs.exists(tool_path)
-        return Some(ProgramExeInfo(
+        return ProgramExeInfo(
           prog_low,
           tool_path,
           version,
@@ -364,10 +364,10 @@ pub async fn Rust::get_program_exe_info(
           exists,
           Tool::Rust,
           exists,
-        ))
+        )
       }
       _ => ()
     }
   }
-  None
+  raise fail("找不到 \{program}@\{version} 的可执行文件信息")
 }
