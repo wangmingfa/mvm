@@ -78,7 +78,8 @@ fn Python::_get_proper_version(
           }
           // endoflife.date API 的 cycle 为 major.minor 格式
           // 查找以该主版本号开头的最新 cycle
-          guard infos.search_by(fn(v) { v.cycle.has_prefix("\{ver}.") }) is Some(idx) else {
+          guard infos.search_by(fn(v) { v.cycle.has_prefix("\{ver}.") })
+            is Some(idx) else {
             raise fail("找不到版本：\{version}")
           }
           "v\{infos[idx].latest}"

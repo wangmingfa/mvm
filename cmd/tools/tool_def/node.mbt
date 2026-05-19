@@ -399,7 +399,7 @@ fn NodePath::get_exe_path(self : Self, program : String) -> String {
     Windows => if is_node { ".exe" } else { ".ps1" }
     _ => ""
   }
-  @fs_ext.join_paths([bin_dir, program, suffix].filter(v => !v.is_blank()))
+  @fs_ext.join_paths([bin_dir, program + suffix].filter(v => !v.is_blank()))
 }
 
 ///|

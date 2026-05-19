@@ -35,7 +35,9 @@ async fn run_run(
     ..,
   } = program_exe_info
 
-  @log.debug("使用 \{tool}@\{target_version} 运行命令: \{to_repr(args)}")
+  @log.debug(
+    "使用 \{tool}@\{target_version} (\{exec_program_path}) 运行命令: \{to_repr(args)}",
+  )
   // 检查工具是否安装，未安装则自动安装
   if !tool_exists {
     @log.info("\{tool}@\{target_version} 未安装，正在自动安装...")
