@@ -25,7 +25,7 @@ pub async fn is_installed(Tool, String) -> Bool
 
 pub fn is_no_cache_mode() -> Bool
 
-pub fn make_global_config(existing_config? : GlobalConfig, logo? : Bool?, github_proxy? : String?, node_mirror? : String?, go_mirror? : String?, python_mirror? : String?, rust_mirror? : String?, java_mirror? : String?) -> GlobalConfig
+pub fn make_global_config(existing_config? : GlobalConfig, github_proxy? : String?, node_mirror? : String?, go_mirror? : String?, python_mirror? : String?, rust_mirror? : String?, java_mirror? : String?) -> GlobalConfig
 
 pub fn mvm_bin_home() -> String raise
 
@@ -99,7 +99,6 @@ pub struct DownloadInfo {
 } derive(@debug.Debug)
 
 pub(all) struct GlobalConfig {
-  logo : Bool?
   github_proxy : String?
   node_mirror : String?
   go_mirror : String?

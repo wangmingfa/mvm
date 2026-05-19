@@ -36,7 +36,6 @@ async fn get_mvm_version(tool : Tool) -> String {
 /// 写入干净的默认配置（所有字段为 None），确保 config 测试从已知状态开始
 fn clean_config() -> @tools.GlobalConfig {
   {
-    logo: None,
     github_proxy: None,
     node_mirror: None,
     go_mirror: None,
@@ -233,22 +232,6 @@ async test "config 逐项设置与验证" {
   ignore(save_global_config(clean_config()))
   let clear_java = run(Command::ConfigList)
   assert_true(clear_java.plain_output().contains("java_mirror: (未设置)"))
-
-  // ===== logo =====
-  let set_false = run(Command::ConfigSet("logo", "false"))
-  guard set_false.is_success() else {
-    fail("ConfigSet logo=false 失败：\{option_to_string(set_false.error)}")
-  }
-  assert_true(set_false.plain_output().contains("隐藏"))
-  let list_false = run(Command::ConfigList)
-  assert_true(list_false.plain_output().contains("logo: 隐藏"))
-  let set_true = run(Command::ConfigSet("logo", "true"))
-  guard set_true.is_success() else {
-    fail("ConfigSet logo=true 失败：\{option_to_string(set_true.error)}")
-  }
-  assert_true(set_true.plain_output().contains("显示"))
-  let list_true = run(Command::ConfigList)
-  assert_true(list_true.plain_output().contains("logo: 显示"))
 
   // ===== 清理：恢复干净配置 =====
   ignore(save_global_config(clean_config()))

@@ -81,7 +81,6 @@ fn run_help() -> CommandResult {
     (
       "mvm config set china", "一键配置中国大陆镜像（含 Python/Rust/Java 镜像）",
     ),
-    ("mvm config set logo false", "关闭启动 logo 显示"),
     ("mvm upgrade --reinstall", "重新安装当前版本的 mvm"),
   ]
   let mut max_ex_w = 0

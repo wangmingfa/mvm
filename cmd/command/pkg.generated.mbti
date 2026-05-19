@@ -38,11 +38,12 @@ pub impl Show for Command
 
 pub(all) struct CommandResult {
   mut output : String
-  exit_code : Int
+  mut exit_code : Int
   error : String?
-}
+} derive(@debug.Debug)
 pub fn CommandResult::failure(String, exit_code? : Int) -> Self
 pub fn CommandResult::is_success(Self) -> Bool
+pub fn CommandResult::plain_output(Self) -> StringView
 pub fn CommandResult::success() -> Self
 pub fn CommandResult::success_with_output(String) -> Self
 pub fn CommandResult::write(Self, String) -> Unit

@@ -210,10 +210,6 @@ mvm config set python_mirror https://npmmirror.com/mirrors/python
 mvm config set rust_mirror https://mirrors.ustc.edu.cn/rust-static
 mvm config set java_mirror https://mirrors.aliyun.com/adoptium
 mvm config set github_proxy https://cdn.gh-proxy.org/
-
-# Hide/show startup logo (shown by default)
-mvm config set logo false
-mvm config set logo true
 ```
 
 ## How It Works
@@ -254,7 +250,7 @@ When you run `mvm install node@20`:
 
 ### 5. Configuration System
 
-- **Global config** `$MVM_HOME/config.json`: Stores logo display, GitHub proxy, Node mirror, Go mirror, Python mirror, Rust mirror, Java mirror settings
+- **Global config** `$MVM_HOME/config.json`: Stores GitHub proxy, Node mirror, Go mirror, Python mirror, Rust mirror, Java mirror settings
 - **Project config** `mvm.json`: Stores project-level tool version pins (node, bun, zig, go, python, rust, deno, java, kotlin)
 
 ## Volta Compatibility

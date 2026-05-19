@@ -119,7 +119,6 @@ test "apply_global_config node_mirror" {
     "v20.18.0", "darwin", "arm64",
   )
   let config = {
-    logo: None,
     github_proxy: None,
     node_mirror: Some("https://mirrors.aliyun.com/nodejs-release"),
     go_mirror: None,
@@ -141,7 +140,6 @@ test "apply_global_config go_mirror" {
     "https://go.dev/dl/go1.23.4.darwin-arm64.tar.gz", "go", "1.23.4", "darwin", "arm64",
   )
   let config = {
-    logo: None,
     github_proxy: None,
     node_mirror: None,
     go_mirror: Some("https://mirrors.aliyun.com/golang"),
@@ -164,7 +162,6 @@ test "apply_global_config github_proxy" {
     "bun", "bun-v1.3.12", "darwin", "arm64",
   )
   let config = {
-    logo: None,
     github_proxy: Some("https://cdn.gh-proxy.org/$URL"),
     node_mirror: None,
     go_mirror: None,
@@ -187,7 +184,6 @@ test "apply_global_config no_config" {
     "darwin", "arm64",
   )
   let config = {
-    logo: None,
     github_proxy: None,
     node_mirror: None,
     go_mirror: None,
@@ -209,7 +205,6 @@ test "apply_global_config node_mirror_priority" {
     "v20.18.0", "darwin", "arm64",
   )
   let config = {
-    logo: None,
     github_proxy: Some("https://cdn.gh-proxy.org/$URL"),
     node_mirror: Some("https://mirrors.aliyun.com/nodejs-release"),
     go_mirror: None,
@@ -232,7 +227,6 @@ test "apply_global_config python_mirror" {
     "linux", "x64",
   )
   let config = {
-    logo: None,
     github_proxy: None,
     node_mirror: None,
     go_mirror: None,
@@ -254,7 +248,6 @@ test "apply_global_config rust_mirror" {
     "1.80.0", "darwin", "arm64",
   )
   let config = {
-    logo: None,
     github_proxy: None,
     node_mirror: None,
     go_mirror: None,
@@ -277,7 +270,6 @@ test "apply_global_config java_mirror" {
     "java", "21", "mac", "aarch64",
   )
   let config = {
-    logo: None,
     github_proxy: None,
     node_mirror: None,
     go_mirror: None,
@@ -300,7 +292,6 @@ test "apply_global_config deno uses github_proxy" {
     "deno", "v1.40.0", "darwin", "arm64",
   )
   let config = {
-    logo: None,
     github_proxy: Some("https://cdn.gh-proxy.org/$URL"),
     node_mirror: None,
     go_mirror: None,
@@ -323,7 +314,6 @@ test "apply_global_config kotlin uses github_proxy" {
     "kotlin", "v2.0.0", "darwin", "arm64",
   )
   let config = {
-    logo: None,
     github_proxy: Some("https://cdn.gh-proxy.org/$URL"),
     node_mirror: None,
     go_mirror: None,

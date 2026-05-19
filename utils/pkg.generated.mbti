@@ -46,6 +46,8 @@ pub fn print_logo() -> Unit
 
 pub fn[T : ToStr] red(T) -> String
 
+pub fn strip_colors(String) -> String
+
 pub fn to_debug_string(String) -> String
 
 pub fn[T : ToStr] yellow(T) -> String

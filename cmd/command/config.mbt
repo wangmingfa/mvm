@@ -7,13 +7,6 @@ async fn run_config() -> CommandResult {
   print_to(result, "MVM 配置:")
   print_to(result, "全局配置文件: \{config_path}")
   print_to(result, "")
-  print_to(result, "Logo 显示:")
-  match config.logo {
-    Some(true) => print_to(result, "  logo: 显示")
-    Some(false) => print_to(result, "  logo: 隐藏")
-    None => print_to(result, "  logo: 显示（默认）")
-  }
-  print_to(result, "")
   print_to(result, "GitHub 代理配置:")
   match config.github_proxy {
     Some(proxy) => print_to(result, "  github_proxy: \{proxy}")
@@ -136,21 +129,6 @@ async fn run_config_set(key : String, value : String) -> CommandResult {
       print_to(result, "配置已保存到: \{config_path}")
       print_to(result, "设置 \{key} = \{value}")
     }
-    "logo" => {
-      let logo_val = match value.to_lower() {
-        "true" | "1" | "yes" | "on" => Some(true)
-        "false" | "0" | "no" | "off" => Some(false)
-        _ => raise fail("错误: logo 配置值只能是 true 或 false")
-      }
-      let new_config = @tools.make_global_config(
-        existing_config~,
-        logo=logo_val,
-      )
-      let config_path = @tools.save_global_config(new_config)
-      print_to(result, "配置已保存到: \{config_path}")
-      let label = if logo_val is Some(true) { "显示" } else { "隐藏" }
-      print_to(result, "设置 logo = \{label}")
-    }
     _ => {
       println(
         @utils.colored_spans([
@@ -160,7 +138,6 @@ async fn run_config_set(key : String, value : String) -> CommandResult {
         ]),
       )
       println("支持的配置项:")
-      println("  logo - 是否显示启动 logo（true/false）")
       println("  github_proxy - GitHub 代理地址")
       println("  node_mirror - Node 镜像地址")
       println("  go_mirror - Go 镜像地址")
@@ -179,7 +156,6 @@ fn get_preset_config(name : String) -> @tools.GlobalConfig? {
   match name.to_lower() {
     "china" =>
       Some({
-        logo: None,
         github_proxy: Some("https://cdn.gh-proxy.org/$URL"),
         node_mirror: Some("https://mirrors.aliyun.com/nodejs-release"),
         go_mirror: Some("https://mirrors.aliyun.com/golang"),

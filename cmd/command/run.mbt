@@ -1,12 +1,9 @@
 ///|
-/// 判断是否应打印 logo：Run 命令不打印，配置 logo=false 时不打印
-fn should_print_logo(command : Command, config : @tools.GlobalConfig) -> Bool {
-  // Run 是工具直接调用，不需要打印 logo
+/// 判断是否应打印 logo：仅在 Help 和 Setup 命令中显示 logo，其他命令不显示
+fn should_print_logo(command : Command) -> Bool {
   match command {
-    Run(_, _, _) => false
-    _ =>
-      // config.logo 为 Some(false) 时隐藏 logo，其他情况（None 或 Some(true））显示
-      config.logo != Some(false)
+    Help | Setup(_) => true
+    _ => false
   }
 }
 
@@ -16,8 +13,7 @@ fn should_print_logo(command : Command, config : @tools.GlobalConfig) -> Bool {
 /// 子命令内部 raise fail(msg) 会被 catch 捕获，转为 CommandResult::failure
 pub async fn run(command : Command) -> CommandResult {
   try {
-    let (_, config) = @tools.get_global_config()
-    if should_print_logo(command, config) {
+    if should_print_logo(command) {
       // logo 仅打印到控制台，不写入 CommandResult.output
       @utils.print_logo()
     }

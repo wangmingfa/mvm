@@ -33,7 +33,7 @@ pub async fn is_installed(@tool_def.Tool, String) -> Bool
 
 pub fn is_no_cache_mode() -> Bool
 
-pub fn make_global_config(existing_config? : @tool_def.GlobalConfig, logo? : Bool?, github_proxy? : String?, node_mirror? : String?, go_mirror? : String?, python_mirror? : String?, rust_mirror? : String?, java_mirror? : String?) -> @tool_def.GlobalConfig
+pub fn make_global_config(existing_config? : @tool_def.GlobalConfig, github_proxy? : String?, node_mirror? : String?, go_mirror? : String?, python_mirror? : String?, rust_mirror? : String?, java_mirror? : String?) -> @tool_def.GlobalConfig
 
 pub fn match_version(@tool_def.Tool, String, String) -> Bool
 

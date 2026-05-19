@@ -1,6 +1,10 @@
 // Generated using `moon info`, DON'T EDIT IT
 package "username/mvm/command"
 
+import {
+  "moonbitlang/core/debug",
+}
+
 // Values
 pub async fn chmod_x(Array[String]) -> Unit
 
@@ -10,9 +14,15 @@ pub async fn get_best_downloader() -> String?
 
 pub async fn run(String, ArrayView[String], extra_env? : Map[String, String]) -> Int
 
+pub fn run_with_output(String, ArrayView[String], extra_env? : Map[String, String]) -> RunOutput
+
 // Errors
 
 // Types and methods
+pub struct RunOutput {
+  exit_code : Int
+  output : String
+} derive(@debug.Debug)
 
 // Type aliases
 

@@ -210,10 +210,6 @@ mvm config set python_mirror https://npmmirror.com/mirrors/python
 mvm config set rust_mirror https://mirrors.ustc.edu.cn/rust-static
 mvm config set java_mirror https://mirrors.aliyun.com/adoptium
 mvm config set github_proxy https://cdn.gh-proxy.org/$URL
-
-# 关闭/开启启动 logo 显示（默认显示）
-mvm config set logo false
-mvm config set logo true
 ```
 
 ## 工作原理
@@ -254,7 +250,7 @@ mvm 将 `$MVM_HOME/bin/` 添加到系统 PATH 中（通过修改 `.zshrc`、`.ba
 
 ### 5. 配置体系
 
-- **全局配置** `$MVM_HOME/config.json`：存储 logo 显示、GitHub 代理、Node 镜像、Go 镜像、Python 镜像、Rust 镜像、Java 镜像等设置
+- **全局配置** `$MVM_HOME/config.json`：存储 GitHub 代理、Node 镜像、Go 镜像、Python 镜像、Rust 镜像、Java 镜像等设置
 - **项目配置** `mvm.json`：存储项目级别的工具版本锁定（node、bun、zig、go、python、rust、deno、java、kotlin）
 
 ## Volta 兼容
