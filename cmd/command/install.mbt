@@ -120,7 +120,7 @@ async fn run_install(
             )
           }
         }
-        @log.success("SHA256 校验通过")
+        @log.info("SHA256 校验通过")
       }
       None =>
         @log.warn("\{tool} 不支持 SHA256 校验，跳过校验继续安装")

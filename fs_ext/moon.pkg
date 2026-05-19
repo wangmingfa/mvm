@@ -7,7 +7,6 @@ import {
   "moonbitlang/async/process",
   "username/mvm/array_ext",
   "username/mvm/ffi",
-  "username/mvm/os",
 }
 
 options(
