@@ -159,7 +159,10 @@ pub async fn get_global_config() -> (String, GlobalConfig) {
 pub async fn save_global_config(config : GlobalConfig) -> String {
   let config_path = get_global_settings_path()
   let content = config.to_json().stringify(indent=2)
-  @fs.write_file(config_path, content, create_mode=CreateOrTruncate)
+  // 原子写入：先写临时文件再 rename，避免并发读取时读到截断后的空/残缺文件
+  let tmp_path = config_path + ".tmp"
+  @fs.write_file(tmp_path, content, create_mode=CreateOrTruncate)
+  @fs.rename(tmp_path, config_path)
   config_path
 }
 

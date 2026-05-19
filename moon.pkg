@@ -1,5 +1,9 @@
 import {
   "username/mvm/cmd/command",
   "username/mvm/cmd/tools/tool_def",
+  "username/mvm/cmd/tools",
+  "username/mvm/utils",
   "moonbitlang/async",
+  "moonbitlang/async/fs",
+  "moonbitlang/core/json",
 } for "wbtest"

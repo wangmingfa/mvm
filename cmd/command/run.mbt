@@ -15,12 +15,12 @@ fn should_print_logo(command : Command, config : @tools.GlobalConfig) -> Bool {
 /// logo 仅打印到控制台，不捕获到 CommandResult（logo 是品牌标识，不属于命令实际结果）
 /// 子命令内部 raise fail(msg) 会被 catch 捕获，转为 CommandResult::failure
 pub async fn run(command : Command) -> CommandResult {
-  let (_, config) = @tools.get_global_config()
-  if should_print_logo(command, config) {
-    // logo 仅打印到控制台，不写入 CommandResult.output
-    @utils.print_logo()
-  }
   try {
+    let (_, config) = @tools.get_global_config()
+    if should_print_logo(command, config) {
+      // logo 仅打印到控制台，不写入 CommandResult.output
+      @utils.print_logo()
+    }
     match command {
       Help => run_help()
       Version => run_version()
