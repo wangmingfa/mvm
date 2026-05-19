@@ -13,9 +13,9 @@ async fn main {
   try {
     let command = get_command(args[1:])
     let result = run(command)
-    if result.error is Some(_) {
+    if result.error is Some(err) {
       // 错误信息打印到 stderr
-      @log.println_error(Failure::Failure(result.error.unwrap()))
+      @log.println_error(Failure::Failure(err))
     }
     if result.exit_code != 0 {
       @sys.exit(result.exit_code)
