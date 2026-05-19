@@ -46,6 +46,24 @@ powershell -c "irm https://raw.githubusercontent.com/wangmingfa/mvm/main/scripts
 - Windows: x86 architecture
 - Linux: x86 architecture
 
+## Supported Tools
+
+mvm supports 9 development tools, each with full version management commands (install, use, pin, unuse, uninstall, list, current, which, run).
+
+| Command Name | Tool | Executable Commands |
+|--------------|------|---------------------|
+| node | Node.js | node, npm, npx, corepack, npm global packages |
+| bun | Bun | bun, bunx |
+| zig | Zig | zig |
+| go | Go | go, gofmt |
+| python / python3 | Python | python3, python |
+| rust / rustc | Rust | rustc, cargo, rustfmt, cargo-fmt, clippy-driver, cargo-clippy, rustdoc |
+| deno | Deno | deno |
+| java / jdk | Java | java, javac, jar, javadoc, jps, jcmd, jstat, keytool |
+| kotlin | Kotlin | kotlin, kotlinc |
+
+> 💡 The "Command Name" column is the actual name used in mvm commands, e.g., **node** in `mvm install node@20`; the "Executable Commands" column shows available shim commands after installation. Node.js also supports npm global package installation — commands from globally installed packages (e.g., `tsc`, `prettier`) via `npm install -g <package>` are automatically available.
+
 ## Commands
 
 ### Global Options

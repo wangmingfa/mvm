@@ -46,6 +46,24 @@ powershell -c "irm https://raw.githubusercontent.com/wangmingfa/mvm/main/scripts
 - Windows：x86 架构
 - Linux：x86 架构
 
+## 支持的工具
+
+mvm 支持 9 种开发工具，每种工具均可使用全部版本管理命令（install、use、pin、unuse、uninstall、list、current、which、run）。
+
+| 命令名 | 工具 | 可执行命令 |
+|--------|------|-----------|
+| node | Node.js | node, npm, npx, corepack, npm 全局包 |
+| bun | Bun | bun, bunx |
+| zig | Zig | zig |
+| go | Go | go, gofmt |
+| python / python3 | Python | python3, python |
+| rust / rustc | Rust | rustc, cargo, rustfmt, cargo-fmt, clippy-driver, cargo-clippy, rustdoc |
+| deno | Deno | deno |
+| java / jdk | Java | java, javac, jar, javadoc, jps, jcmd, jstat, keytool |
+| kotlin | Kotlin | kotlin, kotlinc |
+
+> 💡 "命令名"列是 mvm 命令中实际使用的名称，例如 `mvm install node@20` 中的 **node**；"可执行命令"列表示安装后通过 shim 可使用的命令。Node.js 还支持 npm 全局包安装，通过 `npm install -g <包名>` 安装的全局包命令（如 `tsc`、`prettier` 等）也会自动可用。
+
 ## 命令详解
 
 ### 全局选项
