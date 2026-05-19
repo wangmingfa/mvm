@@ -64,7 +64,7 @@ async fn run_install(
   // 下载文件临时存放目录
   let tmp_dir = "\{@tools.temp_dir()}/tmp-\{tool}-\{version}"
   ensure_dir(tmp_dir)
-  let ext = if url.has_suffix(".tar.gz") {
+  let ext = if url.has_suffix(".tar.gz") || url.has_suffix(".tgz") {
     "tar.gz"
   } else if url.has_suffix(".tar.xz") {
     "tar.xz"
@@ -232,7 +232,7 @@ async fn download_file(
 async fn extract_file(file : String, dest : String) -> Unit {
   @log.info("正在解压 \{file} 到 \{dest} ...")
   let (code, data) = match file {
-    f if f.has_suffix(".tar.gz") =>
+    f if f.has_suffix(".tar.gz") || f.has_suffix(".tgz") =>
       @process.collect_output_merged("tar", ["-xzf", f, "-C", dest])
     f if f.has_suffix(".tar.xz") =>
       @process.collect_output_merged("tar", ["-xJf", f, "-C", dest])

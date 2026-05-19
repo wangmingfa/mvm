@@ -22,10 +22,6 @@ struct PythonVersionInfo {
   cycle : String
   // 该周期下的最新版本，如 "3.12.4"
   latest : String
-  // 发布日期
-  _release : String
-  // 是否 LTS（Python 无 LTS，均为 false）
-  _lts : Bool?
 } derive(@json.FromJson)
 
 ///|
@@ -73,7 +69,21 @@ fn Python::_get_proper_version(
     }
     _ =>
       match version_count {
-        // 主版本号，如 "3.12"
+        // 仅主版本号，如 "2" 或 "3"
+        1 => {
+          let ver = if version.has_prefix("v") {
+            version.sub(start=1).to_owned()
+          } else {
+            version
+          }
+          // endoflife.date API 的 cycle 为 major.minor 格式
+          // 查找以该主版本号开头的最新 cycle
+          guard infos.search_by(fn(v) { v.cycle.has_prefix("\{ver}.") }) is Some(idx) else {
+            raise fail("找不到版本：\{version}")
+          }
+          "v\{infos[idx].latest}"
+        }
+        // 主版本号+次版本号，如 "3.12"
         2 => {
           let search_version = if version.has_prefix("v") {
             version
