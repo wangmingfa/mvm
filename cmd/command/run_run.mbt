@@ -56,17 +56,17 @@ async fn run_run(
   }
 
   // 使用 C FFI 执行子进程，同时流式输出到控制台 + 捕获 stdout
-  let run_output = @mvm_cmd.run_with_output(
+  let (exit_code, output) = @mvm_cmd.run_command(
     exec_program_path,
     exec_args,
     extra_env=exec_envs,
   )
 
-  let result = CommandResult::success_with_output(run_output.output)
-  result.exit_code = run_output.exit_code
+  let result = CommandResult::success_with_output(output)
+  result.exit_code = exit_code
 
-  if run_output.exit_code != 0 {
-    @log.debug("\{tool} 退出码: \{run_output.exit_code}")
+  if exit_code != 0 {
+    @log.debug("\{tool} 退出码: \{exit_code}")
   } else {
     // 运行成功之后的处理
     // 比如使用npm安装了全局包

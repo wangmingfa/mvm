@@ -157,3 +157,138 @@ fn join_args(args : ArrayView[String]) -> String {
   // 如果有空格，则使用引号包裹
   args.map(v => if v.contains(" ") { "\"\{v}\"" } else { v }).join(" ")
 }
+
+///|
+priv struct CommandResult {
+  mut exit_code : Int
+  mut output : String
+}
+
+///|
+type RunCommandCallback[T] = FuncRef[(Int, String, T) -> Unit]
+
+///|
+#borrow(cmd, cwd, user_data, envs)
+extern "C" fn c_run_command(
+  cmd : Bytes,
+  cwd : Bytes,
+  envs : Bytes,
+  callback : RunCommandCallback[CommandResult],
+  user_data : CommandResult,
+) -> Unit = "run_command"
+
+///|
+pub fn run_command(
+  cmd : String,
+  args : ArrayView[String],
+  cwd? : String = "",
+  extra_env? : Map[String, String] = {},
+) -> (Int, String) {
+  let cmd = @ffi.string_to_c_bytes(join_args([cmd, ..args]))
+  let cwd = @ffi.string_to_c_bytes(cwd)
+  let envs = @ffi.string_to_c_bytes(
+    extra_env.to_array().map(v => "\{v.0}=\{v.1}").join("&"),
+  )
+  let user_data = CommandResult::{ exit_code: 0, output: "" }
+  c_run_command(
+    cmd,
+    cwd,
+    envs,
+    fn(exit_code, output, user_data) {
+      user_data.exit_code = exit_code
+      user_data.output = output
+    },
+    user_data,
+  )
+  (user_data.exit_code, user_data.output)
+}
+
+///|
+async test "run_command" {
+  guard @env.current_dir() is Some(dir)
+  let temp_dir = "\{dir}/.temp"
+  guard @fs.exists(temp_dir) else { @fs.mkdir(temp_dir, recursive=true) }
+  let temp_file = "\{temp_dir}/run_command.sh"
+  let envs = { "TEST01": "\{@env.now()}", "TEST02": "\{@env.now()}" }
+  let env_keys = envs.keys().map(v => "\"$\{v}\"").join(" ")
+  let env_values = envs.values().map(v => v).join(" ")
+  let content =
+    #| #!/bin/bash
+    #| for i in {1..3}; do
+    #|   echo "[$i] xxx..."
+    #|   sleep 1
+    #| done
+    $| echo \{env_keys}
+  @fs.write_file(temp_file, content, create_mode=CreateOrTruncate)
+  let (exit_code, output) = run_command(
+    "bash",
+    [temp_file],
+    cwd="/Users/11048490",
+    extra_env=envs,
+  )
+  inspect(exit_code, content="0")
+  // 只验证最后一行
+  guard output.trim().split("\n").last() is Some(last_line_output)
+  inspect(last_line_output, content=env_values)
+}
+
+///|
+async test "run_command_with_node" {
+  let (exit_code, output) = run_command("node", ["-v"])
+  inspect(
+    exit_code,
+    content=(
+      #|0
+    ),
+  )
+  assert_false(output.is_blank())
+}
+
+///|
+#borrow(str)
+extern "C" fn c_print(str : Bytes) -> Unit = "print"
+
+///|
+pub fn print(str : String) -> Unit {
+  c_print(@ffi.string_to_c_bytes(str))
+}
+
+///|
+test "print" {
+  print("a")
+  print("b")
+  print("c")
+  print("d")
+  print("e")
+  println("")
+}
+
+///|
+// async fn run_with_output() -> Unit {
+//   let (r, w) = @process.read_from_process()
+//   defer r.close()
+//   let output = @async.with_task_group(group => {
+//     group.spawn(() => {
+//       while r.read_some() is Some(b) {
+//         println(b)
+//       }
+//     })
+//   })
+//   let exit_code = @async.with_task_group(group => {
+//     group.spawn(() => {
+//       let sh =
+//         #| for i in {1..3}; do echo "[$i] tick"; sleep 1; done
+//       let exit_code = group.spawn(() => {
+//         @process.run("bash", ["-c", sh], stdout=w, stderr=w)
+//       })
+//       exit_code.wait()
+//     })
+//   })
+//   println(exit_code.wait())
+//   println(output.wait())
+// }
+
+// ///|
+// async test "run" {
+//   run_with_output()
+// }

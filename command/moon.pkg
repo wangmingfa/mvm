@@ -2,12 +2,17 @@ import {
   "moonbitlang/async",
   "moonbitlang/async/process",
   "moonbitlang/core/encoding/utf8",
+  "moonbitlang/core/buffer",
+  "moonbitlang/async/process",
+  "moonbitlang/async",
+  "moonbitlang/async/io",
+  "moonbitlang/async/fs",
   "username/mvm/os",
   "username/mvm/log",
   "username/mvm/ffi",
+  "moonbitlang/core/env",
 }
 
 options(
-  "native-stub": [ "run_capture.c" ],
-  targets: { "ffi.mbt": [ "native" ] },
+  "native-stub": [ "cmd.c" ],
 )
