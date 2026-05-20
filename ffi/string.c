@@ -1,3 +1,4 @@
+#include <string.h>
 // MoonBit Runtime 头文件
 #include "moonbit.h"
 

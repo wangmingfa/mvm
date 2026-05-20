@@ -186,14 +186,17 @@ pub async fn run_with_output(
   stdin? : &@process.ProcessInput,
   cwd? : StringView,
 ) -> (Int, &@io.Data) {
+  let cmd_str = join_args([cmd.to_owned(), ..args])
+  println("运行 \{cmd_str}")
   let (r, w) = @process.read_from_process()
   let (exit_code, output) = @async.with_task_group(group => {
     defer r.close()
     let output = group.spawn(() => {
       let buffer = @buffer.new()
       while r.read_some() is Some(b) {
-        print(@utf8.decode_lossy(b))
-        buffer.write_bytes(b)
+        let (bytes, str) = gbk_to_utf8(b)
+        print(str)
+        buffer.write_bytes(bytes)
       }
       buffer.contents()
     })
@@ -212,4 +215,19 @@ pub async fn run_with_output(
     (exit_code.wait(), output.wait())
   })
   (exit_code, output)
+}
+
+///|
+/// 处理windows下使用GBK编码，导致日志乱码
+#cfg(platform="windows")
+fn gbk_to_utf8(bytes : Bytes) -> (Bytes, String) {
+  let str = @utf8.decode(bytes) catch { _ => @ffi.gbk_to_utf8(bytes) }
+  (@utf8.encode(str), str)
+}
+
+///|
+#cfg(not(platform="windows"))
+fn gbk_to_utf8(bytes : Bytes) -> (Bytes, String) {
+  // unix没有支持gbk转utf8
+  return (bytes, @utf8.decode_lossy(bytes))
 }
