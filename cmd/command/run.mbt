@@ -43,7 +43,7 @@ pub async fn run(command : Command) -> CommandResult {
       // 从 Error 中提取失败消息字符串
       let msg = match e {
         Failure::Failure(msg) => msg.trim().to_owned()
-        _ => "未知错误"
+        e => e.to_string()
       }
       CommandResult::failure(msg)
     }

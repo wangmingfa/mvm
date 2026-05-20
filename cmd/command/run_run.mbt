@@ -59,14 +59,13 @@ async fn run_run(
     @log.clear_all_lines()
   }
 
-  // 使用 C FFI 执行子进程，同时流式输出到控制台 + 捕获 stdout
-  let (exit_code, output) = @mvm_cmd.run_command(
+  let (exit_code, output) = @mvm_cmd.run_with_output(
     exec_program_path,
     exec_args,
     extra_env=exec_envs,
   )
 
-  let result = CommandResult::success_with_output(output)
+  let result = CommandResult::success_with_output(output.text())
   result.exit_code = exit_code
 
   if exit_code != 0 {
