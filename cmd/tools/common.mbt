@@ -276,6 +276,8 @@ pub async fn post_install(tool : Tool, target_dir : String) -> Unit {
   let os = @os.get_os_name()
   if os is Linux || os is MacOS {
     // 增加可执行权限
+    // macOS JDK 使用 .app bundle 结构，实际路径为 Contents/Home/bin/
+    let java_bin_dir = if os is MacOS { "Contents/Home/bin" } else { "bin" }
     let exe_files = match tool {
       Node =>
         ["node", "npm", "npx"].map(name => {
@@ -297,7 +299,7 @@ pub async fn post_install(tool : Tool, target_dir : String) -> Unit {
       // Java (JDK) 的可执行文件在 bin 子目录下
       Java =>
         ["java", "javac", "jar"].map(name => {
-          @fs_ext.join_path(target_dir, "bin/\{name}")
+          @fs_ext.join_path(target_dir, "\{java_bin_dir}/\{name}")
         })
       // Kotlin 编译器的可执行文件在 bin 子目录下
       Kotlin =>

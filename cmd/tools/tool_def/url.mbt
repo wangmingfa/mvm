@@ -265,9 +265,10 @@ test "apply_global_config rust_mirror" {
 ///|
 test "apply_global_config java_mirror" {
   // java_mirror 分支：tool 为 java 时，替换 JAVA_RELEASE_URL
+  // Java 下载已改为 GitHub releases，java_mirror 仅影响 Adoptium API URL（如可用版本查询）
   let ctx = UrlReplaceContext::new(
-    "https://api.adoptium.net/v3/binary/latest/21/mac/aarch64/jdk/hotspot/eclipse",
-    "java", "21", "mac", "aarch64",
+    "https://api.adoptium.net/v3/info/available_releases", "java", "latest", "",
+    "",
   )
   let config = {
     github_proxy: None,
@@ -279,7 +280,7 @@ test "apply_global_config java_mirror" {
   }
   let result = apply_global_config(ctx.url, config, ctx)
   guard result ==
-    "https://mirrors.aliyun.com/adoptium/v3/binary/latest/21/mac/aarch64/jdk/hotspot/eclipse" else {
+    "https://mirrors.aliyun.com/adoptium/v3/info/available_releases" else {
     fail("java_mirror replacement failed: \{result}")
   }
 }

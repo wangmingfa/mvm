@@ -48,7 +48,9 @@ async fn run_run(
   }
 
   if !program_exists {
-    raise fail("要执行的程序 \{exec_program} 不存在")
+    raise fail(
+      "要执行的程序 \{exec_program}(\{exec_program_path}) 不存在",
+    )
   }
 
   let before_run_result = before_run(program_exe_info, exec_args)

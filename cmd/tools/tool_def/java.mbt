@@ -1,14 +1,18 @@
 ///|
-/// Java 镜像替换的基础 URL
+/// Adoptium API 基础 URL（用于可用版本查询，仍可正常工作）
 const JAVA_RELEASE_URL = "https://api.adoptium.net"
 
 ///|
-/// Adoptium (Eclipse Temurin) API
+/// Adoptium 可用版本信息 API
 const JAVA_AVAILABLE_URL = "https://api.adoptium.net/v3/info/available_releases"
 
 ///|
-/// Adoptium 直接下载 URL 模板（会重定向到实际文件）
-const JAVA_BINARY_URL = "https://api.adoptium.net/v3/binary/latest"
+/// Adoptium GitHub releases 仓库基础 URL（用于下载）
+const JAVA_GITHUB_REPO_PREFIX = "https://github.com/adoptium/temurin"
+
+///|
+/// Adoptium GitHub API 基础 URL（用于获取版本号）
+const JAVA_GITHUB_API_PREFIX = "https://api.github.com/repos/adoptium/temurin"
 
 ///|
 const JAVA_INDEX_CACHE_FILE = "java_index.json"
@@ -22,24 +26,84 @@ test "Java" {
 }
 
 ///|
+/// GitHub Release 信息（用于从 tag_name 提取版本号）
+struct GithubReleaseInfo {
+  tag_name : String
+} derive(@json.FromJson)
+
+///|
 /// Adoptium 可用版本信息
 struct JavaAvailableReleases {
+  // 所有可用版本列表
+  available_releases : Array[Int]
   // 可用的 LTS 版本列表
   available_lts_releases : Array[Int]
   // 最新的 LTS 版本
   most_recent_lts : Int
   // 最新的可用版本（包括非 LTS）
   most_recent_feature_release : Int
-  // 所有可用版本列表
-  available_releases : Array[Int]
 } derive(@json.FromJson)
 
 ///|
 pub async fn Java::get_target_version(
-  os : @os.OsInfo,
+  _os : @os.OsInfo,
   version : String,
   version_count : Int,
 ) -> String {
+  match version {
+    // 默认/lts：安装最新 LTS 版本
+    "" | "lts" => {
+      let major = Java::_get_lts_major_version()
+      Java::_resolve_latest_patch_version(major.to_string())
+    }
+    // latest：安装最新版本（包括非 LTS）
+    "latest" => {
+      let major = Java::_get_latest_major_version()
+      Java::_resolve_latest_patch_version(major.to_string())
+    }
+    _ =>
+      match version_count {
+        // 仅主版本号，如 "21"
+        1 => {
+          let major = @string.parse_int(version) catch {
+            _ => raise fail("无效的版本号：\{version}")
+          }
+          Java::_verify_major_version_available(major)
+          Java::_resolve_latest_patch_version(version)
+        }
+        // 主版本号+次版本号 或 完整版本号，如 "21.0" 或 "21.0.11"
+        // 均提取主版本号，从 GitHub 获取该主版本的最新版本
+        2 | 3 => {
+          let parts = version.split(".").collect()
+          let major = parts[0].to_owned()
+          let major_int = @string.parse_int(major) catch {
+            _ => raise fail("无效的版本号：\{version}")
+          }
+          Java::_verify_major_version_available(major_int)
+          Java::_resolve_latest_patch_version(major)
+        }
+        _ => raise fail("无效的版本号：\{version}")
+      }
+  }
+}
+
+///|
+/// 获取最新的 LTS 主版本号
+async fn Java::_get_lts_major_version() -> Int {
+  let releases = Java::_fetch_available_releases()
+  releases.most_recent_lts
+}
+
+///|
+/// 获取最新的主版本号（包括非 LTS）
+async fn Java::_get_latest_major_version() -> Int {
+  let releases = Java::_fetch_available_releases()
+  releases.most_recent_feature_release
+}
+
+///|
+/// 从 Adoptium API 获取可用版本信息（带缓存）
+async fn Java::_fetch_available_releases() -> JavaAvailableReleases {
   let cached_content = read_cache_file_content(JAVA_INDEX_CACHE_FILE)
   let content = match cached_content {
     Some(content) => content
@@ -50,8 +114,8 @@ pub async fn Java::get_target_version(
         JAVA_AVAILABLE_URL,
         "java",
         "latest",
-        os.name.to_string(),
-        os.arch.to_string(),
+        "",
+        "",
       )
       let url = apply_global_config(JAVA_AVAILABLE_URL, global_config, ctx)
 
@@ -69,81 +133,59 @@ pub async fn Java::get_target_version(
   let json = @json.parse(content) catch {
     e => raise fail("解析 Java 版本信息失败：\{e}")
   }
-  let releases : JavaAvailableReleases = @json.from_json(json) catch {
+  @json.from_json(json) catch {
     e => raise fail("解析 Java 版本信息失败：\{e}")
-  }
-  match version {
-    "" | "lts" => {
-      let lts_version = releases.most_recent_lts.to_string()
-      Java::_resolve_latest_patch_version(os, lts_version)
-    }
-    "latest" => {
-      let latest_version = releases.most_recent_feature_release.to_string()
-      Java::_resolve_latest_patch_version(os, latest_version)
-    }
-    _ =>
-      match version_count {
-        1 => {
-          let major = @string.parse_int(version) catch {
-            _ => raise fail("无效的版本号：\{version}")
-          }
-          if !releases.available_releases.contains(major) &&
-            !releases.available_lts_releases.contains(major) {
-            raise fail("找不到版本：\{version}")
-          }
-          Java::_resolve_latest_patch_version(os, version)
-        }
-        2 | 3 => version
-        _ => raise fail("无效的版本号：\{version}")
-      }
   }
 }
 
 ///|
-/// 从 Adoptium API 获取指定主版本的最新补丁版本号
-async fn Java::_resolve_latest_patch_version(
-  os : @os.OsInfo,
-  major_version : String,
-) -> String {
-  // 应用镜像配置
-  let (_, global_config) = get_global_config()
-  let ctx = UrlReplaceContext::new(
-    JAVA_AVAILABLE_URL,
-    "java",
-    major_version,
-    os.name.to_string(),
-    os.arch.to_string(),
-  )
+/// 验证主版本号是否可用
+async fn Java::_verify_major_version_available(major : Int) -> Unit {
+  let releases = Java::_fetch_available_releases()
+  if !releases.available_releases.contains(major) &&
+    !releases.available_lts_releases.contains(major) {
+    raise fail("找不到版本：\{major}")
+  }
+}
 
-  // 使用 Adoptium assets API 获取最新版本号
-  let assets_url = "https://api.adoptium.net/v3/assets/latest/\{major_version}/hotspot/architecture/\{Java::_get_arch(os)}/os/\{Java::_get_os_name(os)}/image_type/jdk"
-  let assets_url = apply_global_config(assets_url, global_config, ctx)
-
-  let (res, data) = @http.get(
-    assets_url,
-    headers=@request.merge_detault_headers(),
-  )
-  if !(res.code is (200..<300)) {
-    // 如果无法获取具体版本号，直接使用主版本号
-    @log.warn(
-      "无法获取 Java \{major_version} 的具体版本号（HTTP \{res.code} \{res.reason}，URL: \{assets_url}），将使用主版本号",
-    )
-    return major_version
+///|
+/// 从 GitHub API 获取指定主版本的最新完整版本号（含 build 号）
+/// 例如：major_version="25" → 返回 "25.0.3+9"
+async fn Java::_resolve_latest_patch_version(major_version : String) -> String {
+  // 使用缓存避免频繁调用 GitHub API（未认证限制为 60 次/小时）
+  let cache_file = "java_github_\{major_version}.json"
+  let cached_content = read_cache_file_content(cache_file)
+  let content = match cached_content {
+    Some(content) => content
+    None => {
+      // 使用 Adoptium GitHub releases API 获取最新版本号
+      let github_api_url = "\{JAVA_GITHUB_API_PREFIX}\{major_version}-binaries/releases/latest"
+      let (res, data) = @http.get(
+        github_api_url,
+        headers=@request.github_headers(),
+      )
+      if !(res.code is (200..<300)) {
+        raise fail(
+          "无法获取 Java \{major_version} 的版本信息（HTTP \{res.code} \{res.reason}，URL: \{github_api_url}）",
+        )
+      }
+      let content = data.text()
+      write_cache_file_content(cache_file, content)
+      content
+    }
   }
-  let content = data.text()
-  let json = @json.parse(content) catch { _ => return major_version }
-  // Adoptium API 返回数组，提取版本号
-  guard json is Array(arr) else { return major_version }
-  guard arr.length() > 0 else { return major_version }
-  let first = arr[0]
-  guard first is Object(map) else { return major_version }
-  guard map.get("release") is Some(Object(release_map)) else {
-    return major_version
+  let json = @json.parse(content) catch {
+    e => raise fail("解析 Java \{major_version} 版本信息失败：\{e}")
   }
-  match release_map.get("semver") {
-    Some(String(semver)) => semver
-    _ => major_version
+  let release : GithubReleaseInfo = @json.from_json(json) catch {
+    e => raise fail("解析 Java \{major_version} 版本信息失败：\{e}")
   }
+  // Tag 格式: "jdk-25.0.3+9" → "25.0.3+9"
+  let tag = release.tag_name
+  guard tag.has_prefix("jdk-") else {
+    raise fail("无法从 tag \{tag} 解析 Java 版本号")
+  }
+  tag["jdk-".length():].to_owned()
 }
 
 ///|
@@ -168,26 +210,48 @@ fn Java::_get_os_name(os : @os.OsInfo) -> String {
 
 ///|
 /// 获取 Java 的下载信息
-/// 使用 Adoptium 直接下载 URL（会重定向到实际文件）
-/// 镜像/代理替换在下载流程中处理
+/// 使用 Adoptium GitHub releases 直接下载 URL
+/// 需要版本号包含 build 号（如 "25.0.3+9"）
+/// 代理/镜像由 install.mbt 在异步上下文中统一应用
 pub fn Java::get_download_info(
   os_info : @os.OsInfo,
   version : String,
-) -> DownloadInfo {
-  // 解析主版本号（取第一个 "." 之前的部分）
-  let parts = version.split(".").collect()
-  let major = parts[0].to_owned()
+) -> DownloadInfo raise {
+  // 版本号必须包含 build 号（格式如 "25.0.3+9"）
+  guard version.contains("+") else {
+    raise fail(
+      "Java 版本号 \{version} 缺少 build 号（需要格式如 25.0.3+9），无法构造下载链接",
+    )
+  }
+  // 解析版本号：25.0.3+9 → version_without_build=25.0.3, build=9, major=25
+  let plus_parts = version.split("+").collect()
+  let version_without_build = plus_parts[0].to_owned()
+  let build = plus_parts[1].to_owned()
+  let major_parts = version_without_build.split(".").collect()
+  let major = major_parts[0].to_owned()
+
   let arch = Java::_get_arch(os_info)
   let os_name = Java::_get_os_name(os_info)
-  let image_type = "jdk"
-  // Adoptium 直接二进制下载 URL（会 302 重定向到 GitHub release）
-  let url = "\{JAVA_BINARY_URL}/\{major}/\{os_name}/\{arch}/\{image_type}/hotspot/eclipse"
-  { url, headers: {}, root_path_depth: 1 }
+  let ext = match os_info.name {
+    Windows => "zip"
+    _ => "tar.gz"
+  }
+
+  // GitHub tag（URL-encoded）：jdk-25.0.3%2B9
+  let tag = "jdk-\{version_without_build}%2B\{build}"
+  // Asset 文件名：OpenJDK25U-jdk_aarch64_mac_hotspot_25.0.3_9.tar.gz
+  let asset_name = "OpenJDK\{major}U-jdk_\{arch}_\{os_name}_hotspot_\{version_without_build}_\{build}.\{ext}"
+
+  let url = "\{JAVA_GITHUB_REPO_PREFIX}\{major}-binaries/releases/download/\{tag}/\{asset_name}"
+  // root_path_depth=1: 剥离 jdk-{version}/ 外层目录
+  // macOS 安装后结构为 Contents/Home/bin/java（.app bundle），get_exe_path 会适配
+  // Linux/Windows 安装后结构为 bin/java
+  { url, headers: {}, root_path_depth: 1U }
 }
 
 ///|
 /// Java 校验值获取
-/// 初期实现返回 None，后续可从 Adoptium release assets 提取
+/// 初期实现返回 None，后续可从 GitHub release 的 .sha256.txt 文件提取
 pub fn Java::get_expected_checksum(
   _os_info : @os.OsInfo,
   _version : String,
@@ -199,7 +263,9 @@ pub fn Java::get_expected_checksum(
 pub fn Java::get_exe_path(version : String) -> String raise {
   let os = @os.get_os_name()
   let suffix = if os is Windows { ".exe" } else { "" }
-  [version_dir(Tool::Java, version), "bin", "java\{suffix}"]
+  // macOS JDK 使用 .app bundle 结构，实际可执行文件在 Contents/Home/bin/ 下
+  let bin_prefix = if os is MacOS { "Contents/Home/bin" } else { "bin" }
+  [version_dir(Tool::Java, version), bin_prefix, "java\{suffix}"]
   .filter(v => !v.is_blank())
   .join("/")
 }
@@ -211,7 +277,6 @@ pub fn Java::get_java_builtin_tool_path_and_version(
   java_tool_exe : ProgramExeInfo,
 ) -> ProgramExeInfo? {
   let { path: java_exe_path, .. } = java_tool_exe
-
   let java_bin_dir : String? = @fs_ext.get_parent_dir(java_exe_path) catch {
     _ => {
       @log.error("无法获取到 java 的 bin 目录")
