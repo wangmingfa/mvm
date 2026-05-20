@@ -184,7 +184,12 @@ pub fn run_command(
   cwd? : String = "",
   extra_env? : Map[String, String] = {},
 ) -> (Int, String) {
-  let cmd = @ffi.string_to_c_bytes(join_args([cmd, ..args]))
+  let cmd = join_args([cmd, ..args])
+  @log.debug("运行命令 \{cmd}")
+  @log.debug("工作目录 \{cwd}")
+  @log.debug("环境变量 \{to_repr(extra_env)}")
+
+  let cmd = @ffi.string_to_c_bytes(cmd)
   let cwd = @ffi.string_to_c_bytes(cwd)
   let envs = @ffi.string_to_c_bytes(
     extra_env.to_array().map(v => "\{v.0}=\{v.1}").join("&"),

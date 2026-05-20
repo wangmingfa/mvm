@@ -11,10 +11,6 @@ const JAVA_AVAILABLE_URL = "https://api.adoptium.net/v3/info/available_releases"
 const JAVA_GITHUB_REPO_PREFIX = "https://github.com/adoptium/temurin"
 
 ///|
-/// Adoptium GitHub API 基础 URL（用于获取版本号）
-const JAVA_GITHUB_API_PREFIX = "https://api.github.com/repos/adoptium/temurin"
-
-///|
 const JAVA_INDEX_CACHE_FILE = "java_index.json"
 
 ///|
@@ -26,9 +22,26 @@ test "Java" {
 }
 
 ///|
-/// GitHub Release 信息（用于从 tag_name 提取版本号）
+/// 缓存版本信息（兼容旧缓存格式：{"tag_name":"jdk-22.0.2+9"}）
 struct GithubReleaseInfo {
   tag_name : String
+} derive(@json.FromJson)
+
+///|
+/// Adoptium API 版本信息（从 /v3/assets/latest/{major}/hotspot 获取）
+/// 注意：semver 字段对 LTS 版本会附加后缀（如 "25.0.3+9.0.LTS"），不能直接用于构造下载链接
+/// 使用 major/minor/security/build 字段构造干净版本号（如 "25.0.3+9"）
+struct AdoptiumVersion {
+  major : Int
+  minor : Int
+  security : Int
+  build : Int
+} derive(@json.FromJson)
+
+///|
+/// Adoptium API 资产信息
+struct AdoptiumAsset {
+  version : AdoptiumVersion
 } derive(@json.FromJson)
 
 ///|
@@ -54,6 +67,7 @@ pub async fn Java::get_target_version(
     // 默认/lts：安装最新 LTS 版本
     "" | "lts" => {
       let major = Java::_get_lts_major_version()
+      @log.info("最新的LTS主版本 \{major}")
       Java::_resolve_latest_patch_version(major.to_string())
     }
     // latest：安装最新版本（包括非 LTS）
@@ -85,6 +99,12 @@ pub async fn Java::get_target_version(
         _ => raise fail("无效的版本号：\{version}")
       }
   }
+}
+
+///|
+async test "get_target_version empty version" {
+  let os = @os.get_os_info()
+  inspect(Java::get_target_version(os, "", 0))
 }
 
 ///|
@@ -149,43 +169,76 @@ async fn Java::_verify_major_version_available(major : Int) -> Unit {
 }
 
 ///|
-/// 从 GitHub API 获取指定主版本的最新完整版本号（含 build 号）
-/// 例如：major_version="25" → 返回 "25.0.3+9"
+/// 从 Adoptium API 获取指定主版本的最新完整版本号（含 build 号）
+/// 使用 /v3/assets/latest/{major}/hotspot 端点，无需 GitHub API，无速率限制
+/// 从 major/minor/security/build 字段构造版本号，避免 LTS 版本 semver 的 ".0.LTS" 后缀
+/// 例如：major_version="25" → 返回 "25.0.3+9"（而非 semver 的 "25.0.3+9.0.LTS"）
 async fn Java::_resolve_latest_patch_version(major_version : String) -> String {
-  // 使用缓存避免频繁调用 GitHub API（未认证限制为 60 次/小时）
+  // 使用缓存避免频繁请求
   let cache_file = "java_github_\{major_version}.json"
   let cached_content = read_cache_file_content(cache_file)
-  let content = match cached_content {
-    Some(content) => content
+  match cached_content {
+    Some(content) => {
+      // 从缓存中解析版本号（兼容旧缓存格式：{"tag_name":"jdk-22.0.2+9"}）
+      let json = @json.parse(content) catch {
+        e =>
+          raise fail("解析 Java \{major_version} 版本缓存失败：\{e}")
+      }
+      let release : GithubReleaseInfo = @json.from_json(json) catch {
+        e =>
+          raise fail("解析 Java \{major_version} 版本缓存失败：\{e}")
+      }
+      let tag = release.tag_name
+      guard tag.has_prefix("jdk-") else {
+        raise fail("无法从缓存 tag \{tag} 解析 Java 版本号")
+      }
+      tag["jdk-".length():].to_owned()
+    }
     None => {
-      // 使用 Adoptium GitHub releases API 获取最新版本号
-      let github_api_url = "\{JAVA_GITHUB_API_PREFIX}\{major_version}-binaries/releases/latest"
-      let (res, data) = @http.get(
-        github_api_url,
-        headers=@request.github_headers(),
+      // 使用 Adoptium 官方 API 获取最新版本号（无速率限制）
+      let adoptium_url = "\{JAVA_RELEASE_URL}/v3/assets/latest/\{major_version}/hotspot"
+      // 应用镜像配置（java_mirror 会替换 JAVA_RELEASE_URL）
+      let (_, global_config) = get_global_config()
+      let ctx = UrlReplaceContext::new(
+        adoptium_url, "java", major_version, "", "",
       )
+      let url = apply_global_config(adoptium_url, global_config, ctx)
+
+      @log.info("获取Java版本的url \{url}")
+      let (res, data) = @http.get(url, headers=@request.merge_detault_headers())
       if !(res.code is (200..<300)) {
         raise fail(
-          "无法获取 Java \{major_version} 的版本信息（HTTP \{res.code} \{res.reason}，URL: \{github_api_url}）",
+          "无法获取 Java \{major_version} 的版本信息（HTTP \{res.code}，URL: \{url}）",
         )
       }
       let content = data.text()
-      write_cache_file_content(cache_file, content)
-      content
+
+      // 解析 Adoptium API 返回的资产列表
+      let json = @json.parse(content) catch {
+        e =>
+          raise fail("解析 Java \{major_version} 版本信息失败：\{e}")
+      }
+      let assets : Array[AdoptiumAsset] = @json.from_json(json) catch {
+        e =>
+          raise fail("解析 Java \{major_version} 版本信息失败：\{e}")
+      }
+      guard assets.length() > 0 else {
+        raise fail(
+          "无法获取 Java \{major_version} 的版本信息：API 返回空列表",
+        )
+      }
+      // 从结构化字段构造干净版本号（避免 LTS 版本 semver 中的 ".0.LTS" 后缀）
+      // 例如：major=25, minor=0, security=3, build=9 → "25.0.3+9"
+      let v = assets[0].version
+      let clean_version = "\{v.major}.\{v.minor}.\{v.security}+\{v.build}"
+      // 缓存版本号（兼容旧缓存格式：{"tag_name":"jdk-25.0.3+9"})
+      write_cache_file_content(
+        cache_file,
+        "{\"tag_name\":\"jdk-\{clean_version}\"}",
+      )
+      clean_version
     }
   }
-  let json = @json.parse(content) catch {
-    e => raise fail("解析 Java \{major_version} 版本信息失败：\{e}")
-  }
-  let release : GithubReleaseInfo = @json.from_json(json) catch {
-    e => raise fail("解析 Java \{major_version} 版本信息失败：\{e}")
-  }
-  // Tag 格式: "jdk-25.0.3+9" → "25.0.3+9"
-  let tag = release.tag_name
-  guard tag.has_prefix("jdk-") else {
-    raise fail("无法从 tag \{tag} 解析 Java 版本号")
-  }
-  tag["jdk-".length():].to_owned()
 }
 
 ///|

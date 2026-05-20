@@ -4,14 +4,16 @@
 $oldLevel = $env:MVM_LOG_LEVEL
 $env:MVM_LOG_LEVEL = "debug"
 
-moon run cmd/main @args
-$exitCode = $LASTEXITCODE
-
-# 恢复原始 MVM_LOG_LEVEL
-if ($oldLevel) {
-    $env:MVM_LOG_LEVEL = $oldLevel
-} else {
-    Remove-Item Env:MVM_LOG_LEVEL -ErrorAction SilentlyContinue
+try {
+    moon run cmd/main @args
+    $exitCode = $LASTEXITCODE
+} finally {
+    # 恢复原始 MVM_LOG_LEVEL（即使 Ctrl+C 中断也会执行）
+    if ($oldLevel) {
+        $env:MVM_LOG_LEVEL = $oldLevel
+    } else {
+        Remove-Item Env:MVM_LOG_LEVEL -ErrorAction SilentlyContinue
+    }
 }
 
 exit $exitCode

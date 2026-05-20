@@ -17,7 +17,7 @@ async fn run_install(
   // 如果version为空，则默认为lts
   let version = if version is Some(version) { version } else { "" }
   let os_info = @os.get_os_info()
-  let version = @tools.get_target_version(os_info, tool, version)
+  let version = @tools.get_target_version(tool, version)
 
   // 检查是否已安装
   if @tools.is_installed(tool, version) {
@@ -34,7 +34,7 @@ async fn run_install(
   ensure_dir(@tools.tool_dir(tool))
 
   // 获取下载信息（URL、headers、目录深度）
-  let download_info = @tools.get_download_info(os_info, tool, version)
+  let download_info = @tools.get_download_info(tool, version)
   if download_info.url.is_blank() {
     raise fail("无法获取下载地址")
   }

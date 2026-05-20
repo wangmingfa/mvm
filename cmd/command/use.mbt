@@ -3,8 +3,7 @@
 async fn run_use(tool : @tools.Tool, version : String?) -> CommandResult {
   let result = CommandResult::success()
   let version = if version is Some(version) { version } else { "" }
-  let os = @os.get_os_info()
-  let version = @tools.get_target_version(os, tool, version)
+  let version = @tools.get_target_version(tool, version)
 
   let _ = @tools.write_global_config(tool, version)
 
