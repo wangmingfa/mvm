@@ -582,13 +582,13 @@ async test "run 空参数返回 failure" {
 async test "run 指定版本号 node@22 返回 CommandResult" {
   let result = run(Command::Run(Tool::Node, "22", ["node", "-v"]))
   if result.is_success() {
-    // 从 mvm.json 读取 node 版本号，验证输出包含版本号
-    let expected_version = get_mvm_version(Tool::Node)
-    guard result.plain_output().contains(expected_version) else {
+    let expected_version = "v22."
+    guard result.plain_output().has_prefix(expected_version) else {
       fail(
         "node@22 -v 版本号不包含期望值：期望包含 \{expected_version}，实际 \{result.plain_output()}",
       )
     }
+  } else {
+    raise fail("失败")
   }
-  // 失败时不做额外断言（版本 22 可能未安装，可能来自 raise fail 或子进程非零退出）
 }

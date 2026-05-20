@@ -104,7 +104,12 @@ pub async fn Java::get_target_version(
 ///|
 async test "get_target_version empty version" {
   let os = @os.get_os_info()
-  inspect(Java::get_target_version(os, "", 0))
+  inspect(
+    Java::get_target_version(os, "", 0),
+    content=(
+      #|25.0.3+9
+    ),
+  )
 }
 
 ///|
