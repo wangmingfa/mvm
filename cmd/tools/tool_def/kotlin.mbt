@@ -1,10 +1,11 @@
 ///|
-/// Kotlin GitHub 发布源
+/// Kotlin GitHub 发布源（用于下载，直接下载链接不受 API 速率限制）
 const KOTLIN_RELEASE_URL = "https://github.com/JetBrains/kotlin/releases/download"
 
 ///|
-/// Kotlin GitHub releases API
-const KOTLIN_INDEX_URL = "https://api.github.com/repos/JetBrains/kotlin/releases?per_page=100"
+/// Maven Central Solr 搜索 API（用于版本列表查询，无速率限制）
+/// 查询 org.jetbrains.kotlin:kotlin-compiler 的所有版本，按时间倒序排列
+const KOTLIN_INDEX_URL = "https://search.maven.org/solrsearch/select?q=g:org.jetbrains.kotlin+AND+a:kotlin-compiler&rows=200&wt=json&core=gav"
 
 ///|
 const KOTLIN_INDEX_CACHE_FILE = "kotlin_index.json"
@@ -18,8 +19,24 @@ test "Kotlin" {
 }
 
 ///|
-struct KotlinReleaseInfo {
-  tag_name : String
+/// Maven Central 搜索 API 版本条目（每个条目包含版本号 v）
+struct MavenCentralVersionDoc {
+  v : String // 版本号，如 "2.2.0"、"2.1.20-RC" 等
+} derive(@json.FromJson)
+
+///|
+/// Maven Central 搜索 API 响应数据（包含版本总数和版本列表）
+
+///|
+/// Maven Central 搜索 API 响应数据（仅解析 docs 字段，numFound 等额外字段会被忽略）
+struct MavenCentralResponseData {
+  docs : Array[MavenCentralVersionDoc]
+} derive(@json.FromJson)
+
+///|
+/// Maven Central 搜索 API 响应（顶层包装）
+struct MavenCentralResponse {
+  response : MavenCentralResponseData
 } derive(@json.FromJson)
 
 ///|
@@ -36,8 +53,15 @@ pub async fn Kotlin::get_target_version(
     version,
     version_count,
     Kotlin::_get_proper_version,
-    headers=@request.github_headers(),
+    // Maven Central API 无需 GitHub API 专用 headers
   )
+}
+
+///|
+/// 判断版本号是否为稳定版（不含预发布标识：-RC, -M, -EAP, -Beta 等）
+fn is_stable_version(v : String) -> Bool {
+  // 稳定版本号不含 "-"（预发布版本均有如 "-RC2", "-EAP", "-M1" 等后缀）
+  !v.contains("-")
 }
 
 ///|
@@ -47,52 +71,53 @@ fn Kotlin::_get_proper_version(
   version_count : Int,
   json : Json,
 ) -> String raise {
-  guard json is Array(arr) else { raise fail("Kotlin版本信息格式不对") }
-  let infos : Array[KotlinReleaseInfo] = arr.map(v => {
-    @json.from_json(v) catch {
-      e => raise fail("解析Kotlin版本信息失败，原因：\{e}")
-    }
-  })
-  // 过滤出有效版本号（以 v 开头的标签）
-  let valid_versions = infos.filter(fn(v) { v.tag_name.has_prefix("v") })
-  guard valid_versions.length() > 0 else {
-    raise fail("Kotlin版本信息为空")
+  // 解析 Maven Central 搜索 API 响应
+  let maven_response : MavenCentralResponse = @json.from_json(json) catch {
+    e => raise fail("解析Kotlin版本信息失败，原因：\{e}")
   }
-  // 按版本号倒序排序（去掉 v 前缀比较）
-  valid_versions.sort_by((a, b) => {
-    let a_ver = a.tag_name.sub(start=1).to_owned()
-    let b_ver = b.tag_name.sub(start=1).to_owned()
-    @utils.compare_version(b_ver, a_ver) catch {
+  // 过滤出稳定版本（排除 RC、EAP、M 等预发布版本）
+  let stable_versions = maven_response.response.docs
+    .filter(fn(doc) { is_stable_version(doc.v) })
+    .map(fn(doc) { doc.v })
+  guard stable_versions.length() > 0 else {
+    raise fail("Kotlin稳定版本信息为空")
+  }
+  // 按版本号倒序排序（最新版本在前）
+  stable_versions.sort_by((a, b) => {
+    @utils.compare_version(b, a) catch {
       _ => 0
     }
   })
   match version {
-    "" | "lts" | "latest" =>
-      // Kotlin 没有 LTS 概念，取最新版本（不带 v 前缀）
-      valid_versions[0].tag_name[1:].to_owned()
+    // 空版本/lts/latest：取最新稳定版本（Kotlin 没有 LTS 概念）
+    "" | "lts" | "latest" => stable_versions[0]
     _ =>
       match version_count {
-        2 | 3 =>
-          // Kotlin 版本号不带 v 前缀
-          if version_count == 3 {
-            // 精确匹配
-            let search_tag = "v\{version}"
-            guard valid_versions.search_by(fn(v) { v.tag_name == search_tag })
-              is Some(idx) else {
-              raise fail("找不到版本：\{version}")
-            }
-            valid_versions[idx].tag_name[1:].to_owned()
-          } else {
-            // 前缀匹配
-            let search_tag = "v\{version}."
-            guard valid_versions.search_by(fn(v) {
-                v.tag_name.has_prefix(search_tag)
-              })
-              is Some(idx) else {
-              raise fail("找不到版本：\{version}")
-            }
-            valid_versions[idx].tag_name[1:].to_owned()
+        // 仅主版本号，如 "2" → 匹配最新 2.x 版本
+        1 => {
+          let prefix = "\{version}."
+          guard stable_versions.search_by(fn(v) { v.has_prefix(prefix) })
+            is Some(idx) else {
+            raise fail("找不到版本：\{version}")
           }
+          stable_versions[idx]
+        }
+        // 主版本号+次版本号，如 "2.1" → 匹配最新 2.1.x 版本
+        2 => {
+          let prefix = "\{version}."
+          guard stable_versions.search_by(fn(v) { v.has_prefix(prefix) })
+            is Some(idx) else {
+            raise fail("找不到版本：\{version}")
+          }
+          stable_versions[idx]
+        }
+        // 精确版本号，如 "2.1.20" → 精确匹配
+        3 => {
+          guard stable_versions.search_by(fn(v) { v == version }) is Some(idx) else {
+            raise fail("找不到版本：\{version}")
+          }
+          stable_versions[idx]
+        }
         _ => raise fail("无效的版本号：\{version}")
       }
   }
@@ -124,7 +149,7 @@ pub fn Kotlin::get_expected_checksum(
 pub fn Kotlin::get_exe_path(version : String) -> String raise {
   let os = @os.get_os_name()
   let suffix = if os is Windows { ".bat" } else { "" }
-  [version_dir(Tool::Kotlin, version), "bin", "kotlinc\{suffix}"]
+  [version_dir(Tool::Kotlin, version), "bin", "kotlin\{suffix}"]
   .filter(v => !v.is_blank())
   .join("/")
 }

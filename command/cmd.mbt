@@ -187,7 +187,7 @@ pub async fn run_with_output(
   cwd? : StringView,
 ) -> (Int, &@io.Data) {
   let cmd_str = join_args([cmd.to_owned(), ..args])
-  println("运行 \{cmd_str}")
+  @log.debug("运行 \{cmd_str}")
   let (r, w) = @process.read_from_process()
   let (exit_code, output) = @async.with_task_group(group => {
     defer r.close()
