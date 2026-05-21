@@ -56,6 +56,8 @@ test "join_path" {
 
 ///|
 pub fn[T : Show] join_paths(paths : ArrayView[T]) -> String {
+  // 过滤掉空值
+  let paths = paths.filter(v => !v.to_string().is_blank())
   if paths.is_empty() {
     return ""
   }

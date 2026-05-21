@@ -1,0 +1,13 @@
+import {
+  "username/mvm/ffi",
+  "username/mvm/test",
+  "username/mvm/fs_ext",
+  "username/mvm/command" @mvm_cmd,
+  "moonbitlang/core/env",
+  "moonbitlang/async",
+  "moonbitlang/async/fs",
+}
+
+options(
+  "native-stub": [ "zip.c", "miniz.c" ],
+)

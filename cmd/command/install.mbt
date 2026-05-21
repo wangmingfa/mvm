@@ -247,27 +247,31 @@ async fn extract_file(file : String, dest : String) -> Unit {
 }
 
 ///|
-async fn check_unzip_is_installed() -> Unit {
-  if !@mvm_cmd.command_exists("unzip") {
-    raise fail("请先安装 unzip")
-  }
-}
+// async fn check_unzip_is_installed() -> Unit {
+//   if !@mvm_cmd.command_exists("unzip") {
+//     raise fail("请先安装 unzip")
+//   }
+// }
 
 ///|
-async fn unzip(zip_file_path : String, output_dir : String) -> (Int, &@io.Data) {
-  let os = @os.get_os_name()
-  match os {
-    Linux | MacOS => {
-      check_unzip_is_installed()
-      @process.collect_output_merged("unzip", [
-        "-q", "-o", zip_file_path, "-d", output_dir,
-      ])
-    }
-    Windows =>
-      @process.collect_output_merged("powershell", [
-        "-Command",
-        "Expand-Archive -Path \"\{zip_file_path}\" -DestinationPath \"\{output_dir}\" -Force",
-      ])
-    _ => raise fail("不支持的操作系统")
-  }
+fn unzip(zip_file_path : String, output_dir : String) -> (Int, &@io.Data) {
+  // let os = @os.get_os_name()
+  // match os {
+  //   Linux | MacOS => {
+  //     check_unzip_is_installed()
+  //     @process.collect_output_merged("unzip", [
+  //       "-q", "-o", zip_file_path, "-d", output_dir,
+  //     ])
+  //   }
+  //   Windows =>
+  //     @process.collect_output_merged("powershell", [
+  //       "-Command",
+  //       "Expand-Archive -Path \"\{zip_file_path}\" -DestinationPath \"\{output_dir}\" -Force",
+  //     ])
+  //   _ => raise fail("不支持的操作系统")
+  // }
+  let success = @zip.unzip(zip_file_path, output_dir, on_progress=progress => {
+    println("解压进度 \{progress}")
+  })
+  (if success { 0 } else { 1 }, "")
 }

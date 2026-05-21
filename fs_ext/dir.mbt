@@ -1,7 +1,5 @@
 ///|
-/// 确保目录存在（跨平台方案，天然容忍并发冲突）
-/// Unix: 使用 mkdir -p（自动创建中间目录 + 目录已存在时静默成功）
-/// Windows: 使用 cmd mkdir（默认创建中间目录，目录已存在时需兜底检查）
+/// 确保目录存在
 pub async fn ensure_dir(dir : String) -> Unit {
   // if (try? @fs.kind(dir)) is Ok(Directory) {
   //   raise fail("\{dir} 不是文件夹")
@@ -19,6 +17,13 @@ pub async fn ensure_dir(dir : String) -> Unit {
   // }
   guard @fs.exists(dir) is false else { return }
   @fs.mkdir(dir, recursive=true)
+}
+
+///|
+/// 确保一串拼接起来的路径存在
+pub async fn ensure_paths(paths : ArrayView[String]) -> Unit {
+  let dir = join_paths(paths)
+  ensure_dir(dir)
 }
 
 ///|

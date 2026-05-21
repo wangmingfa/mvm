@@ -109,13 +109,13 @@ async test "get_best_downloader" {
 
 ///|
 fn get_cmd_and_args(
-  cmd : String,
+  cmd : StringView,
   args : ArrayView[String],
-) -> (String, ArrayView[String]) {
+) -> (StringView, ArrayView[String]) {
   // 在windows下，需要使用powershell -Command
   let os = @os.get_os_name()
   match os {
-    Windows => ("powershell", ["-Command", cmd + " " + join_args(args)])
+    Windows => ("powershell", ["-Command", "\{cmd} " + join_args(args)])
     _ => (cmd, args)
   }
 }
@@ -130,14 +130,28 @@ async test "run node -v" {
 
 ///|
 pub async fn run(
-  cmd : String,
+  cmd : StringView,
   args : ArrayView[String],
   extra_env? : Map[String, String] = {},
+  inherit_env? : Bool = true,
+  stdin? : &@process.ProcessInput,
+  stdout? : &@process.ProcessOutput,
+  stderr? : &@process.ProcessOutput,
+  cwd? : StringView,
 ) -> Int {
   let (cmd, args) = get_cmd_and_args(cmd, args)
   let arg_str = join_args(args)
   @log.debug("运行: \{cmd} \{arg_str}")
-  @process.run(cmd, args, extra_env~)
+  @process.run(
+    cmd,
+    args,
+    extra_env~,
+    inherit_env~,
+    stdin?,
+    stdout?,
+    stderr?,
+    cwd?,
+  )
 }
 
 ///|

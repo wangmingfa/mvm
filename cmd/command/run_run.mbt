@@ -23,34 +23,53 @@ async fn run_run(
     },
   )
 
-  let program_exe_info = @tools.get_program_exe_info(
-    tool, exec_program, version,
-  )
-  let {
-    path: exec_program_path,
-    version: target_version,
-    program_exists,
-    tool_exists,
-    envs: exec_envs,
-    ..,
-  } = program_exe_info
+  let mut try_install = true
 
-  @log.debug(
-    "使用 \{tool}@\{target_version} (\{exec_program_path}) 运行命令: \{to_repr(args)}",
-  )
-  // 检查工具是否安装，未安装则自动安装
-  if !tool_exists {
-    @log.info("\{tool}@\{target_version} 未安装，正在自动安装...")
-    let install_result = run_install(tool, Some(target_version), false, false)
-    if !install_result.is_success() {
-      raise fail(install_result.error.unwrap_or("安装失败"))
-    }
-  }
-
-  if !program_exists {
-    raise fail(
-      "要执行的程序 \{exec_program}(\{exec_program_path}) 不存在",
+  let program_exe_info = while true {
+    let program_exe_info = @tools.get_program_exe_info(
+      tool, exec_program, version,
     )
+    let {
+      path: exec_program_path,
+      version: target_version,
+      program_exists,
+      tool_exists,
+      ..,
+    } = program_exe_info
+
+    @log.debug(
+      "使用 \{tool}@\{target_version} (\{exec_program_path}) 运行命令: \{to_repr(args)}",
+    )
+    // 检查工具是否安装，未安装则自动安装
+    if !tool_exists {
+      if try_install {
+        try_install = false
+        // 尝试安装
+        @log.info("\{tool}@\{target_version} 未安装，正在自动安装...")
+        let install_result = run_install(
+          tool,
+          Some(target_version),
+          false,
+          false,
+        )
+        if !install_result.is_success() {
+          raise fail(install_result.error.unwrap_or("安装失败"))
+        }
+        continue
+      } else {
+        // 安装后，工具还是不存在
+        raise fail("安装 \{tool}@\{target_version} 失败")
+      }
+    }
+    // 检查要运行的程序是否存在
+    if !program_exists {
+      raise fail(
+        "要执行的程序 \{exec_program}(\{exec_program_path}) 不存在",
+      )
+    }
+    break program_exe_info
+  } nobreak {
+    raise fail("无法运行命令")
   }
 
   let before_run_result = before_run(program_exe_info, exec_args)
@@ -58,6 +77,8 @@ async fn run_run(
   if !@log.is_debug_log_level() {
     @log.clear_all_lines()
   }
+
+  let { path: exec_program_path, envs: exec_envs, .. } = program_exe_info
 
   let (exit_code, output) = @mvm_cmd.run_with_output(
     exec_program_path,
