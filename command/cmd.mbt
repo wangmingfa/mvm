@@ -207,13 +207,13 @@ pub async fn run_with_output(
         cwd?,
       )
     })
-    let (exit_code, output) = if exit_code.try_wait() is Some(exit_code) {
-      (exit_code, output.wait())
-    } else {
-      output.cancel()
-      (1, b"Failed")
-    }
-    (exit_code, output)
+    // let (exit_code, output) = if exit_code.try_wait() is Some(exit_code) {
+    //   (exit_code, output.wait())
+    // } else {
+    //   output.cancel()
+    //   (1, b"Failed")
+    // }
+    (exit_code.wait(), output.wait())
   })
   (exit_code, output)
 }
