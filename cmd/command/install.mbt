@@ -247,33 +247,14 @@ async fn extract_file(file : String, dest : String) -> Unit {
 }
 
 ///|
-// async fn check_unzip_is_installed() -> Unit {
-//   if !@mvm_cmd.command_exists("unzip") {
-//     raise fail("请先安装 unzip")
-//   }
-// }
-
-///|
 fn unzip(zip_file_path : String, output_dir : String) -> (Int, &@io.Data) {
-  // let os = @os.get_os_name()
-  // match os {
-  //   Linux | MacOS => {
-  //     check_unzip_is_installed()
-  //     @process.collect_output_merged("unzip", [
-  //       "-q", "-o", zip_file_path, "-d", output_dir,
-  //     ])
-  //   }
-  //   Windows =>
-  //     @process.collect_output_merged("powershell", [
-  //       "-Command",
-  //       "Expand-Archive -Path \"\{zip_file_path}\" -DestinationPath \"\{output_dir}\" -Force",
-  //     ])
-  //   _ => raise fail("不支持的操作系统")
-  // }
   let progres_bar = @progress.ProgressBar(
     100,
     prefix="解压",
-    progress_bar_type=Full,
+    mode=Full,
+    show_speed=false,
+    show_time_info=false,
+    show_unit=false,
   )
   let success = @zip.unzip(zip_file_path, output_dir, on_progress=progress => {
     progres_bar.set_completed_int(progress.to_int())

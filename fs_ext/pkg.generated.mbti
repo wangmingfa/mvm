@@ -16,6 +16,8 @@ pub async fn copy(String, String) -> Unit
 
 pub async fn ensure_dir(String) -> Unit
 
+pub async fn ensure_paths(ArrayView[String]) -> Unit
+
 pub fn get_parent_dir(String, levels? : Int) -> String? raise
 
 pub fn get_path_name(String) -> String

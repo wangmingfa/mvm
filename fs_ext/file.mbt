@@ -9,14 +9,7 @@ pub async fn mv(src : String, dest : String) -> Unit {
     @fs.rename(src, "\{dest}/\{name}")
     return
   }
-
-  // dest 不存在时，确保其父目录存在后再重命名
-  guard get_parent_dir(dest) is Some(parent_dir) else {
-    raise fail("无法获取目标路径的父目录：\{dest}")
-  }
-  if !parent_dir.is_blank() && !@fs.exists(parent_dir) {
-    ensure_dir(parent_dir)
-  }
+  ensure_dir(dest)
   @fs.rename(src, dest)
 }
 

@@ -30,9 +30,9 @@ pub fn get_logo_text() -> String
 
 pub fn get_readable_file_size(Int64) -> String
 
-pub fn get_readable_time(Int64) -> String
+pub fn get_readable_speed(Int64, Int64, show_unit? : Bool) -> (String, Int64)
 
-pub fn get_speed_with_readable_unit(Int64, Int64) -> (String, Int64)
+pub fn get_readable_time(Int64) -> String
 
 pub fn[T : ToStr] green(T) -> String
 

@@ -58,6 +58,10 @@ pub async fn write_project_config(Tool, String) -> String
 // Errors
 
 // Types and methods
+type AdoptiumAsset derive(@json.FromJson)
+
+type AdoptiumVersion derive(@json.FromJson)
+
 pub struct Bun {
 }
 pub fn Bun::get_download_info(@os.OsInfo, String) -> DownloadInfo raise
@@ -65,10 +69,6 @@ pub fn Bun::get_exe_path(String) -> String raise
 pub async fn Bun::get_expected_checksum(@os.OsInfo, String) -> String?
 pub async fn Bun::get_program_exe_info(String, String) -> ProgramExeInfo
 pub async fn Bun::get_target_version(@os.OsInfo, String, Int) -> String
-
-type BunAssetInfo derive(@json.FromJson)
-
-type BunReleaseInfo derive(@json.FromJson)
 
 pub struct Config {
   node : String?
@@ -98,6 +98,8 @@ pub struct DownloadInfo {
   root_path_depth : UInt
 } derive(@debug.Debug)
 
+type GithubReleaseInfo derive(@json.FromJson)
+
 pub(all) struct GlobalConfig {
   github_proxy : String?
   node_mirror : String?
@@ -117,7 +119,7 @@ pub async fn Go::get_program_exe_info(String, String) -> ProgramExeInfo
 pub async fn Go::get_target_version(@os.OsInfo, String, Int) -> String
 
 type Java
-pub fn Java::get_download_info(@os.OsInfo, String) -> DownloadInfo
+pub fn Java::get_download_info(@os.OsInfo, String) -> DownloadInfo raise
 pub fn Java::get_exe_path(String) -> String raise
 pub fn Java::get_expected_checksum(@os.OsInfo, String) -> String?
 pub fn Java::get_java_builtin_tool_path_and_version(Tool, ProgramExeInfo) -> ProgramExeInfo?
@@ -134,7 +136,11 @@ pub fn Kotlin::get_kotlin_builtin_tool_path_and_version(Tool, ProgramExeInfo) ->
 pub async fn Kotlin::get_program_exe_info(String, String) -> ProgramExeInfo
 pub async fn Kotlin::get_target_version(@os.OsInfo, String, Int) -> String
 
-type KotlinReleaseInfo derive(@json.FromJson)
+type MavenCentralResponse derive(@json.FromJson)
+
+type MavenCentralResponseData derive(@json.FromJson)
+
+type MavenCentralVersionDoc derive(@json.FromJson)
 
 type Node
 pub fn Node::get_download_info(@os.OsInfo, String) -> DownloadInfo raise

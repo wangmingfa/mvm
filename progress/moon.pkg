@@ -2,10 +2,5 @@ import {
   "moonbitlang/async" @async,
   "moonbitlang/core/encoding/utf8",
   "username/mvm/utils",
-  "username/mvm/ffi",
   "username/mvm/stdio",
 }
-
-options(
-  "native-stub": [ "progress.c" ],
-)

@@ -250,9 +250,9 @@ pub async fn Node::get_program_exe_info(
     raise fail("请指定 program 或 version")
   }
   let node_path = NodePath(version)
-  let { root, lib: lib_dir, .. } = node_path
+  let { lib: lib_dir, .. } = node_path
   let program_path = node_path.get_exe_path(program)
-  let node_exists = @fs.exists(root)
+  let node_exists = @fs.exists(program_path)
   match program {
     "node" =>
       return ProgramExeInfo(

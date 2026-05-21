@@ -1,11 +1,56 @@
 ///|
-#borrow(prefix, suffix)
-extern "C" fn c_progress_bar(
-  prefix : Bytes,
-  completed : Int64,
-  total : Int64,
-  suffix : Bytes,
-) -> Unit = "progress_bar"
+/// 将字节大小转换为可读格式（如 "20.5 MB"）
+/// show_unit: 是否显示单位（B/KB/MB/GB），默认为 true
+fn format_size(bytes : Int64, show_unit? : Bool = true) -> String {
+  if bytes < 1000 {
+    if show_unit {
+      "\{bytes} B"
+    } else {
+      "\{bytes}"
+    }
+  } else if bytes < 1_000_000 {
+    let main = bytes / 1000
+    let sub = bytes * 10 / 1000 % 10
+    if show_unit {
+      "\{main}.\{sub} KB"
+    } else {
+      "\{main}.\{sub}"
+    }
+  } else if bytes < 1_000_000_000 {
+    let main = bytes / 1_000_000
+    let sub = bytes * 10 / 1_000_000 % 10
+    if show_unit {
+      "\{main}.\{sub} MB"
+    } else {
+      "\{main}.\{sub}"
+    }
+  } else {
+    let main = bytes / 1_000_000_000
+    let sub = bytes * 10 / 1_000_000_000 % 10
+    if show_unit {
+      "\{main}.\{sub} GB"
+    } else {
+      "\{main}.\{sub}"
+    }
+  }
+}
+
+///|
+/// 构建进度条字符串（如 "[======>               ]"）
+fn build_bar(filled : Int, bar_width : Int) -> String {
+  let mut bar = ""
+  for _ in 0..<filled {
+    bar = bar + "="
+  }
+  if filled < bar_width {
+    bar = bar + ">"
+    let remaining = bar_width - filled - 1
+    for _ in 0..<remaining {
+      bar = bar + " "
+    }
+  }
+  bar
+}
 
 ///|
 pub fn progress_bar(
@@ -13,13 +58,26 @@ pub fn progress_bar(
   completed : Int64,
   total : Int64,
   suffix? : String,
+  show_unit? : Bool = true,
 ) -> Unit {
-  c_progress_bar(
-    @ffi.string_to_c_bytes(if prefix is Some(s) { s } else { "" }),
-    completed,
-    total,
-    @ffi.string_to_c_bytes(if suffix is Some(s) { s } else { "" }),
+  // 限制 completed 不超过 total
+  let completed = if completed > total { total } else { completed }
+  if total <= 0 {
+    return
+  }
+  let bar_width = 50
+  let percent = (completed * 100 / total).to_int()
+  let filled = (completed * bar_width.to_int64() / total).to_int()
+  let bar = build_bar(filled, bar_width)
+  let completed_str = format_size(completed, show_unit~)
+  let total_str = format_size(total, show_unit~)
+  let prefix_str = if prefix is Some(s) { "\{s} " } else { "" }
+  let suffix_str = if suffix is Some(s) { s } else { "" }
+  // \r 回到行首覆盖上一行内容
+  @stdio.print(
+    "\r\{prefix_str}[\{bar}] \{completed_str} / \{total_str}  (\{percent}%)  \{suffix_str}",
   )
+  @stdio.flush_stdout()
 }
 
 ///|
@@ -46,9 +104,14 @@ fn progress_bar_with_detailed_info(
   start_time~ : Int64,
   period~ : Int64,
   completed_in_period~ : Int64,
+  show_speed? : Bool = true,
+  show_time_info? : Bool = true,
+  show_unit? : Bool = true,
 ) -> Unit {
-  let (speed_str, current_speed) = @utils.get_speed_with_readable_unit(
-    completed_in_period, period,
+  let (speed_str, current_speed) = @utils.get_readable_speed(
+    completed_in_period,
+    period,
+    show_unit~,
   )
   let time_info = @utils.get_duration_and_total_time(
     current_size=completed,
@@ -56,12 +119,14 @@ fn progress_bar_with_detailed_info(
     start_time_ms=start_time,
     current_speed~,
   )
-  progress_bar(
-    prefix?,
-    completed,
-    total,
-    suffix="|  \{speed_str}  |  \{time_info}",
-  )
+  let suffixes = []
+  if show_speed {
+    suffixes.push("|  \{speed_str}")
+  }
+  if show_time_info {
+    suffixes.push("|  \{time_info}")
+  }
+  progress_bar(prefix?, completed, total, suffix=suffixes.join(" "), show_unit~)
 }
 
 ///|
@@ -82,6 +147,8 @@ async test "progress_bar_with_detailed_info" {
       start_time~,
       period~,
       completed_in_period=step,
+      show_speed=false,
+      show_time_info=false,
     )
     @async.sleep(sleep_time)
   }
@@ -90,7 +157,7 @@ async test "progress_bar_with_detailed_info" {
 }
 
 ///|
-pub(all) enum ProgressBarType {
+pub(all) enum ProgressBarMode {
   Full
   Simple
 }
@@ -98,7 +165,10 @@ pub(all) enum ProgressBarType {
 ///|
 pub struct ProgressBar {
   prefix : String
-  progress_bar_type : ProgressBarType
+  mode : ProgressBarMode
+  show_speed : Bool
+  show_time_info : Bool
+  show_unit : Bool
   total : Int64
   mut competed : Int64
   start_time : Int64
@@ -112,12 +182,18 @@ pub struct ProgressBar {
 pub fn ProgressBar::ProgressBar(
   total : Int64,
   prefix? : String = "",
-  progress_bar_type? : ProgressBarType = Full,
+  mode? : ProgressBarMode = Full,
+  show_speed? : Bool = true,
+  show_time_info? : Bool = true,
+  show_unit? : Bool = true,
 ) -> Self {
   let time = @async.now()
   {
     prefix,
-    progress_bar_type,
+    mode,
+    show_speed,
+    show_time_info,
+    show_unit,
     total,
     competed: 0,
     start_time: time,
@@ -135,14 +211,18 @@ fn ProgressBar::percent(self : Self) -> Int {
 
 ///|
 fn ProgressBar::print(self : Self) -> Unit {
-  match self.progress_bar_type {
+  match self.mode {
     Full =>
       progress_bar_with_detailed_info(
+        prefix=self.prefix,
         completed=self.competed,
         total=self.total,
         start_time=self.start_time,
         period=self.period,
         completed_in_period=self.completed_in_period,
+        show_speed=self.show_speed,
+        show_time_info=self.show_time_info,
+        show_unit=self.show_unit,
       )
     Simple => simple_progress_bar(prefix=self.prefix, self.percent())
   }
@@ -223,26 +303,15 @@ fn simple_progress_bar(prefix? : String = "", percent : Int) -> Unit {
   // 进度条总宽度
   let bar_width = 30
   let filled = percent * bar_width / 100
-  // 构建填充部分
-  let mut bar = ""
-  for _ in 0..<filled {
-    bar = bar + "="
-  }
-  // 100% 时全部填充，否则添加 ">" 指示器和空格
-  if filled < bar_width {
-    bar = bar + ">"
-    let remaining = bar_width - filled - 1
-    for _ in 0..<remaining {
-      bar = bar + " "
-    }
-  }
+  let bar = build_bar(filled, bar_width)
   // \r 回到行首覆盖上一行内容
   @stdio.print("\r\{prefix}[\{bar}] \{percent}%")
+  @stdio.flush_stdout()
 }
 
 ///|
 async test "simple_progress_bar" {
-  let progress_bar = ProgressBar(100, progress_bar_type=Simple)
+  let progress_bar = ProgressBar(100, mode=Simple)
   for i in 1..<=10 {
     progress_bar.set_completed_int(i * 10)
     @async.sleep(100)

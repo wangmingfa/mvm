@@ -2,7 +2,8 @@
 package "username/mvm/command"
 
 import {
-  "moonbitlang/core/debug",
+  "moonbitlang/async/io",
+  "moonbitlang/async/process",
 }
 
 // Values
@@ -12,17 +13,13 @@ pub async fn command_exists(String) -> Bool
 
 pub async fn get_best_downloader() -> String?
 
-pub async fn run(String, ArrayView[String], extra_env? : Map[String, String]) -> Int
+pub async fn run(StringView, ArrayView[String], extra_env? : Map[String, String], inherit_env? : Bool, stdin? : &@process.ProcessInput, stdout? : &@process.ProcessOutput, stderr? : &@process.ProcessOutput, cwd? : StringView) -> Int
 
-pub fn run_with_output(String, ArrayView[String], extra_env? : Map[String, String]) -> RunOutput
+pub async fn run_with_output(StringView, ArrayView[String], extra_env? : Map[String, String], inherit_env? : Bool, stdin? : &@process.ProcessInput, cwd? : StringView) -> (Int, &@io.Data)
 
 // Errors
 
 // Types and methods
-pub struct RunOutput {
-  exit_code : Int
-  output : String
-} derive(@debug.Debug)
 
 // Type aliases
 

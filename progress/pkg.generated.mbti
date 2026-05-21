@@ -2,12 +2,15 @@
 package "username/mvm/progress"
 
 // Values
-pub fn progress_bar(Int64, Int64, suffix? : String) -> Unit
+pub fn progress_bar(prefix? : String, Int64, Int64, suffix? : String, show_unit? : Bool) -> Unit
 
 // Errors
 
 // Types and methods
 pub struct ProgressBar {
+  prefix : String
+  mode : ProgressBarMode
+  show_unit : Bool
   total : Int64
   mut competed : Int64
   start_time : Int64
@@ -16,13 +19,19 @@ pub struct ProgressBar {
   mut period : Int64
   mut completed_in_period : Int64
 }
+pub fn ProgressBar::ProgressBar(Int64, prefix? : String, mode? : ProgressBarMode, show_unit? : Bool) -> Self
 pub fn ProgressBar::add_completed(Self, Int64) -> Unit
-pub fn ProgressBar::clear() -> Unit
+pub fn ProgressBar::clear(Self) -> Unit
 pub fn ProgressBar::duration(Self) -> Int64
 pub fn ProgressBar::is_completed(Self) -> Bool
-pub fn ProgressBar(Int64) -> Self
 pub fn ProgressBar::set_complete(Self) -> Unit
 pub fn ProgressBar::set_completed(Self, Int64) -> Unit
+pub fn ProgressBar::set_completed_int(Self, Int) -> Unit
+
+pub(all) enum ProgressBarMode {
+  Full
+  Simple
+}
 
 // Type aliases
 
