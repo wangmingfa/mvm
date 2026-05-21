@@ -57,7 +57,7 @@ mvm 支持 9 种开发工具，每种工具均可使用全部版本管理命令�
 | zig | Zig | zig | ★ |
 | go | Go | go, gofmt | ★ |
 | python / python3 | Python | python3, python | ★ |
-| rust / rustc | Rust | rustc, cargo, rustfmt, cargo-fmt, clippy-driver, cargo-clippy, rustdoc | ★ |
+| rust / rustc | Rust | rustc, cargo, rustfmt, cargo-fmt, <br>clippy-driver, cargo-clippy, rustdoc | ★ |
 | deno | Deno | deno | ★ |
 | java / jdk | Java | java, javac, jar, javadoc, jps, jcmd, jstat, keytool | ★ |
 | kotlin | Kotlin | kotlin, kotlinc | ★ |
