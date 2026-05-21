@@ -2,10 +2,11 @@
 const BUN_RELEASE_URL = "https://github.com/oven-sh/bun/releases/download"
 
 ///|
-const BUN_INDEX_URL = "https://api.github.com/repos/oven-sh/bun/releases"
+/// Bun 版本列表来源（使用 mise-versions 避免 GitHub API 速率限制）
+const BUN_VERSION_URL = "https://mise-versions.jdx.dev/tools/bun"
 
 ///|
-const BUN_INDEX_CACHE_FILE = "bun_releases.json"
+const BUN_VERSIONS_CACHE_FILE = "bun_versions.json"
 
 ///|
 pub struct Bun {}
@@ -17,82 +18,186 @@ test "Bun" {
 }
 
 ///|
-struct BunReleaseInfo {
-  tag_name : String
-  assets : Array[BunAssetInfo]
-} derive(@json.FromJson)
-
-///|
-struct BunAssetInfo {
-  name : String
-} derive(@json.FromJson)
-
-///|
 pub async fn Bun::get_target_version(
   os : @os.OsInfo,
   version : String,
   version_count : Int,
 ) -> String {
-  get_target_version_with_cache(
-    BUN_INDEX_CACHE_FILE,
-    BUN_INDEX_URL,
-    "Bun",
-    os,
+  let _ = os
+  // 尝试从缓存读取版本列表（仅当 version_count == 3 时使用缓存）
+  if version_count == 3 {
+    let cached = read_cache_file_content(BUN_VERSIONS_CACHE_FILE)
+    if cached is Some(content) {
+      let versions = Bun::_parse_cached_versions(content)
+      if versions.length() > 0 {
+        let result = Bun::_find_version(version, version_count, versions) catch {
+          _ => ""
+        }
+        if !result.is_blank() {
+          return result
+        }
+      }
+    }
+  }
+
+  // 从 mise-versions 获取版本列表 HTML
+  let (res, data) = @http.get(
+    BUN_VERSION_URL,
+    headers=@request.merge_detault_headers(),
+  )
+  guard res.code is (200..<300) else {
+    raise fail(
+      "无法获取到Bun版本信息（HTTP \{res.code} \{res.reason}，URL: \{BUN_VERSION_URL}）",
+    )
+  }
+  let html = data.text()
+
+  // 解析 HTML 中的版本信息
+  let versions = Bun::_parse_versions_from_html(html)
+
+  // 缓存版本列表（每行一个版本）
+  write_cache_file_content(BUN_VERSIONS_CACHE_FILE, versions.join("\n"))
+
+  // 从版本列表中查找目标版本
+  Bun::_find_version(version, version_count, versions)
+}
+
+///|
+async test "Bun::get_target_version" {
+  let os = @os.get_os_info()
+  let version = Bun::get_target_version(os, "0", 1)
+  inspect(
     version,
-    version_count,
-    Bun::_get_proper_version,
-    headers=@request.github_headers(),
+    content=(
+      #|v0.8.1
+    ),
   )
 }
 
 ///|
-fn Bun::_get_proper_version(
-  os : @os.OsInfo,
-  version : String,
-  version_count : Int,
-  json : Json,
-) -> String raise {
-  guard json is Array(arr) else { raise fail("Bun版本信息格式不对") }
-  let bunInfos : Array[BunReleaseInfo] = arr.map(v => {
-    @json.from_json(v) catch {
-      _ => raise fail("解析Bun版本信息失败")
+/// 从缓存中解析版本列表（每行一个版本）
+fn Bun::_parse_cached_versions(content : String) -> Array[String] {
+  content
+  .split("\n")
+  .map(v => v.trim().to_owned())
+  .filter(v => !v.is_blank())
+  .to_array()
+}
+
+///|
+/// 从 mise-versions HTML 中解析版本列表
+/// HTML 中包含两种 release URL 格式：
+/// 1. <a> 标签：oven-sh/bun/releases/tag/vX.Y.Z（渲染的版本链接）
+/// 2. Astro island props：oven-sh/bun/releases/tag/bun-vX.Y.Z（编码的数据）
+/// 使用 releases/tag/ 作为分割点，同时处理 v 和 bun-v 两种前缀
+fn Bun::_parse_versions_from_html(html : String) -> Array[String] raise {
+  let separator =
+    #|component-export="VersionsTable"
+  let props_start_key =
+    #|props="
+  // 从props="xxxxx"中解析xxx
+  guard html.split(separator).to_array().get(1) is Some(version_content) &&
+    version_content.find(props_start_key) is Some(props_start_index) &&
+    version_content[props_start_index + props_start_key.length():].find("\"")
+    is Some(props_end_index) else {
+    raise fail("无法解析到Bun的版本号")
+  }
+  // 替换转义字符
+  let props_content = version_content[props_start_index +
+    props_start_key.length():][:props_end_index]
+    .replace_all(old="&quot;", new="\"")
+    .replace_all(old="&gt;", new=">")
+
+  guard (try? @json.parse(props_content)) is Ok(Object(json)) &&
+    json.get("versions") is Some(Array(versions)) &&
+    versions.get(1) is Some(Array(versions)) else {
+    raise fail("无法解析到Bun的版本号")
+  }
+
+  let bun_versions : Array[String] = []
+
+  for item in versions {
+    guard item is Array(item_arr) &&
+      item_arr.get(1) is Some(Object(version_obj)) else {
+      continue
+    }
+    // version_obj的格式：
+    //  {
+    //   "version": [
+    //     0,
+    //     "0.0.0-9"
+    //   ],
+    //   "created_at": [
+    //     0,
+    //     "2021-09-14T20:23:51.000Z"
+    //   ],
+    //   "release_url": [
+    //     0,
+    //     null
+    //   ],
+    //   "prerelease": [
+    //     0,
+    //     false
+    //   ]
+    // }
+    guard version_obj.get("version") is Some(Array(version_arr)) &&
+      version_arr.get(1) is Some(String(version)) else {
+      continue
+    }
+    bun_versions.push("v\{version}")
+  }
+
+  guard bun_versions.length() > 0 else { raise fail("Bun版本信息为空") }
+
+  bun_versions.sort_by((a, b) => {
+    @utils.compare_version(Bun::_strip_v_prefix(b), Bun::_strip_v_prefix(a)) catch {
+      _ => 0
     }
   })
-  guard bunInfos.length() > 0 else { raise fail("Bun版本信息为空") }
-  // 提取纯版本号并过滤预发布版本
-  let versions : Array[(String, BunReleaseInfo)] = bunInfos
-    .map(info => {
-      let tag = info.tag_name
-      // Bun 的 tag 格式为 bun-v1.2.5 或 v1.2.5
-      let ver = if tag.has_prefix("bun-") {
-        tag["bun-".length():]
-      } else if tag.has_prefix("v") {
-        tag[1:]
-      } else {
-        tag
-      }
-      // 跳过预发布版本
-      if !ver.contains("-canary") && !ver.contains("-debug") {
-        return (ver.to_owned(), info)
-      }
-      return ("", info)
-    })
-    .filter(v => !v.0.is_blank())
 
-  let all_versions = versions.map(v => v.0).join("、")
-  @log.debug("所有版本: \{all_versions}")
+  let all_versions : String = bun_versions.join("、")
+  @log.debug("所有Bun版本(\{bun_versions.length()}个): \{all_versions}")
 
-  // 按版本号倒序排序
-  versions.sort_by((a, b) => @utils.compare_version(b.0, a.0) catch { _ => 0 })
+  bun_versions
+}
+
+///|
+/// 验证版本号是否为有效的 semver 格式
+/// 仅允许数字和点号，且恰好有 2 个点号（表示 X.Y.Z 格式）
+fn Bun::_is_valid_semver(version : String) -> Bool {
+  let mut dot_count = 0
+  for c in version {
+    if c == '.' {
+      dot_count += 1
+    } else if !(c >= '0' && c <= '9') {
+      break false
+    }
+  } nobreak {
+    dot_count == 2
+  }
+}
+
+///|
+/// 去掉版本号的 "v" 前缀
+fn Bun::_strip_v_prefix(version : String) -> String {
+  if version.has_prefix("v") {
+    let sv = version[1:]
+    sv.to_owned()
+  } else {
+    version
+  }
+}
+
+///|
+/// 从排序后的版本列表中查找目标版本
+fn Bun::_find_version(
+  version : String,
+  version_count : Int,
+  versions : Array[String],
+) -> String raise {
   guard versions.length() > 0 else { raise fail("Bun版本信息为空") }
   match version {
-    "" | "latest" =>
-      Bun::_check_os_compatiable(
-        os,
-        versions[0].0,
-        versions[0].1,
-        error_msg_tpl="当前最新版本 {version} 不支持 {os.name} 操作系统下的 {os.arch} 架构",
-      )
+    "" | "latest" => versions[0]
     _ =>
       match version_count {
         1..=3 => {
@@ -103,20 +208,15 @@ fn Bun::_get_proper_version(
           }
           guard versions.search_by(v => {
               if version_count == 3 {
-                v.0 == find_version
+                v == find_version
               } else {
-                v.0.has_prefix(find_version + ".")
+                v.has_prefix(find_version + ".")
               }
             })
             is Some(idx) else {
             raise fail("找不到版本：\{version}")
           }
-          Bun::_check_os_compatiable(
-            os,
-            versions[idx].0,
-            versions[idx].1,
-            error_msg_tpl="版本 {version} 不支持 {os.name} 操作系统下的 {os.arch} 架构",
-          )
+          versions[idx]
         }
         _ => raise fail("无效的版本号：\{version}")
       }
@@ -140,25 +240,6 @@ fn Bun::_get_platform_asset_name() -> String raise {
   }
   "bun-\{os_str}-\{arch_str}"
 }
-
-///|
-fn Bun::_check_os_compatiable(
-  os : @os.OsInfo,
-  version : String,
-  bunReleaseInfo : BunReleaseInfo,
-  error_msg_tpl? : String = "版本 {version} 不支持 {os.name} 操作系统下的 {os.arch} 架构",
-) -> String raise {
-  let platform_name = Bun::_get_platform_asset_name()
-  @log.debug("平台名 \{platform_name}")
-
-  let asset_names = bunReleaseInfo.assets.map(v => v.name)
-  if asset_names.all(v => !v.has_prefix(platform_name)) {
-    raise fail(format_os_compat_error(error_msg_tpl, version, os))
-  }
-  version
-}
-
-///|
 
 ///|
 /// 获取 Bun 的下载信息（URL 和 headers）
@@ -212,10 +293,6 @@ pub async fn Bun::get_expected_checksum(
   } else {
     [original_url]
   }
-  // let headers = {
-  //   "User-Agent": "curl/8.7.1",
-  //   "Accept": "application/octet-stream",
-  // }
 
   // 尝试从缓存读取
   let cache_file = "bun_shasums_\{version}.txt"
@@ -260,8 +337,6 @@ fn _parse_bun_shasums(content : String, filename : String) -> String? {
 
 ///|
 pub fn Bun::get_exe_path(version : String) -> String raise {
-  // let os = @os.get_os_name()
-  // let suffix = if os is Windows { ".exe" } else { "" }
   [version_dir(Tool::Bun, version), "bun"].filter(v => !v.is_blank()).join("/")
 }
 
