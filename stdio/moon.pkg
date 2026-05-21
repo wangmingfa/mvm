@@ -1,0 +1,7 @@
+import {
+  "username/mvm/ffi",
+}
+
+options(
+  "native-stub": [ "print.c" ],
+)

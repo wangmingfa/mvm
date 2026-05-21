@@ -140,11 +140,8 @@ extern "C" fn c_enter_alternate_screen() -> Unit = "enter_alternate_screen"
 extern "C" fn c_exit_alternate_screen() -> Unit = "exit_alternate_screen"
 
 ///|
-extern "C" fn clear_lines(lines : Int) -> Unit = "clear_lines"
-
-///|
 pub fn clear_all_lines() -> Unit {
-  clear_lines(log_line_count.val)
+  @stdio.clear_lines(log_line_count.val)
 }
 
 ///|

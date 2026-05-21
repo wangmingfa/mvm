@@ -4,7 +4,7 @@ pub async fn mv(src : String, dest : String) -> Unit {
 
   // dest 已存在且是目录时，将 src 移入该目录内（类似 Unix mv 命令行为）
   // 使用 try? @fs.kind 一次性判断，避免 exists 和 kind 之间的竞争条件
-  if (try? @fs.kind(dest)) is Ok(Directory) {
+  if @fs.exists(dest) && (try? @fs.kind(dest)) is Ok(Directory) {
     let name = get_path_name(src)
     @fs.rename(src, "\{dest}/\{name}")
     return

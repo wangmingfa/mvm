@@ -1,17 +1,21 @@
 ///|
-#borrow(suffix)
+#borrow(prefix, suffix)
 extern "C" fn c_progress_bar(
+  prefix : Bytes,
   completed : Int64,
   total : Int64,
   suffix : Bytes,
 ) -> Unit = "progress_bar"
 
 ///|
-extern "C" fn clear_progress() -> Unit = "clear_progress"
-
-///|
-pub fn progress_bar(completed : Int64, total : Int64, suffix? : String) -> Unit {
+pub fn progress_bar(
+  prefix? : String,
+  completed : Int64,
+  total : Int64,
+  suffix? : String,
+) -> Unit {
   c_progress_bar(
+    @ffi.string_to_c_bytes(if prefix is Some(s) { s } else { "" }),
     completed,
     total,
     @ffi.string_to_c_bytes(if suffix is Some(s) { s } else { "" }),
@@ -30,12 +34,13 @@ async test "progress_bar" {
     )
     @async.sleep(50)
   }
-  clear_progress()
+  @stdio.clear_lines(1)
   println("下载完成")
 }
 
 ///|
 fn progress_bar_with_detailed_info(
+  prefix? : String,
   completed~ : Int64,
   total~ : Int64,
   start_time~ : Int64,
@@ -51,7 +56,12 @@ fn progress_bar_with_detailed_info(
     start_time_ms=start_time,
     current_speed~,
   )
-  progress_bar(completed, total, suffix="|  \{speed_str}  |  \{time_info}")
+  progress_bar(
+    prefix?,
+    completed,
+    total,
+    suffix="|  \{speed_str}  |  \{time_info}",
+  )
 }
 
 ///|
@@ -61,11 +71,12 @@ async test "progress_bar_with_detailed_info" {
   let mut completed : Int64 = 0
   let step : Int64 = 20_000_000
   let start_time = @async.now()
-  let period : Int64 = 50
+  let period : Int64 = 100
   let sleep_time = period.to_int()
   while completed < total {
     completed += step
     progress_bar_with_detailed_info(
+      prefix="下载进度",
       completed~,
       total~,
       start_time~,
@@ -74,12 +85,20 @@ async test "progress_bar_with_detailed_info" {
     )
     @async.sleep(sleep_time)
   }
-  clear_progress()
+  @stdio.clear_lines(1)
   println("下载完成")
 }
 
 ///|
+pub(all) enum ProgressBarType {
+  Full
+  Simple
+}
+
+///|
 pub struct ProgressBar {
+  prefix : String
+  progress_bar_type : ProgressBarType
   total : Int64
   mut competed : Int64
   start_time : Int64
@@ -90,9 +109,15 @@ pub struct ProgressBar {
 }
 
 ///|
-pub fn ProgressBar::new(total : Int64) -> Self {
+pub fn ProgressBar::ProgressBar(
+  total : Int64,
+  prefix? : String = "",
+  progress_bar_type? : ProgressBarType = Full,
+) -> Self {
   let time = @async.now()
   {
+    prefix,
+    progress_bar_type,
     total,
     competed: 0,
     start_time: time,
@@ -104,14 +129,23 @@ pub fn ProgressBar::new(total : Int64) -> Self {
 }
 
 ///|
+fn ProgressBar::percent(self : Self) -> Int {
+  (self.competed * 100 / self.total).to_int()
+}
+
+///|
 fn ProgressBar::print(self : Self) -> Unit {
-  progress_bar_with_detailed_info(
-    completed=self.competed,
-    total=self.total,
-    start_time=self.start_time,
-    period=self.period,
-    completed_in_period=self.completed_in_period,
-  )
+  match self.progress_bar_type {
+    Full =>
+      progress_bar_with_detailed_info(
+        completed=self.competed,
+        total=self.total,
+        start_time=self.start_time,
+        period=self.period,
+        completed_in_period=self.completed_in_period,
+      )
+    Simple => simple_progress_bar(prefix=self.prefix, self.percent())
+  }
 }
 
 ///|
@@ -132,6 +166,11 @@ pub fn ProgressBar::set_completed(self : Self, completed : Int64) -> Unit {
 }
 
 ///|
+pub fn ProgressBar::set_completed_int(self : Self, completed : Int) -> Unit {
+  self.set_completed(completed.to_int64())
+}
+
+///|
 pub fn ProgressBar::add_completed(self : Self, add : Int64) -> Unit {
   self.set_completed(self.competed + add)
 }
@@ -147,8 +186,8 @@ pub fn ProgressBar::is_completed(self : Self) -> Bool {
 }
 
 ///|
-pub fn ProgressBar::clear() -> Unit {
-  clear_progress()
+pub fn ProgressBar::clear(_ : Self) -> Unit {
+  @stdio.clear_lines(1)
 }
 
 ///|
@@ -159,11 +198,55 @@ pub fn ProgressBar::duration(self : Self) -> Int64 {
 ///|
 async test "ProgressBar" {
   // 仅验证 ProgressBar 结构体逻辑，大幅减少模拟数据量和等待时间
-  let progress_bar = ProgressBar::new(100_000_000)
+  let progress_bar = ProgressBar(100_000_000)
   while !progress_bar.is_completed() {
     progress_bar.add_completed(20_000_000)
     @async.sleep(50)
   }
-  ProgressBar::clear()
+  progress_bar.clear()
   println("下载完成")
+}
+
+///|
+/// 简单进度条
+///   prefix 前缀信息
+///   percent 进度百分比，0-100
+fn simple_progress_bar(prefix? : String = "", percent : Int) -> Unit {
+  // 将百分比限制在 0-100 范围内
+  let percent = if percent < 0 {
+    0
+  } else if percent > 100 {
+    100
+  } else {
+    percent
+  }
+  // 进度条总宽度
+  let bar_width = 30
+  let filled = percent * bar_width / 100
+  // 构建填充部分
+  let mut bar = ""
+  for _ in 0..<filled {
+    bar = bar + "="
+  }
+  // 100% 时全部填充，否则添加 ">" 指示器和空格
+  if filled < bar_width {
+    bar = bar + ">"
+    let remaining = bar_width - filled - 1
+    for _ in 0..<remaining {
+      bar = bar + " "
+    }
+  }
+  // \r 回到行首覆盖上一行内容
+  @stdio.print("\r\{prefix}[\{bar}] \{percent}%")
+}
+
+///|
+async test "simple_progress_bar" {
+  let progress_bar = ProgressBar(100, progress_bar_type=Simple)
+  for i in 1..<=10 {
+    progress_bar.set_completed_int(i * 10)
+    @async.sleep(100)
+  }
+  println("")
+  @stdio.clear_lines(1)
 }

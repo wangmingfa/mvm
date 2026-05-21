@@ -8,10 +8,7 @@ import {
   "moonbitlang/async/io",
   "username/mvm/os",
   "username/mvm/log",
+  "username/mvm/stdio",
   "username/mvm/ffi",
   "moonbitlang/core/env",
 }
-
-options(
-  "native-stub": [ "cmd.c" ],
-)

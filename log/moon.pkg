@@ -1,6 +1,7 @@
 import {
   "username/mvm/utils",
   "username/mvm/sys",
+  "username/mvm/stdio",
   "moonbitlang/core/env",
 }
 

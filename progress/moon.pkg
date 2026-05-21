@@ -3,6 +3,7 @@ import {
   "moonbitlang/core/encoding/utf8",
   "username/mvm/utils",
   "username/mvm/ffi",
+  "username/mvm/stdio",
 }
 
 options(

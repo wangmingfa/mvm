@@ -270,8 +270,14 @@ fn unzip(zip_file_path : String, output_dir : String) -> (Int, &@io.Data) {
   //     ])
   //   _ => raise fail("不支持的操作系统")
   // }
+  let progres_bar = @progress.ProgressBar(
+    100,
+    prefix="解压",
+    progress_bar_type=Full,
+  )
   let success = @zip.unzip(zip_file_path, output_dir, on_progress=progress => {
-    println("解压进度 \{progress}")
+    progres_bar.set_completed_int(progress.to_int())
   })
+  progres_bar.clear()
   (if success { 0 } else { 1 }, "")
 }

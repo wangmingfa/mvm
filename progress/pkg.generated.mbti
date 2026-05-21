@@ -20,7 +20,7 @@ pub fn ProgressBar::add_completed(Self, Int64) -> Unit
 pub fn ProgressBar::clear() -> Unit
 pub fn ProgressBar::duration(Self) -> Int64
 pub fn ProgressBar::is_completed(Self) -> Bool
-pub fn ProgressBar::new(Int64) -> Self
+pub fn ProgressBar(Int64) -> Self
 pub fn ProgressBar::set_complete(Self) -> Unit
 pub fn ProgressBar::set_completed(Self, Int64) -> Unit
 

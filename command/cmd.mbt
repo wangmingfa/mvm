@@ -173,25 +173,6 @@ fn join_args(args : ArrayView[String]) -> String {
 }
 
 ///|
-#borrow(str)
-extern "C" fn c_print(str : Bytes) -> Unit = "print"
-
-///|
-pub fn print(str : String) -> Unit {
-  c_print(@ffi.string_to_c_bytes(str))
-}
-
-///|
-test "print" {
-  print("a")
-  print("b")
-  print("c")
-  print("d")
-  print("e")
-  println("")
-}
-
-///|
 pub async fn run_with_output(
   cmd : StringView,
   args : ArrayView[String],
@@ -209,7 +190,7 @@ pub async fn run_with_output(
       let buffer = @buffer.new()
       while r.read_some() is Some(b) {
         let (bytes, str) = gbk_to_utf8(b)
-        print(str)
+        @stdio.print(str)
         buffer.write_bytes(bytes)
       }
       buffer.contents()
@@ -244,4 +225,9 @@ fn gbk_to_utf8(bytes : Bytes) -> (Bytes, String) {
 fn gbk_to_utf8(bytes : Bytes) -> (Bytes, String) {
   // unix没有支持gbk转utf8
   return (bytes, @utf8.decode_lossy(bytes))
+}
+
+///|
+test "" {
+  let _ = @ffi.string_to_c_bytes("")
 }

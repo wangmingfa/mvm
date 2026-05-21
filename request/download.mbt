@@ -152,7 +152,7 @@ pub async fn download(
       )
       defer file.close()
       if show_progress {
-        let progress_bar = @progress.ProgressBar::new(size)
+        let progress_bar = @progress.ProgressBar(size)
         @async.any([
           () => file.write_reader(client),
           () => {
@@ -164,7 +164,7 @@ pub async fn download(
           },
         ])
         progress_bar.set_complete()
-        @progress.ProgressBar::clear()
+        progress_bar.clear()
         println("")
         @log.info(
           "文件已保存：\{file_path} 耗时：\{@utils.get_readable_time(progress_bar.duration())}",
