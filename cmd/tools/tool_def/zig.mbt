@@ -217,12 +217,12 @@ pub async fn Zig::get_program_exe_info(
   if program.is_blank() || version.is_blank() {
     raise fail("请指定 program 或 version")
   }
-  let tool_dir = version_dir(Tool::Zig, version)
-  let exists = @fs.exists(tool_dir)
+  let program_path = Zig::get_exe_path(version)
+  let exists = @fs.exists(program_path)
   if program.to_lower() == "zig" {
     return ProgramExeInfo(
       "zig",
-      Zig::get_exe_path(version),
+      program_path,
       version,
       envs={},
       exists,

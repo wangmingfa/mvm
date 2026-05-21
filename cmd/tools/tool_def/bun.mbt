@@ -348,12 +348,12 @@ pub async fn Bun::get_program_exe_info(
   if program.is_blank() || version.is_blank() {
     raise fail("请指定 program 或 version")
   }
-  let tool_dir = version_dir(Tool::Bun, version)
-  let exists = @fs.exists(tool_dir)
+  let program_path = Bun::get_exe_path(version)
+  let exists = @fs.exists(program_path)
   if program.to_lower() == "bun" {
     return ProgramExeInfo(
       "bun",
-      Bun::get_exe_path(version),
+      program_path,
       version,
       envs={},
       exists,

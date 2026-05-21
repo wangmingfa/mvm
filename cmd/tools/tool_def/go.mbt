@@ -303,14 +303,15 @@ pub async fn Go::get_program_exe_info(
     raise fail("请指定 program 或 version")
   }
   let tool_dir = version_dir(Tool::Go, version)
-  let exists = @fs.exists(tool_dir)
+  let program_path = Go::get_exe_path(version)
+  let exists = @fs.exists(program_path)
   let os = @os.get_os_name()
   let suffix = if os is Windows { ".exe" } else { "" }
   let prog_low = program.to_lower()
   if prog_low == "go" {
     return ProgramExeInfo(
       "go",
-      Go::get_exe_path(version),
+      program_path,
       version,
       envs={},
       exists,

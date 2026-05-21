@@ -200,11 +200,11 @@ pub async fn Kotlin::get_program_exe_info(
   if program.is_blank() || version.is_blank() {
     raise fail("请指定 program 或 version")
   }
-  let tool_dir = version_dir(Tool::Kotlin, version)
-  let exists = @fs.exists(tool_dir)
+  let program_path = Kotlin::get_exe_path(version)
+  let exists = @fs.exists(program_path)
   let kotlin_info = ProgramExeInfo(
     "kotlin",
-    Kotlin::get_exe_path(version),
+    program_path,
     version,
     envs={},
     exists,
@@ -222,13 +222,13 @@ pub async fn Kotlin::get_program_exe_info(
     match kotlin_bin_dir {
       Some(dir) => {
         let tool_path = @fs_ext.join_path(dir, "\{prog_low}\{suffix}")
-        let exists = @fs.exists(tool_path)
+        let tool_exists = @fs.exists(tool_path)
         return ProgramExeInfo(
           prog_low,
           tool_path,
           version,
           envs={},
-          exists,
+          tool_exists,
           Tool::Kotlin,
           exists,
         )

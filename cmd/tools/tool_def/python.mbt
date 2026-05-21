@@ -221,13 +221,14 @@ pub async fn Python::get_program_exe_info(
     raise fail("请指定 program 或 version")
   }
   let tool_dir = version_dir(Tool::Python, version)
-  let exists = @fs.exists(tool_dir)
+  let program_path = Python::get_exe_path(version)
+  let exists = @fs.exists(program_path)
   let os = @os.get_os_name()
   let prog_low = program.to_lower()
   if prog_low == "python" || prog_low == "python3" {
     return ProgramExeInfo(
       "python",
-      Python::get_exe_path(version),
+      program_path,
       version,
       envs={},
       exists,

@@ -68,7 +68,18 @@ pub struct DownloadInfo {
 ///|
 /// 检查版本是否已安装
 pub async fn is_installed(tool : Tool, version : String) -> Bool {
-  @fs.exists(version_dir(tool, version))
+  let tool_exe_path = match tool {
+    Java => Java::get_exe_path(version)
+    Deno => Deno::get_exe_path(version)
+    Rust => Rust::get_exe_path(version)
+    Python => Python::get_exe_path(version)
+    Go => Go::get_exe_path(version)
+    Zig => Zig::get_exe_path(version)
+    Bun => Bun::get_exe_path(version)
+    Node => NodePath(version).get_exe_path(Node.to_string())
+    Kotlin => Kotlin::get_exe_path(version)
+  }
+  @fs.exists(tool_exe_path)
 }
 
 ///|

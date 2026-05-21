@@ -333,11 +333,11 @@ pub async fn Rust::get_program_exe_info(
   if program.is_blank() || version.is_blank() {
     raise fail("请指定 program 或 version")
   }
-  let tool_dir = version_dir(Tool::Rust, version)
-  let exists = @fs.exists(tool_dir)
+  let program_path = Rust::get_exe_path(version)
+  let exists = @fs.exists(program_path)
   let rustc_info = ProgramExeInfo(
     "rustc",
-    Rust::get_exe_path(version),
+    program_path,
     version,
     envs={},
     exists,
@@ -355,13 +355,13 @@ pub async fn Rust::get_program_exe_info(
     match rust_bin_dir {
       Some(dir) => {
         let tool_path = @fs_ext.join_path(dir, "\{prog_low}\{suffix}")
-        let exists = @fs.exists(tool_path)
+        let cargo_exists = @fs.exists(tool_path)
         return ProgramExeInfo(
           prog_low,
           tool_path,
           version,
           envs={},
-          exists,
+          cargo_exists,
           Tool::Rust,
           exists,
         )
