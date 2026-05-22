@@ -6,19 +6,25 @@ pub async fn mv(src : String, dest : String) -> Unit {
   // 使用 try? @fs.kind 一次性判断，避免 exists 和 kind 之间的竞争条件
   if @fs.exists(dest) && (try? @fs.kind(dest)) is Ok(Directory) {
     let name = get_path_name(src)
-    @fs.rename(src, "\{dest}/\{name}")
+    let final_dest = "\{dest}/\{name}"
+    @log.debug("目标为 \{final_dest}")
+    @fs.rename(src, final_dest)
     return
   }
-  ensure_dir(dest)
+  // 确保父目录存在
+  ensure_parent_dir(dest)
   @fs.rename(src, dest)
 }
 
 ///|
 pub async fn copy(src : String, dest : String) -> Unit {
+  @log.debug("拷贝 \{src} => \{dest}")
   let src_file = @fs.open(src, mode=ReadOnly)
   defer src_file.close()
+  @log.debug("打开目标文件 \{dest} | \{@fs.exists(dest)}")
   let dest_file = @fs.open(dest, mode=WriteOnly, create_mode=CreateOrTruncate)
   defer dest_file.close()
+  @log.debug("写入目标文件 \{dest}")
   dest_file.write_reader(src_file)
 }
 
@@ -344,8 +350,10 @@ async test "readlink_target" {
 ///|
 pub async fn remove_if_exists(file_path : String) -> Unit {
   if @fs.exists(file_path) {
-    // 文件
-    @fs.remove(file_path)
+    match @fs.kind(file_path) {
+      Directory => @fs.rmdir(file_path, recursive=true)
+      _ => @fs.remove(file_path)
+    }
   } else {
     // 软连接
     match symlink_status(file_path) {

@@ -348,3 +348,10 @@ pub async fn create_tool_cmd_windows(
   @log.debug("创建ps1文件 \{ps1_file_path}")
   @log.debug("创建cmd文件 \{cmd_file_path}")
 }
+
+///|
+pub fn tool_version_str(tool : Tool, version? : String) -> String {
+  [tool.to_string(), if version is Some(v) { v } else { "" }]
+  .filter(v => !v.is_blank())
+  .join("@")
+}

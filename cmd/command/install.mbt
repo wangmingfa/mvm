@@ -79,15 +79,26 @@ async fn run_install(
   let archive_file = "\{tmp_dir}/\{archive_file_name}"
   let mut skip_download = false
   if !no_cache && @fs.exists(cached_archive_file) {
-    @log.info(
-      "发现已缓存的压缩包，直接复用: \{@utils.blue(cached_archive_file)}",
-    )
-    // 使用拷贝而非移动，防止用户 Ctrl+C 中断时缓存文件丢失
-    @fs_ext.copy(cached_archive_file, archive_file)
-    skip_download = true
+    // 必须是文件
+    match @fs.kind(cached_archive_file) {
+      Regular => {
+        @log.info(
+          "发现已缓存的压缩包，直接复用: \{@utils.blue(cached_archive_file)}",
+        )
+        // 使用拷贝而非移动，防止用户 Ctrl+C 中断时缓存文件丢失
+        @fs_ext.copy(cached_archive_file, archive_file)
+        skip_download = true
+      }
+      _ =>
+        // 处理一些边界场景
+        @fs_ext.remove_if_exists(cached_archive_file)
+    }
   }
 
-  if !skip_download {
+  if skip_download {
+    @log.debug("跳过下载")
+  } else {
+    @log.debug("开始下载")
     download_file(url, archive_file, headers~)
   }
 
@@ -179,6 +190,7 @@ async fn run_install(
   if !skip_download && !no_cache {
     let cached_archive_path = "\{temp_dir_root}/\{archive_file_name}"
     if @fs.exists(archive_file) {
+      @log.debug("缓存压缩包 \{archive_file} => \{cached_archive_path}")
       // 如果缓存目录已有同名文件（极少见），先移除再移动
       @fs_ext.remove_if_exists(cached_archive_path)
       @fs_ext.mv(archive_file, cached_archive_path)
@@ -239,7 +251,7 @@ async fn extract_file(file : String, dest : String) -> Unit {
     f if f.has_suffix(".zip") => unzip(file, dest)
     _ => raise fail("未知的压缩格式：\{file}")
   }
-  @log.debug("解压结果: \{code}")
+  @log.debug("解压结果码: \{code}")
   match code {
     0 => ()
     _ => raise fail("解压失败，原因：\{data.text()}")

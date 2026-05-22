@@ -20,6 +20,14 @@ pub async fn ensure_dir(dir : String) -> Unit {
 }
 
 ///|
+/// 确保父目录存在
+pub async fn ensure_parent_dir(path : String) -> Unit {
+  if get_parent_dir(path) is Some(parent) {
+    ensure_dir(parent)
+  }
+}
+
+///|
 /// 确保一串拼接起来的路径存在
 pub async fn ensure_paths(paths : ArrayView[String]) -> Unit {
   let dir = join_paths(paths)
@@ -28,7 +36,13 @@ pub async fn ensure_paths(paths : ArrayView[String]) -> Unit {
 
 ///|
 pub async fn remove_dir(dir : String) -> Unit {
-  if @fs.exists(dir) {
+  @log.debug("开始删除目录 \{dir}")
+  let exists = @fs.exists(dir)
+  if @log.is_debug() && exists {
+    @log.debug("目录信息 \{exists} | \{to_repr(@fs.kind(dir))}")
+  }
+  if exists && @fs.kind(dir) is Directory {
+    @log.debug("删除目录 \{dir}")
     @fs.rmdir(dir, recursive=true)
   }
 }

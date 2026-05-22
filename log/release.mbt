@@ -1,9 +1,9 @@
 ///|
-fn is_debug() -> Bool {
+pub fn is_debug() -> Bool {
   false
 }
 
 ///|
-fn is_release() -> Bool {
+pub fn is_release() -> Bool {
   return true
 }
