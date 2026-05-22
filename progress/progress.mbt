@@ -71,7 +71,7 @@ pub fn progress_bar(
   let bar = build_bar(filled, bar_width)
   let completed_str = format_size(completed, show_unit~)
   let total_str = format_size(total, show_unit~)
-  let prefix_str = if prefix is Some(s) { "\{s} " } else { "" }
+  let prefix_str = if prefix is Some(s) && !s.is_blank() { "\{s} " } else { "" }
   let suffix_str = if suffix is Some(s) { s } else { "" }
   // \r 回到行首覆盖上一行内容
   @stdio.print(
@@ -267,6 +267,8 @@ pub fn ProgressBar::is_completed(self : Self) -> Bool {
 
 ///|
 pub fn ProgressBar::clear(_ : Self) -> Unit {
+  // 覆盖当前行的内容
+  println("")
   @stdio.clear_lines(1)
 }
 

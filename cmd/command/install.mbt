@@ -263,7 +263,7 @@ fn unzip(zip_file_path : String, output_dir : String) -> (Int, &@io.Data) {
   let progres_bar = @progress.ProgressBar(
     100,
     prefix="解压",
-    mode=Full,
+    mode=Simple,
     show_speed=false,
     show_time_info=false,
     show_unit=false,
