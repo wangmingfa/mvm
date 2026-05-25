@@ -70,6 +70,7 @@ pub let zh_dict : Map[String, String] = {
   "install.downloading": "正在下载: {url}",
   "install.saving_to": "保存到：{dest}",
   "install.fallback_native": "HTTP 客户端下载失败，尝试使用系统原生命令下载...",
+  "install.fallback_http": "原生命令下载失败，回退到 HTTP 客户端下载...",
   "install.cached_archive": "发现已缓存的压缩包，直接复用: {path}",
   "install.skip_download": "跳过下载",
   "install.start_download": "开始下载",

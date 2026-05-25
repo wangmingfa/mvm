@@ -237,16 +237,16 @@ async fn download_file(
   @log.info(@i18n.t("install.downloading", args={ "url": @utils.blue(url) }))
   // 保存到
   @log.info(@i18n.t("install.saving_to", args={ "dest": dest }))
-  // 优先使用 MoonBit HTTP 客户端下载，失败时回退到系统原生命令下载
+  // 优先使用系统原生命令下载（速度更快），失败时回退到 MoonBit HTTP 客户端
   // 用户手动取消（Ctrl+C）不回退：用户意图是停止整个操作，而非切换下载方式
-  @request.download(url, dest, dest_is_file=true, headers~, show_progress~) catch {
+  @request.download_by_native_command(url, dest, headers~, show_progress~) catch {
     e => {
       if @sys.is_cancelled(e) {
-        raise e // 用户手动取消，不回退到原生命令
+        raise e // 用户手动取消，不回退到 HTTP 客户端
       }
-      // HTTP 客户端下载失败，尝试使用系统原生命令下载
-      @log.warn(@i18n.t("install.fallback_native"))
-      @request.download_by_native_command(url, dest, headers~, show_progress~)
+      // 原生命令下载失败，回退到 MoonBit HTTP 客户端下载
+      @log.warn(@i18n.t("install.fallback_http"))
+      @request.download(url, dest, dest_is_file=true, headers~, show_progress~)
     }
   }
 }

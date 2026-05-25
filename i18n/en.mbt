@@ -70,6 +70,7 @@ pub let en_dict : Map[String, String] = {
   "install.downloading": "Downloading: {url}",
   "install.saving_to": "Saving to: {dest}",
   "install.fallback_native": "HTTP client download failed, trying native command download...",
+  "install.fallback_http": "Native command download failed, falling back to HTTP client download...",
   "install.cached_archive": "Found cached archive, reusing: {path}",
   "install.skip_download": "Skipping download",
   "install.start_download": "Starting download",
