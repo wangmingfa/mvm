@@ -18,6 +18,10 @@ pub(all) enum Command {
   ConfigList
   ConfigSet(String, String)
   ConfigPreset(String)
+  LangInstall(String)  // 安装语言包：mvm lang install <json文件路径>
+  LangList              // 列出可用语言：mvm lang list
+  LangRemove(String)    // 移除语言包：mvm lang remove <lang_code>
+  LangSet(String)       // 设置当前语言：mvm lang set <lang_code>
 } derive(Debug)
 
 ///|
@@ -48,6 +52,10 @@ pub impl Show for Command with to_string(s) {
     ConfigList => "ConfigList"
     ConfigSet(key, value) => "ConfigSet(\{key}, \{value})"
     ConfigPreset(name) => "ConfigPreset(\{name})"
+    LangInstall(path) => "LangInstall(\{path})"
+    LangList => "LangList"
+    LangRemove(code) => "LangRemove(\{code})"
+    LangSet(code) => "LangSet(\{code})"
   }
 }
 
@@ -69,13 +77,15 @@ fn Command::new_with_version(
     "install" => Install(t, version, skip_verify, no_cache)
     "pin" => {
       guard version is Some(version) else {
-        raise fail("pin参数无效。示例：mvm pin node@20")
+        // pin参数无效
+        raise fail(@i18n.t("command.pin_invalid_args"))
       }
       Pin(t, version)
     }
     "use" => Use(t, version)
     "uninstall" => Uninstall(t, version)
-    _ => raise fail("无效的命令类型：\{command_type}")
+    // 无效的命令类型
+    _ => raise fail(@i18n.t("command.invalid_command_type", args={ "command_type": command_type }))
   }
 }
 
@@ -102,7 +112,8 @@ fn parse_with_version(
         skip_verify~,
         no_cache~,
       )
-    _ => raise fail("无效的参数 \{options}")
+    // 无效的参数
+    _ => raise fail(@i18n.t("command.invalid_args", args={ "options": options }))
   }
 }
 
@@ -145,7 +156,8 @@ pub fn get_command(argv : ArrayView[String]) -> Command raise {
     let (skip_verify, no_cache, positional) = _extract_install_flags(argv[1:])
     match positional.length() {
       0 =>
-        raise fail("请指定要安装的工具。示例：mvm install node@20")
+        // 请指定要安装的工具
+        raise fail(@i18n.t("command.install_no_tool"))
       1 =>
         return parse_with_version(
           "install",
@@ -153,10 +165,9 @@ pub fn get_command(argv : ArrayView[String]) -> Command raise {
           skip_verify~,
           no_cache~,
         )
+      // install命令只接受一个工具参数
       _ =>
-        raise fail(
-          "install 命令只接受一个工具参数。示例：mvm install node@20",
-        )
+        raise fail(@i18n.t("command.install_one_tool"))
     }
   }
   // 处理 upgrade 命令（支持 --reinstall/-r flag 和灵活的参数位置）
@@ -172,10 +183,9 @@ pub fn get_command(argv : ArrayView[String]) -> Command raise {
         }
         return Upgrade(Some(arg), reinstall)
       }
+      // upgrade命令参数无效
       _ =>
-        raise fail(
-          "upgrade 命令参数无效。示例：mvm upgrade 或 mvm upgrade v1.0.0 --reinstall",
-        )
+        raise fail(@i18n.t("command.upgrade_invalid_args"))
     }
   }
   match argv {
@@ -188,31 +198,29 @@ pub fn get_command(argv : ArrayView[String]) -> Command raise {
     ["pin", options] => parse_with_version("pin", options)
     ["use", options] => parse_with_version("use", options)
     ["unuse"] =>
-      raise fail("请指定要移除的工具。示例：mvm unuse node")
+      // 请指定要移除的工具
+      raise fail(@i18n.t("command.unuse_no_tool"))
     ["unuse", tool] => Unuse(Tool::from_string(tool))
+    // unuse命令只接受一个工具参数
     ["unuse", ..] =>
-      raise fail(
-        "unuse 命令只接受一个工具参数。示例：mvm unuse node",
-      )
+      raise fail(@i18n.t("command.unuse_one_tool"))
     ["uninstall", options] | ["un", options] =>
       parse_with_version("uninstall", options)
     ["which"] =>
-      raise fail("请指定要查看的工具。示例：mvm which node")
+      // 请指定要查看的工具
+      raise fail(@i18n.t("command.which_no_tool"))
     ["which", tool] => Which(Tool::from_string(tool))
+    // which命令只接受一个工具参数
     ["which", ..] =>
-      raise fail(
-        "which 命令只接受一个工具参数。示例：mvm which node",
-      )
+      raise fail(@i18n.t("command.which_one_tool"))
     ["current"] => Current(None)
     ["current", tool] => Current(Some(Tool::from_string(tool)))
+    // current命令只接受一个工具参数
     ["current", ..] =>
-      raise fail(
-        "current 命令只接受一个工具参数。示例：mvm current node",
-      )
+      raise fail(@i18n.t("command.current_one_tool"))
     ["run"] =>
-      raise fail(
-        "请指定要运行的工具和版本。示例：mvm run node@18 -- node -v",
-      )
+      // 请指定要运行的工具和版本
+      raise fail(@i18n.t("command.run_no_tool_version"))
     ["run", tool_version, "--", .. run_args] =>
       match tool_version.split("@").to_array() {
         // 支持：node@18
@@ -225,38 +233,54 @@ pub fn get_command(argv : ArrayView[String]) -> Command raise {
           let t = Tool::from_string(tool.to_owned())
           Run(t, "", run_args.to_owned())
         }
+        // 无效的版本格式
         _ =>
-          raise fail(
-            "无效的版本格式 \{tool_version}。示例：mvm run node@18 -- node -v",
-          )
+          raise fail(@i18n.t("command.run_invalid_version_format", args={ "version": tool_version }))
       }
+    // 请使用--分隔版本和命令
     ["run", ..] =>
-      raise fail(
-        "请使用 -- 分隔版本和命令。示例：mvm run node@18 -- node -v",
-      )
+      raise fail(@i18n.t("command.run_need_separator"))
     ["list"] | ["ls"] => List(None)
     ["list", tool] | ["ls", tool] => List(Some(Tool::from_string(tool)))
     ["cache", "clean"] => CacheClean
-    ["cache"] => raise fail("请使用 mvm cache clean 清理缓存")
+    // 请使用mvm cache clean清理缓存
+    ["cache"] => raise fail(@i18n.t("command.cache_clean_hint"))
+    // 不支持的cache子命令
     ["cache", ..] =>
-      raise fail("不支持的 cache 子命令。请使用 mvm cache clean")
+      raise fail(@i18n.t("command.cache_unsupported_sub"))
     ["config", "list"] | ["config", "ls"] | ["config", "l"] => ConfigList
-    ["config"] => raise fail("请使用 mvm config list 查看配置")
+    // 请使用mvm config list查看配置
+    ["config"] => raise fail(@i18n.t("command.config_list_hint"))
     ["config", "set", key, value] => ConfigSet(key, value)
     ["config", "set", preset] => ConfigPreset(preset)
+    // config set命令需要提供key和value
     ["config", "set", ..] => {
       let url = "https://cdn.gh-proxy.org/" + "$" + "URL"
-      raise fail(
-        "config set 命令需要提供 key 和 value。示例：mvm config set github_proxy " +
-        url,
-      )
+      raise fail(@i18n.t("command.config_set_need_kv", args={ "url": url }))
     }
+    // 不支持的config子命令
     ["config", subcommand, ..] =>
-      raise fail("不支持的 config 子命令：\{subcommand}")
-    [cmd] => raise fail("命令 '\{cmd}' 缺少参数")
+      raise fail(@i18n.t("command.config_unsupported_sub", args={ "subcommand": subcommand }))
+    ["lang", "install", path] => LangInstall(path)
+    // 请指定语言包JSON文件路径
+    ["lang", "install"] => raise fail(@i18n.t("command.lang_install_need_path"))
+    ["lang", "list"] | ["lang", "ls"] => LangList
+    ["lang", "remove", code] => LangRemove(code)
+    // 请指定要移除的语言代码
+    ["lang", "remove"] => raise fail(@i18n.t("command.lang_remove_need_code"))
+    ["lang", "set", code] => LangSet(code)
+    // 请指定要设置的语言代码
+    ["lang", "set"] => raise fail(@i18n.t("command.lang_set_need_code"))
+    // 请使用mvm lang list查看可用语言
+    ["lang"] => raise fail(@i18n.t("command.lang_list_hint"))
+    // 不支持的lang子命令
+    ["lang", subcommand, ..] => raise fail(@i18n.t("command.lang_unsupported_sub", args={ "subcommand": subcommand }))
+    // 命令缺少参数
+    [cmd] => raise fail(@i18n.t("error.command_missing_args", args={ "cmd": cmd }))
     _ => {
+      // 无效的命令
       let msg = argv.join(" ")
-      raise fail("无效的命令：\{msg}")
+      raise fail(@i18n.t("error.invalid_command", args={ "cmd": msg }))
     }
   }
 }

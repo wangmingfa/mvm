@@ -228,6 +228,26 @@ mvm config set python_mirror https://npmmirror.com/mirrors/python
 mvm config set rust_mirror https://mirrors.ustc.edu.cn/rust-static
 mvm config set java_mirror https://mirrors.aliyun.com/adoptium
 mvm config set github_proxy https://cdn.gh-proxy.org/$URL
+
+# 设置语言（支持 zh、en 及扩展语言代码）
+mvm config set language zh
+mvm config set language en
+```
+
+13. `mvm lang`——语言管理
+```bash
+# 设置当前语言（立即生效，支持任意语言代码）
+mvm lang set zh
+mvm lang set en
+
+# 查看可用语言
+mvm lang list
+
+# 安装扩展语言包（JSON 文件路径）
+mvm lang install /path/to/lang.json
+
+# 移除扩展语言包
+mvm lang remove <lang_code>
 ```
 
 ## 工作原理
@@ -268,7 +288,7 @@ mvm 将 `$MVM_HOME/bin/` 添加到系统 PATH 中（通过修改 `.zshrc`、`.ba
 
 ### 5. 配置体系
 
-- **全局配置** `$MVM_HOME/config.json`：存储 GitHub 代理、Node 镜像、Go 镜像、Python 镜像、Rust 镜像、Java 镜像等设置
+- **全局配置** `$MVM_HOME/config.json`：存储 GitHub 代理、Node 镜像、Go 镜像、Python 镜像、Rust 镜像、Java 镜像、语言偏好等设置
 - **项目配置** `mvm.json`：存储项目级别的工具版本锁定（node、bun、zig、go、python、rust、deno、java、kotlin）
 
 ## Volta 兼容

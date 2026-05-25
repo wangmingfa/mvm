@@ -228,6 +228,26 @@ mvm config set python_mirror https://npmmirror.com/mirrors/python
 mvm config set rust_mirror https://mirrors.ustc.edu.cn/rust-static
 mvm config set java_mirror https://mirrors.aliyun.com/adoptium
 mvm config set github_proxy https://cdn.gh-proxy.org/
+
+# Set language (supports zh, en and extension language codes)
+mvm config set language zh
+mvm config set language en
+```
+
+13. `mvm lang`——Language management
+```bash
+# Set current language (applies immediately, supports any language code)
+mvm lang set zh
+mvm lang set en
+
+# View available languages
+mvm lang list
+
+# Install extension language pack (JSON file path)
+mvm lang install /path/to/lang.json
+
+# Remove extension language pack
+mvm lang remove <lang_code>
 ```
 
 ## How It Works
@@ -268,7 +288,7 @@ When you run `mvm install node@20`:
 
 ### 5. Configuration System
 
-- **Global config** `$MVM_HOME/config.json`: Stores GitHub proxy, Node mirror, Go mirror, Python mirror, Rust mirror, Java mirror settings
+- **Global config** `$MVM_HOME/config.json`: Stores GitHub proxy, Node mirror, Go mirror, Python mirror, Rust mirror, Java mirror, language preference settings
 - **Project config** `mvm.json`: Stores project-level tool version pins (node, bun, zig, go, python, rust, deno, java, kotlin)
 
 ## Volta Compatibility

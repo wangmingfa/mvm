@@ -28,23 +28,28 @@ async fn run_list(tool : @tools.Tool?) -> CommandResult {
       None
     }
 
-    // @log 日志不捕获到 CommandResult（仅用于排查问题）
+    // 当前目录版本
     @log.debug(
-      "\{tool} 当前目录版本 \{@utils.option_to_string(cwd_tool_version)}",
+      @i18n.t("list.debug_cwd_version", args={ "tool": tool.to_string(), "version": @utils.option_to_string(cwd_tool_version) }),
     )
+    // 全局版本
     @log.debug(
-      "\{tool} 全局版本 \{@utils.option_to_string(global_tool_version)}",
+      @i18n.t("list.debug_global_version", args={ "tool": tool.to_string(), "version": @utils.option_to_string(global_tool_version) }),
     )
 
-    print_to(result, "\{tool}:")
+    // 工具标题
+    print_to(result, "\{@i18n.t("list.tool_header", args={ "tool": tool.to_string() })}")
     if versions.is_empty() {
-      print_to(result, "  (暂无)")
+      // 暂无
+      print_to(result, "  \{@i18n.t("list.no_versions")}")
     } else {
       for version in versions {
         let version_tips = if cwd_tool_version is Some(v) && v == version {
-          " (当前目录)"
+          // 当前目录
+          " \{@i18n.t("list.cwd_marker")}"
         } else if global_tool_version is Some(v) && v == version {
-          " (全局)"
+          // 全局
+          " \{@i18n.t("list.global_marker")}"
         } else {
           ""
         }

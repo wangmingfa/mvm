@@ -202,8 +202,9 @@ pub async fn Node::get_expected_checksum(
         headers=@request.merge_detault_headers(),
       )
       if !(res.code is (200..<300)) {
+        // 无法获取校验文件
         @log.warn(
-          "无法从 \{@utils.blue(shasums_url)} 获取 Node.js SHA256 校验文件: \{res.code} \{res.reason}",
+          @i18n.t("node.cannot_fetch_shasums", args={ "url": @utils.blue(shasums_url), "code": res.code.to_string(), "reason": res.reason }),
         )
         return None
       }
@@ -246,8 +247,9 @@ pub async fn Node::get_program_exe_info(
   program : String,
   version : String,
 ) -> ProgramExeInfo {
+  // 请指定program或version
   if program.is_blank() || version.is_blank() {
-    raise fail("请指定 program 或 version")
+    raise fail(@i18n.t("node.specify_program_or_version"))
   }
   let node_path = NodePath(version)
   let { lib: lib_dir, .. } = node_path
@@ -272,36 +274,35 @@ pub async fn Node::get_program_exe_info(
       let lib_node_modules_dir = @fs_ext.join_path(lib_dir, "node_modules")
       for lib in @fs.readdir(lib_node_modules_dir) {
         let lib_path = @fs_ext.join_path(lib_node_modules_dir, lib)
-        @log.debug("从 \{@utils.yellow(lib_path)} 中查找")
+        // 从lib_path中查找
+        @log.debug(@i18n.t("node.debug_searching_in", args={ "path": @utils.yellow(lib_path) }))
         if @fs.kind(lib_path) is Directory {
           let package_json_path = @fs_ext.join_path(lib_path, "package.json")
           guard @fs.exists(package_json_path) else { continue }
           let json = @fs.read_file(package_json_path).json() catch {
             e => {
-              @log.warn("解析 \{package_json_path} 失败，原因：\{e}")
+              // 解析JSON失败
+              @log.warn(@i18n.t("node.parse_json_failed", args={ "path": package_json_path, "reason": e.to_string() }))
               continue
             }
           }
           guard json is Object(map) else {
-            @log.warn(
-              "解析 \{package_json_path} 失败，原因：返回的不是对象",
-            )
+            // JSON不是对象
+            @log.warn(@i18n.t("node.parse_json_not_object", args={ "path": package_json_path }))
             continue
           }
           let version = match map.get("version") {
             Some(String(v)) => v
             _ => {
-              @log.warn(
-                "解析 \{package_json_path} 失败，原因：没有version字段或者version字段不是字符串",
-              )
+                // 没有version字段
+              @log.warn(@i18n.t("node.parse_json_no_version", args={ "path": package_json_path }))
               continue
             }
           }
           let bin = map.get("bin")
           guard bin is Some(Object(bin_map)) else {
-            @log.warn(
-              "解析 \{package_json_path} 失败，原因：没有bin字段或者bin字段不是对象",
-            )
+            // 没有bin字段
+            @log.warn(@i18n.t("node.parse_json_no_bin", args={ "path": package_json_path }))
             continue
           }
           for key, _ in bin_map {
@@ -335,7 +336,8 @@ pub async fn Node::get_program_exe_info(
           }
         }
       }
-      raise fail("找不到 \{program}@\{version} 的可执行文件信息")
+      // 找不到可执行文件信息
+      raise fail(@i18n.t("node.exe_info_not_found", args={ "program": program, "version": version }))
     }
   }
 }
@@ -421,8 +423,9 @@ pub fn Node::get_node_dir(npm_exe_path : String) -> NodePath raise {
     }
   }
 
+  // 无法推断Node安装目录
   guard node_dir is Some(node_dir) else {
-    raise fail("无法从 \{npm_exe_path} 推断Node安装目录")
+    raise fail(@i18n.t("node.cannot_infer_install_dir", args={ "path": npm_exe_path }))
   }
 
   // 从node_dir中提取版本号（目录名）

@@ -314,7 +314,8 @@ pub async fn download_by_native_command(
   show_progress? : Bool = true,
 ) -> Unit {
   guard @command.get_best_downloader() is Some(downloader) else {
-    raise fail("没有找到合适的下载器，请安装curl或者wget")
+    // 没有找到合适的下载器
+    raise fail(@i18n.t("error.no_downloader"))
   }
   // 构建 curl 格式的 header 参数（每个 header 生成 "-H" 和 "key: value" 两个参数）
   let curl_header_args : Array[String] = []

@@ -4,43 +4,58 @@ async fn run_config() -> CommandResult {
   let result = CommandResult::success()
   let (config_path, config) = @tools.get_global_config()
 
-  print_to(result, "MVM 配置:")
-  print_to(result, "全局配置文件: \{config_path}")
+  // MVM 配置
+  print_to(result, @i18n.t("config.title"))
+  // 全局配置文件
+  print_to(result, @i18n.t("config.global_path", args={ "path": config_path }))
   print_to(result, "")
-  print_to(result, "GitHub 代理配置:")
+  // GitHub 代理配置
+  print_to(result, @i18n.t("config.github_proxy"))
   match config.github_proxy {
-    Some(proxy) => print_to(result, "  github_proxy: \{proxy}")
-    None => print_to(result, "  github_proxy: (未设置)")
+    Some(proxy) => print_to(result, @i18n.t("config.list_key", args={ "key": "github_proxy", "value": proxy }))
+    None => print_to(result, @i18n.t("config.list_key", args={ "key": "github_proxy", "value": @i18n.t("config.not_set") }))
   }
   print_to(result, "")
-  print_to(result, "Node 镜像配置:")
+  // Node 镜像配置
+  print_to(result, @i18n.t("config.node_mirror"))
   match config.node_mirror {
-    Some(mirror) => print_to(result, "  node_mirror: \{mirror}")
-    None => print_to(result, "  node_mirror: (未设置)")
+    Some(mirror) => print_to(result, @i18n.t("config.list_key", args={ "key": "node_mirror", "value": mirror }))
+    None => print_to(result, @i18n.t("config.list_key", args={ "key": "node_mirror", "value": @i18n.t("config.not_set") }))
   }
   print_to(result, "")
-  print_to(result, "Go 镜像配置:")
+  // Go 镜像配置
+  print_to(result, @i18n.t("config.go_mirror"))
   match config.go_mirror {
-    Some(mirror) => print_to(result, "  go_mirror: \{mirror}")
-    None => print_to(result, "  go_mirror: (未设置)")
+    Some(mirror) => print_to(result, @i18n.t("config.list_key", args={ "key": "go_mirror", "value": mirror }))
+    None => print_to(result, @i18n.t("config.list_key", args={ "key": "go_mirror", "value": @i18n.t("config.not_set") }))
   }
   print_to(result, "")
-  print_to(result, "Python 镜像配置:")
+  // Python 镜像配置
+  print_to(result, @i18n.t("config.python_mirror"))
   match config.python_mirror {
-    Some(mirror) => print_to(result, "  python_mirror: \{mirror}")
-    None => print_to(result, "  python_mirror: (未设置)")
+    Some(mirror) => print_to(result, @i18n.t("config.list_key", args={ "key": "python_mirror", "value": mirror }))
+    None => print_to(result, @i18n.t("config.list_key", args={ "key": "python_mirror", "value": @i18n.t("config.not_set") }))
   }
   print_to(result, "")
-  print_to(result, "Rust 镜像配置:")
+  // Rust 镜像配置
+  print_to(result, @i18n.t("config.rust_mirror"))
   match config.rust_mirror {
-    Some(mirror) => print_to(result, "  rust_mirror: \{mirror}")
-    None => print_to(result, "  rust_mirror: (未设置)")
+    Some(mirror) => print_to(result, @i18n.t("config.list_key", args={ "key": "rust_mirror", "value": mirror }))
+    None => print_to(result, @i18n.t("config.list_key", args={ "key": "rust_mirror", "value": @i18n.t("config.not_set") }))
   }
   print_to(result, "")
-  print_to(result, "Java 镜像配置:")
+  // Java 镜像配置
+  print_to(result, @i18n.t("config.java_mirror"))
   match config.java_mirror {
-    Some(mirror) => print_to(result, "  java_mirror: \{mirror}")
-    None => print_to(result, "  java_mirror: (未设置)")
+    Some(mirror) => print_to(result, @i18n.t("config.list_key", args={ "key": "java_mirror", "value": mirror }))
+    None => print_to(result, @i18n.t("config.list_key", args={ "key": "java_mirror", "value": @i18n.t("config.not_set") }))
+  }
+  print_to(result, "")
+  // 语言配置
+  print_to(result, @i18n.t("config.language"))
+  match config.language {
+    Some(lang) => print_to(result, @i18n.t("config.list_key", args={ "key": "language", "value": lang }))
+    None => print_to(result, @i18n.t("config.list_key", args={ "key": "language", "value": @i18n.t("config.language_default") }))
   }
   result
 }
@@ -51,15 +66,14 @@ async fn run_config() -> CommandResult {
 /// - github_proxy 值应包含 $URL 变量（宽松校验，缺少则 warn 但不阻断）
 fn validate_config_url(key : String, value : String) -> Unit raise {
   if !value.has_prefix("http://") && !value.has_prefix("https://") {
+    // URL 校验失败
     raise fail(
-      "配置项 \{key} 的值必须是有效的 URL（以 http:// 或 https:// 开头），当前值：\{value}",
+      @i18n.t("config.url_invalid", args={ "key": key, "value": value }),
     )
   }
   if key == "github_proxy" && !value.contains("$URL") {
-    // @log 日志不捕获到 CommandResult
-    @log.warn(
-      "github_proxy 值中未包含 $URL 变量，可能导致代理功能异常",
-    )
+    // github_proxy 缺少 $URL 变量
+    @log.warn(@i18n.t("config.proxy_no_url_var"))
   }
 }
 
@@ -76,8 +90,10 @@ async fn run_config_set(key : String, value : String) -> CommandResult {
         github_proxy=Some(value),
       )
       let config_path = @tools.save_global_config(new_config)
-      print_to(result, "配置已保存到: \{config_path}")
-      print_to(result, "设置 \{key} = \{value}")
+      // 配置已保存
+      print_to(result, @i18n.t("config.saved_to", args={ "path": config_path }))
+      // 设置键值
+      print_to(result, @i18n.t("config.set_value", args={ "key": key, "value": value }))
     }
     "node_mirror" => {
       validate_config_url(key, value)
@@ -86,8 +102,8 @@ async fn run_config_set(key : String, value : String) -> CommandResult {
         node_mirror=Some(value),
       )
       let config_path = @tools.save_global_config(new_config)
-      print_to(result, "配置已保存到: \{config_path}")
-      print_to(result, "设置 \{key} = \{value}")
+      print_to(result, @i18n.t("config.saved_to", args={ "path": config_path }))
+      print_to(result, @i18n.t("config.set_value", args={ "key": key, "value": value }))
     }
     "go_mirror" => {
       validate_config_url(key, value)
@@ -96,8 +112,8 @@ async fn run_config_set(key : String, value : String) -> CommandResult {
         go_mirror=Some(value),
       )
       let config_path = @tools.save_global_config(new_config)
-      print_to(result, "配置已保存到: \{config_path}")
-      print_to(result, "设置 \{key} = \{value}")
+      print_to(result, @i18n.t("config.saved_to", args={ "path": config_path }))
+      print_to(result, @i18n.t("config.set_value", args={ "key": key, "value": value }))
     }
     "python_mirror" => {
       validate_config_url(key, value)
@@ -106,8 +122,8 @@ async fn run_config_set(key : String, value : String) -> CommandResult {
         python_mirror=Some(value),
       )
       let config_path = @tools.save_global_config(new_config)
-      print_to(result, "配置已保存到: \{config_path}")
-      print_to(result, "设置 \{key} = \{value}")
+      print_to(result, @i18n.t("config.saved_to", args={ "path": config_path }))
+      print_to(result, @i18n.t("config.set_value", args={ "key": key, "value": value }))
     }
     "rust_mirror" => {
       validate_config_url(key, value)
@@ -116,8 +132,8 @@ async fn run_config_set(key : String, value : String) -> CommandResult {
         rust_mirror=Some(value),
       )
       let config_path = @tools.save_global_config(new_config)
-      print_to(result, "配置已保存到: \{config_path}")
-      print_to(result, "设置 \{key} = \{value}")
+      print_to(result, @i18n.t("config.saved_to", args={ "path": config_path }))
+      print_to(result, @i18n.t("config.set_value", args={ "key": key, "value": value }))
     }
     "java_mirror" => {
       validate_config_url(key, value)
@@ -126,25 +142,45 @@ async fn run_config_set(key : String, value : String) -> CommandResult {
         java_mirror=Some(value),
       )
       let config_path = @tools.save_global_config(new_config)
-      print_to(result, "配置已保存到: \{config_path}")
-      print_to(result, "设置 \{key} = \{value}")
+      print_to(result, @i18n.t("config.saved_to", args={ "path": config_path }))
+      print_to(result, @i18n.t("config.set_value", args={ "key": key, "value": value }))
+    }
+    "language" => {
+      // 语言配置值校验：仅允许 zh、zh-CN、en、en-US
+      let valid_langs = ["zh", "zh-CN", "en", "en-US"]
+      if !valid_langs.contains(value) {
+        // language 值无效
+        raise fail(
+          @i18n.t("config.lang_invalid", args={ "valid_values": valid_langs.join(", "), "value": value }),
+        )
+      }
+      let new_config = @tools.make_global_config(
+        existing_config~,
+        language=Some(value),
+      )
+      let config_path = @tools.save_global_config(new_config)
+      print_to(result, @i18n.t("config.saved_to", args={ "path": config_path }))
+      print_to(result, @i18n.t("config.set_value", args={ "key": key, "value": value }))
     }
     _ => {
       println(
         @utils.colored_spans([
-          (Red, "错误: "),
-          (Yellow, "不支持的配置项 "),
+          (Red, @i18n.t("config.error_prefix")),
+          (Yellow, @i18n.t("config.unsupported_key_label")),
           (Cyan, key),
         ]),
       )
-      println("支持的配置项:")
-      println("  github_proxy - GitHub 代理地址")
-      println("  node_mirror - Node 镜像地址")
-      println("  go_mirror - Go 镜像地址")
-      println("  python_mirror - Python 镜像地址")
-      println("  rust_mirror - Rust 镜像地址")
-      println("  java_mirror - Java 镜像地址")
-      raise fail("不支持的配置项 \{key}")
+      // 支持的配置项
+      println(@i18n.t("config.supported_keys"))
+      println("  \{@i18n.t("config.key_desc_github_proxy")}")
+      println("  \{@i18n.t("config.key_desc_node_mirror")}")
+      println("  \{@i18n.t("config.key_desc_go_mirror")}")
+      println("  \{@i18n.t("config.key_desc_python_mirror")}")
+      println("  \{@i18n.t("config.key_desc_rust_mirror")}")
+      println("  \{@i18n.t("config.key_desc_java_mirror")}")
+      println("  \{@i18n.t("config.key_desc_language")}")
+      // 不支持的配置项
+      raise fail(@i18n.t("config.key_not_supported", args={ "key": key }))
     }
   }
   result
@@ -162,6 +198,7 @@ fn get_preset_config(name : String) -> @tools.GlobalConfig? {
         python_mirror: Some("https://mirrors.aliyun.com/python"),
         rust_mirror: Some("https://mirrors.aliyun.com/rustup"),
         java_mirror: Some("https://mirrors.aliyun.com/adoptium"),
+        language: None,
       })
     _ => None
   }
@@ -174,17 +211,20 @@ async fn run_config_preset(name : String) -> CommandResult {
     Some(preset) => {
       let result = CommandResult::success()
       let config_path = @tools.save_global_config(preset)
-      print_to(result, "已应用快速配置:")
+      // 已应用快速配置
+      print_to(result, @i18n.t("config.preset_applied"))
       print_to(result, preset.to_string(indent=2))
-      print_to(result, "配置已保存到: \{config_path}")
+      // 配置已保存
+      print_to(result, @i18n.t("config.saved_to", args={ "path": config_path }))
       result
     }
     _ => {
-      println("支持的预设配置:")
-      println(
-        "  china - 中国大陆快速配置（GitHub 代理 + Node/Go/Python/Rust/Java 镜像）",
-      )
-      raise fail("不支持的预设配置: \{name}")
+      // 支持的预设配置
+      println(@i18n.t("config.supported_presets"))
+      // china 预设描述
+      println("  \{@i18n.t("config.china_preset_desc")}")
+      // 不支持的预设配置
+      raise fail(@i18n.t("config.preset_not_supported", args={ "preset": name }))
     }
   }
 }

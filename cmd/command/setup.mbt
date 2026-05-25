@@ -29,7 +29,8 @@ async fn run_setup(use_prefix : Bool) -> CommandResult {
   match os {
     MacOS | Linux => setup_unix(bin_dir, npm_dir, tools, prefix_str, result)
     Windows => setup_windows(bin_dir, npm_dir, tools, prefix_str, result)
-    _ => raise fail("不支持的操作系统：\{os}")
+    // 不支持的操作系统
+    _ => raise fail(@i18n.t("setup.unsupported_os", args={ "os": os.to_string() }))
   }
   result
 }
@@ -45,7 +46,8 @@ async fn remove_names(
       for ext in exts {
         let prefixed = @fs_ext.join_path(bin_dir, prefix + name + ext)
         let _ = @fs_ext.remove_if_exists(prefixed) catch {
-          e => @log.warn("无法删除 \{prefixed} \{e}")
+          // 无法删除文件
+          e => @log.warn(@i18n.t("setup.cannot_delete", args={ "path": prefixed, "error": e.to_string() }))
         }
       }
     }
@@ -145,11 +147,11 @@ async fn configure_path_unix(bin_dir : String, npm_dir : String) -> Unit {
   if new_lines != "" {
     let new_content = content + new_lines + "\n"
     @fs.write_file(profile_path, new_content, create_mode=CreateOrTruncate)
-    // @log 日志不捕获到 CommandResult
-    @log.info("已将 PATH 配置写入 \{profile_path}")
+    // 已将 PATH 配置写入
+    @log.info(@i18n.t("setup.path_configured", args={ "path": profile_path }))
   } else {
-    // @log 日志不捕获到 CommandResult
-    @log.info("PATH 已配置，无需修改 \{profile_path}")
+    // PATH 已配置，无需修改
+    @log.info(@i18n.t("setup.path_already_configured", args={ "path": profile_path }))
   }
 }
 
@@ -165,19 +167,25 @@ fn print_success_unix(
   let tools_str = display_names.join(" ")
   let profile_path = detect_shell_profile()
   print_to(result, "")
-  print_to(result, "安装完成！可执行文件已安装到 \{bin_dir}")
-  print_to(result, "  - mvm         (主命令)")
+  // 安装完成
+  print_to(result, @i18n.t("setup.install_complete", args={ "dir": bin_dir }))
+  // 主命令
+  print_to(result, "  - mvm         (\{@i18n.t("setup.main_command")})")
+  // npm 全局包安装路径
   print_to(
     result,
-    "  - npm-pkg 目录    (npm 全局包安装路径：\{npm_dir})",
+    @i18n.t("setup.npm_pkg_dir", args={ "dir": npm_dir }),
   )
-  print_to(result, "  工具软连接：\{tools_str}")
+  // 工具软连接
+  print_to(result, "  \{@i18n.t("setup.tool_symlinks", args={ "tools": tools_str })}")
   print_to(result, "")
+  // 如果 mvm 命令无效，请重启终端或执行
   print_to(
     result,
-    @utils.yellow("如果 mvm 命令无效，请重启终端或执行："),
+    @utils.yellow(@i18n.t("setup.restart_hint")),
   )
-  print_to(result, @utils.yellow("   source \{profile_path}"))
+  // source 命令
+  print_to(result, @utils.yellow("   \{@i18n.t("setup.source_command", args={ "path": profile_path })}"))
 }
 
 ///|
@@ -219,8 +227,8 @@ async fn configure_path_windows(bin_dir : String, npm_dir : String) -> Unit {
   ])
   // 清理临时文件
   let _ = @fs.remove(temp_script) catch { _ => () }
-  // @log 日志不捕获到 CommandResult
-  @log.info("已将 PATH 配置写入 Windows 用户环境变量")
+  // 已将 PATH 配置写入 Windows 用户环境变量
+  @log.info(@i18n.t("setup.path_configured_windows"))
 }
 
 ///|
@@ -234,19 +242,25 @@ fn print_success_windows(
   let display_names = tools.map(tool => prefix_str + tool.to_string())
   let tools_str = display_names.join(", ")
   print_to(result, "")
-  print_to(result, "安装完成！可执行文件已安装到 \{bin_dir}")
-  print_to(result, "  - mvm.exe         (主命令)")
+  // 安装完成
+  print_to(result, @i18n.t("setup.install_complete", args={ "dir": bin_dir }))
+  // 主命令
+  print_to(result, "  - mvm.exe         (\{@i18n.t("setup.main_command")})")
+  // npm 全局包安装路径
   print_to(
     result,
-    "  - npm-pkg 目录    (npm 全局包安装路径：\{npm_dir})",
+    @i18n.t("setup.npm_pkg_dir", args={ "dir": npm_dir }),
   )
-  print_to(result, "  工具脚本：\{tools_str}")
-  print_to(result, "  (.ps1 for PowerShell, .cmd for cmd.exe/npm postinstall)")
+  // 工具脚本
+  print_to(result, "  \{@i18n.t("setup.tool_scripts", args={ "tools": tools_str })}")
+  // Windows 脚本说明
+  print_to(result, "  \{@i18n.t("setup.windows_script_note")}")
   print_to(result, "")
+  // 如果 mvm 命令无效，请重启终端或执行
   print_to(
     result,
-    @utils.yellow("如果 mvm 命令无效，请重启终端或执行："),
+    @utils.yellow(@i18n.t("setup.restart_hint")),
   )
-  let path_hint = "$env:PATH = [Environment]::GetEnvironmentVariable(\"PATH\",\"User\") + \";\" + $env:PATH"
-  print_to(result, @utils.yellow("   \{path_hint}"))
+  // Windows PATH 提示
+  print_to(result, @utils.yellow("   \{@i18n.t("setup.windows_path_hint")}"))
 }

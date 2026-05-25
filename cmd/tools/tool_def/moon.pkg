@@ -3,6 +3,7 @@ import {
   "username/mvm/utils",
   "username/mvm/log",
   "username/mvm/fs_ext",
+  "username/mvm/i18n",
   "username/mvm/request",
   "moonbitlang/async",
   "moonbitlang/async/http",

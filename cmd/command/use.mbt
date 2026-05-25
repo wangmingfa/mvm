@@ -7,7 +7,7 @@ async fn run_use(tool : @tools.Tool, version : String?) -> CommandResult {
 
   let _ = @tools.write_global_config(tool, version)
 
-  // @log 日志不捕获到 CommandResult（仅打印到控制台）
-  @log.success("已将全局 \{tool} 版本设置为 \{version}")
+  // 已设置全局版本
+  @log.success(@i18n.t("use.set_global", args={ "tool": tool.to_string(), "version": version }))
   result
 }

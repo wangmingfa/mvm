@@ -10,19 +10,22 @@ async fn run_cache_clean() -> CommandResult {
   // 清理缓存目录
   if @fs.exists(cache_dir) {
     @fs_ext.remove_dir(cache_dir)
-    print_to(result, "已清理缓存目录: \{cache_dir}")
+    // 已清理缓存目录
+    print_to(result, @i18n.t("cache.cleaned_cache", args={ "dir": cache_dir }))
     cleaned = true
   }
 
   // 清理临时目录
   if @fs.exists(temp_dir) {
     @fs_ext.remove_dir(temp_dir)
-    print_to(result, "已清理临时目录: \{temp_dir}")
+    // 已清理临时目录
+    print_to(result, @i18n.t("cache.cleaned_temp", args={ "dir": temp_dir }))
     cleaned = true
   }
 
   if !cleaned {
-    print_to(result, "缓存目录为空，无需清理")
+    // 缓存目录为空
+    print_to(result, @i18n.t("cache.empty"))
   }
   result
 }

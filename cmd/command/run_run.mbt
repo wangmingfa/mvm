@@ -9,9 +9,8 @@ async fn run_run(
   @log.debug("run_run参数 \{tool} \{version} \{to_repr(args)}")
   // 参数不能为空
   if args.is_empty() {
-    raise fail(
-      "运行的命令不能为空。示例：mvm run node@18 -- node -v",
-    )
+    // 运行的命令不能为空
+    raise fail(@i18n.t("run.empty_command"))
   }
 
   let (exec_program, exec_args) = (
@@ -37,15 +36,16 @@ async fn run_run(
       ..,
     } = program_exe_info
 
+    // 使用tool@version运行命令
     @log.debug(
-      "使用 \{tool}@\{target_version} (\{exec_program_path}) 运行命令: \{to_repr(args)}",
+      @i18n.t("run.debug_running_command", args={ "tool": tool.to_string(), "version": target_version, "path": exec_program_path, "args": to_repr(args).to_string() }),
     )
     // 检查工具是否安装，未安装则自动安装
     if !tool_exists {
       if try_install {
         try_install = false
         // 尝试安装
-        @log.info("\{tool}@\{target_version} 未安装，正在自动安装...")
+        @log.info(@i18n.t("run.auto_installing", args={ "tool": tool.to_string(), "version": target_version }))
         let install_result = run_install(
           tool,
           Some(target_version),
@@ -53,23 +53,24 @@ async fn run_run(
           false,
         )
         if !install_result.is_success() {
-          raise fail(install_result.error.unwrap_or("安装失败"))
+          // 安装失败
+          raise fail(install_result.error.unwrap_or(@i18n.t("run.install_failed_fallback")))
         }
         continue
       } else {
         // 安装后，工具还是不存在
-        raise fail("安装 \{tool}@\{target_version} 失败")
+        raise fail(@i18n.t("run.install_tool_failed", args={ "tool": tool.to_string(), "version": target_version }))
       }
     }
     // 检查要运行的程序是否存在
     if !program_exists {
-      raise fail(
-        "要执行的程序 \{exec_program}(\{exec_program_path}) 不存在",
-      )
+      // 要执行的程序不存在
+      raise fail(@i18n.t("run.program_not_exists", args={ "program": exec_program, "path": exec_program_path }))
     }
     break program_exe_info
   } nobreak {
-    raise fail("无法运行命令")
+    // 无法运行命令
+    raise fail(@i18n.t("run.cannot_run_command"))
   }
 
   let before_run_result = before_run(program_exe_info, exec_args)

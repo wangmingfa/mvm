@@ -48,6 +48,17 @@ const FAILED_KEY = "FAILED:"
 let print_cancelled_flag : Ref[Bool] = Ref(true)
 
 ///|
+/// 取消操作的提示文本（可通过 set_cancelled_text 设置国际化文本）
+/// 默认英文，main.mbt 初始化时会根据语言设置覆盖
+let cancelled_text : Ref[String] = Ref("Operation cancelled")
+
+///|
+/// 设置取消操作的提示文本（用于国际化）
+pub fn set_cancelled_text(text : String) -> Unit {
+  cancelled_text.val = text
+}
+
+///|
 pub fn println_error(e : Error) -> Unit {
   let msg = match e {
     Failure::Failure(msg) => {
@@ -65,7 +76,7 @@ pub fn println_error(e : Error) -> Unit {
           // 只打印一次取消
           print_cancelled_flag.val = false
           println("")
-          "操作已取消"
+          cancelled_text.val
         } else {
           "\n"
         }

@@ -5,6 +5,9 @@ import {
   "moonbitlang/core/env",
   "username/mvm/log",
   "username/mvm/utils",
+  "username/mvm/i18n",
+  "username/mvm/fs_ext",
+  "username/mvm/cmd/tools",
 }
 
 options(

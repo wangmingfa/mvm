@@ -29,6 +29,7 @@ pub(all) struct GlobalConfig {
   rust_mirror : String?
   java_mirror : String?
   // deno 和 kotlin 使用 github_proxy，无专属镜像
+  language : String?
 } derive(FromJson, ToJson)
 
 ///|
@@ -40,6 +41,7 @@ pub fn make_global_config(
     python_mirror: None,
     rust_mirror: None,
     java_mirror: None,
+    language: None,
   },
   github_proxy? : String? = None,
   node_mirror? : String? = None,
@@ -47,6 +49,7 @@ pub fn make_global_config(
   python_mirror? : String? = None,
   rust_mirror? : String? = None,
   java_mirror? : String? = None,
+  language? : String? = None,
 ) -> GlobalConfig {
   let github_proxy = if github_proxy is Some(v) {
     Some(v)
@@ -78,6 +81,11 @@ pub fn make_global_config(
   } else {
     existing_config.java_mirror
   }
+  let language = if language is Some(v) {
+    Some(v)
+  } else {
+    existing_config.language
+  }
   {
     github_proxy,
     node_mirror,
@@ -85,6 +93,7 @@ pub fn make_global_config(
     python_mirror,
     rust_mirror,
     java_mirror,
+    language,
   }
 }
 
@@ -97,6 +106,7 @@ pub fn GlobalConfig::to_string(s : Self, indent? : Int = 0) -> String {
   let python_mirror = s.python_mirror.unwrap_or("")
   let rust_mirror = s.rust_mirror.unwrap_or("")
   let java_mirror = s.java_mirror.unwrap_or("")
+  let language = s.language.unwrap_or("")
   (
     $|\{indent_str}github_proxy: \{github_proxy}
     $|\{indent_str}node_mirror: \{node_mirror}
@@ -104,6 +114,7 @@ pub fn GlobalConfig::to_string(s : Self, indent? : Int = 0) -> String {
     $|\{indent_str}python_mirror: \{python_mirror}
     $|\{indent_str}rust_mirror: \{rust_mirror}
     $|\{indent_str}java_mirror: \{java_mirror}
+    $|\{indent_str}language: \{language}
   )
 }
 
@@ -136,6 +147,7 @@ pub async fn get_global_config() -> (String, GlobalConfig) {
         python_mirror: None,
         rust_mirror: None,
         java_mirror: None,
+        language: None,
       },
     )
   }
@@ -461,6 +473,7 @@ test "GlobalConfig to_string" {
     python_mirror: None,
     rust_mirror: None,
     java_mirror: None,
+    language: None,
   }
   let str = config.to_string()
   guard str.contains("github_proxy: https://proxy.org/$URL") else {
@@ -481,6 +494,7 @@ test "make_global_config 覆盖逻辑" {
     python_mirror: None,
     rust_mirror: None,
     java_mirror: None,
+    language: None,
   }
   // 覆盖 github_proxy
   let updated = make_global_config(

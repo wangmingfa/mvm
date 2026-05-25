@@ -37,6 +37,10 @@ pub async fn run(command : Command) -> CommandResult {
       ConfigList => run_config()
       ConfigSet(key, value) => run_config_set(key, value)
       ConfigPreset(name) => run_config_preset(name)
+      LangInstall(path) => run_lang_install(path)
+      LangList => run_lang_list()
+      LangRemove(code) => run_lang_remove(code)
+      LangSet(code) => run_lang_set(code)
     }
   } catch {
     e => {

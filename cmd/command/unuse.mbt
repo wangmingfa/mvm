@@ -4,7 +4,7 @@ async fn run_unuse(tool : @tools.Tool) -> CommandResult {
   let result = CommandResult::success()
   let _ = @tools.remove_global_config(tool)
 
-  // @log 日志不捕获到 CommandResult
-  @log.success("已移除全局 \{tool} 版本设置")
+  // 已移除全局版本设置
+  @log.success(@i18n.t("unuse.removed_global", args={ "tool": tool.to_string() }))
   result
 }

@@ -4,8 +4,16 @@ using @command {get_command, run}
 ///|
 async fn main {
   guard @env.current_dir() is Some(_dir) else {
-    raise fail("无法获取当前目录")
+    raise fail(@i18n.t("error.no_current_dir"))
   }
+  // 从 GlobalConfig 读取 language 设置，初始化 i18n
+  let (_, config) = @tools.get_global_config()
+  // 设置外部语言字典目录（MVM_HOME/langs）
+  @i18n.set_langs_dir(@fs_ext.join_path(@tools.mvm_home(), "langs"))
+  @i18n.init_lang(config.language)
+  // 设置 log 模块的国际化文本（避免循环依赖，用 setter 模式）
+  @log.set_cancelled_text(@i18n.t("log.cancelled"))
+
   let args = @env.args()
   let arg_str = @utils.yellow(args)
   @log.debug("运行: \{arg_str}")

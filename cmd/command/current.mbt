@@ -25,17 +25,20 @@ async fn run_current(tool : @tools.Tool?) -> CommandResult {
     match config_info {
       Some((config_path, config)) => {
         guard config.get_value(tool) is Some(version) else {
-          print_to(result, "\{label}: (未设置)")
+          // 未设置
+          print_to(result, "\{label}: \{@i18n.t("current.not_set")}")
           continue
         }
         let mvm_home = @tools.mvm_home()
+        // 全局/项目
         let source_label = if config_path.has_prefix(mvm_home) {
-          "全局"
+          @i18n.t("current.global")
         } else {
-          "项目"
+          @i18n.t("current.project")
         }
         let installed = @tools.is_installed(tool, version)
-        let not_installed_label = @utils.yellow("未安装")
+        // 未安装
+        let not_installed_label = @utils.yellow(@i18n.t("current.not_installed"))
         if installed {
           print_to(
             result,
@@ -48,7 +51,8 @@ async fn run_current(tool : @tools.Tool?) -> CommandResult {
           )
         }
       }
-      None => print_to(result, "\{label}: (未设置)")
+      // 未设置
+      None => print_to(result, "\{label}: \{@i18n.t("current.not_set")}")
     }
   }
   result

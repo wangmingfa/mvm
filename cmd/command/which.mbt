@@ -7,8 +7,9 @@ async fn run_which(tool : @tools.Tool) -> CommandResult {
   match config_info {
     Some((config_path, config)) => {
       guard config.get_value(tool) is Some(version) else {
+        // 未在配置文件中找到版本信息
         raise fail(
-          "未在配置文件 \{@utils.yellow(config_path)} 中找到 \{tool} 的版本信息",
+          @i18n.t("which.version_not_found_in_config", args={ "config_path": @utils.yellow(config_path), "tool": tool.to_string() }),
         )
       }
       // 通过已有的公共 API 获取可执行文件路径
@@ -18,13 +19,15 @@ async fn run_which(tool : @tools.Tool) -> CommandResult {
         version,
       )
       let mvm_home = @tools.mvm_home()
+      // 全局/项目
       let source_label = if config_path.has_prefix(mvm_home) {
-        "全局"
+        @i18n.t("which.global")
       } else {
-        "项目"
+        @i18n.t("which.project")
       }
       let installed = @fs.exists(exe_path)
-      let not_installed_label = @utils.yellow("未安装")
+      // 未安装
+      let not_installed_label = @utils.yellow(@i18n.t("which.not_installed"))
       if installed {
         print_to(result, "\{exe_path} (\{source_label}: \{config_path})")
       } else {
@@ -32,16 +35,18 @@ async fn run_which(tool : @tools.Tool) -> CommandResult {
           result,
           "\{exe_path} (\{source_label}: \{config_path}) - \{not_installed_label}",
         )
+        // 请使用 mvm install 安装该版本
         print_to(
           result,
-          "请使用 mvm install \{tool}@\{version} 安装该版本",
+          @i18n.t("which.install_hint", args={ "tool": tool.to_string(), "version": version }),
         )
       }
       result
     }
     None =>
+      // 未找到版本配置
       raise fail(
-        "未找到 \{tool} 的版本配置，请先使用 mvm use 或 mvm pin 指定版本",
+        @i18n.t("which.no_version_config", args={ "tool": tool.to_string() }),
       )
   }
 }

@@ -125,6 +125,7 @@ test "apply_global_config node_mirror" {
     python_mirror: None,
     rust_mirror: None,
     java_mirror: None,
+    language: None,
   }
   let result = apply_global_config(ctx.url, config, ctx)
   guard result ==
@@ -146,6 +147,7 @@ test "apply_global_config go_mirror" {
     python_mirror: None,
     rust_mirror: None,
     java_mirror: None,
+    language: None,
   }
   let result = apply_global_config(ctx.url, config, ctx)
   guard result ==
@@ -168,6 +170,7 @@ test "apply_global_config github_proxy" {
     python_mirror: None,
     rust_mirror: None,
     java_mirror: None,
+    language: None,
   }
   let result = apply_global_config(ctx.url, config, ctx)
   guard result ==
@@ -190,6 +193,7 @@ test "apply_global_config no_config" {
     python_mirror: None,
     rust_mirror: None,
     java_mirror: None,
+    language: None,
   }
   let result = apply_global_config(ctx.url, config, ctx)
   guard result == ctx.url else {
@@ -211,6 +215,7 @@ test "apply_global_config node_mirror_priority" {
     python_mirror: None,
     rust_mirror: None,
     java_mirror: None,
+    language: None,
   }
   let result = apply_global_config(ctx.url, config, ctx)
   guard result ==
@@ -233,6 +238,7 @@ test "apply_global_config python_mirror" {
     python_mirror: Some("https://mirrors.aliyun.com/python"),
     rust_mirror: None,
     java_mirror: None,
+    language: None,
   }
   let result = apply_global_config(ctx.url, config, ctx)
   guard result == "https://mirrors.aliyun.com/python/3.12.0/Python-3.12.0.tgz" else {
@@ -254,6 +260,7 @@ test "apply_global_config rust_mirror" {
     python_mirror: None,
     rust_mirror: Some("https://mirrors.aliyun.com/rustup"),
     java_mirror: None,
+    language: None,
   }
   let result = apply_global_config(ctx.url, config, ctx)
   guard result ==
@@ -277,6 +284,7 @@ test "apply_global_config java_mirror" {
     python_mirror: None,
     rust_mirror: None,
     java_mirror: Some("https://mirrors.aliyun.com/adoptium"),
+    language: None,
   }
   let result = apply_global_config(ctx.url, config, ctx)
   guard result ==
@@ -299,6 +307,7 @@ test "apply_global_config deno uses github_proxy" {
     python_mirror: None,
     rust_mirror: None,
     java_mirror: None,
+    language: None,
   }
   let result = apply_global_config(ctx.url, config, ctx)
   guard result ==
@@ -321,6 +330,7 @@ test "apply_global_config kotlin uses github_proxy" {
     python_mirror: None,
     rust_mirror: None,
     java_mirror: None,
+    language: None,
   }
   let result = apply_global_config(ctx.url, config, ctx)
   guard result ==

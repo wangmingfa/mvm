@@ -14,4 +14,5 @@ import {
   "username/mvm/log",
   "username/mvm/os",
   "username/mvm/sys",
+  "username/mvm/i18n",
 }

@@ -40,10 +40,12 @@ async fn run_upgrade(version : String?, reinstall : Bool) -> CommandResult {
   let target_version = match version {
     Some(v) => {
       let v = normalize_version(v)
-      @log.info("正在验证版本 \{@utils.yellow(v)}...")
+      // 正在验证版本
+      @log.info(@i18n.t("upgrade.verifying_version", args={ "version": @utils.yellow(v) }))
       if !check_version_exists(v) {
+        // 版本不存在
         raise fail(
-          "版本 \{@utils.yellow(v)} 不存在，请检查版本号是否正确（可用 mvm upgrade 升级到最新版本）",
+          @i18n.t("upgrade.version_not_exists", args={ "version": @utils.yellow(v) }),
         )
       }
       v
@@ -51,26 +53,31 @@ async fn run_upgrade(version : String?, reinstall : Bool) -> CommandResult {
     None =>
       // --reinstall 时直接使用当前版本，跳过"已是最新版本"检查
       if reinstall {
-        @log.info("正在重新安装当前版本 \{@utils.yellow(VERSION)}...")
+        // 正在重新安装当前版本
+        @log.info(@i18n.t("upgrade.reinstalling_current", args={ "version": @utils.yellow(VERSION) }))
         VERSION
       } else {
-        @log.info("正在检查最新版本...")
+        // 正在检查最新版本
+        @log.info(@i18n.t("upgrade.checking_latest"))
         let latest = fetch_latest_version()
         if latest.is_blank() {
-          raise fail("无法获取最新版本信息，请检查网络连接")
+          // 无法获取最新版本信息
+          raise fail(@i18n.t("upgrade.cannot_fetch_latest"))
         }
+        // 当前版本和最新版本
         @log.info(
-          "当前版本：\{@utils.yellow(VERSION)}，最新版本：\{@utils.yellow(latest)}",
+          @i18n.t("upgrade.current_and_latest", args={ "current": @utils.yellow(VERSION), "latest": @utils.yellow(latest) }),
         )
         if latest == VERSION {
-          // @log 日志不捕获到 CommandResult
-          @log.success("已是最新版本，无需升级")
+          // 已是最新版本
+          @log.success(@i18n.t("upgrade.already_latest"))
           return result
         }
         latest
       }
   }
-  @log.info("正在升级到 \{@utils.yellow(target_version)}...")
+  // 正在升级到
+  @log.info(@i18n.t("upgrade.upgrade_target", args={ "version": @utils.yellow(target_version) }))
   // 使用 install_online 脚本升级；指定版本时通过 MVM_VERSION 环境变量传递
   let code = match @os.get_os_name() {
     Windows => {
@@ -93,9 +100,10 @@ async fn run_upgrade(version : String?, reinstall : Bool) -> CommandResult {
   }
   match code {
     0 =>
-      // @log 日志不捕获到 CommandResult
-      @log.success("升级成功！当前版本：\{target_version}")
-    _ => raise fail("升级失败，请尝试手动执行安装命令")
+      // 升级成功
+      @log.success(@i18n.t("upgrade.upgrade_success_msg", args={ "version": target_version }))
+    // 升级失败
+    _ => raise fail(@i18n.t("upgrade.upgrade_failed"))
   }
   result
 }
@@ -142,23 +150,26 @@ fn extract_all_tag_names(body : String) -> Array[String] {
 /// 查询所有可用的 mvm 版本
 async fn run_upgrade_list() -> CommandResult {
   let result = CommandResult::success()
-  // @log 日志不捕获到 CommandResult
-  @log.info("正在获取所有可用的 mvm 版本...")
+  // 正在获取所有可用版本
+  @log.info(@i18n.t("upgrade.fetching_all_versions"))
   let (res, data) = @request.github_get(GITHUB_API_RELEASES)
   if res.code != 200 {
+    // 无法获取版本列表
     raise fail(
-      "无法获取版本列表（HTTP \{res.code} \{res.reason}，URL: \{GITHUB_API_RELEASES}），请检查网络连接",
+      @i18n.t("upgrade.cannot_fetch_version_list", args={ "code": res.code.to_string(), "reason": res.reason, "url": GITHUB_API_RELEASES }),
     )
   }
   let body = data.text()
   let versions = extract_all_tag_names(body)
   if versions.is_empty() {
-    raise fail("未找到任何版本信息")
+    // 未找到版本信息
+    raise fail(@i18n.t("upgrade.no_versions_found"))
   }
-  // @log 日志不捕获到 CommandResult
-  @log.info("可用的 mvm 版本（共 \{versions.length()} 个）：")
+  // 可用版本列表
+  @log.info(@i18n.t("upgrade.available_versions_count", args={ "count": versions.length().to_string() }))
   for v in versions {
-    let marker = if v == VERSION { " ← 当前版本" } else { "" }
+    // 当前版本标记
+    let marker = if v == VERSION { " \{@i18n.t("upgrade.current_marker")}" } else { "" }
     print_to(result, "  \{@utils.yellow(v)}\{marker}")
   }
   result

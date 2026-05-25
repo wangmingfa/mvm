@@ -5,4 +5,5 @@ import {
   "username/mvm/os",
   "username/mvm/cmd/tools",
   "username/mvm/cmd/tools/tool_def",
+  "username/mvm/i18n",
 }

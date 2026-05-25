@@ -9,7 +9,8 @@ async fn run_uninstall(tool : @tools.Tool, version : String?) -> CommandResult {
     // 有可能installed.json中没有记录，直接去文件夹看看，有没有需要删除的
     let version_dir = @tools.tool_dir(tool)
     guard @fs.exists(version_dir) is true else {
-      @log.warn("未安装 \{tool}，无需卸载")
+      // 未安装该工具
+      @log.warn(@i18n.t("uninstall.not_installed_tool", args={ "tool": tool.to_string() }))
       return result
     }
     let dirs = []
@@ -32,15 +33,17 @@ async fn run_uninstall(tool : @tools.Tool, version : String?) -> CommandResult {
       continue
     }
     remove_versions.push(v)
-    @log.info("卸载 \{tool} \{v}")
+    // 正在卸载
+    @log.info(@i18n.t("uninstall.uninstalling_version", args={ "tool": tool.to_string(), "version": v }))
     // 删除目录
     let dir = @tools.version_dir(tool, v)
     @fs_ext.remove_dir(dir)
   }
 
   if remove_versions.is_empty() {
+    // 未安装该版本
     @log.warn(
-      "未安装 \{@tools.tool_version_str(tool, version?)}，无需卸载",
+      @i18n.t("uninstall.not_installed_version", args={ "version_str": @tools.tool_version_str(tool, version?) }),
     )
     return result
   }
@@ -50,14 +53,17 @@ async fn run_uninstall(tool : @tools.Tool, version : String?) -> CommandResult {
 
   match removed_versions.length() {
     0 =>
+      // 未安装该版本
       @log.warn(
-        "未安装 \{@tools.tool_version_str(tool, version?)}，无需卸载",
+        @i18n.t("uninstall.not_installed_version", args={ "version_str": @tools.tool_version_str(tool, version?) }),
       )
-    1 => @log.success("已卸载 \{tool} \{removed_versions[0]}")
+    1 =>
+      // 已卸载单个版本
+      @log.success(@i18n.t("uninstall.uninstall_success", args={ "tool": tool.to_string(), "version": removed_versions[0] }))
     _ => {
       let version_msg = removed_versions.join("、")
-      // @log 日志不捕获到 CommandResult
-      @log.success("已卸载 \{tool} 版本：\{version_msg}")
+      // 已卸载多个版本
+      @log.success(@i18n.t("uninstall.uninstall_multi_success", args={ "tool": tool.to_string(), "versions": version_msg }))
     }
   }
   result

@@ -187,7 +187,7 @@ pub async fn run_with_output(
   let (exit_code, output) = @async.with_task_group(group => {
     defer r.close()
     let output = group.spawn(() => {
-      let buffer = @buffer.new()
+      let buffer = Buffer()
       while r.read_some() is Some(b) {
         let (bytes, str) = gbk_to_utf8(b)
         @stdio.print(str)

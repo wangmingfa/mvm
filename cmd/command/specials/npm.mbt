@@ -94,24 +94,29 @@ async fn walk_global_pkgs(
     // 读取package.json中的bin字段的值
     let json = @fs.read_file(pkg_package_json_file_path).json()
     guard json is Object(map) else {
+      // NPM包格式有问题
       @log.warn(
-        "NPM包 \{pkg} 的package.json格式有问题，文件路径：\{pkg_package_json_file_path}",
+        @i18n.t("npm.pkg_json_format_error", args={"pkg": pkg, "path": pkg_package_json_file_path}),
       )
       continue
     }
     guard map.get("bin") is Some(Object(bin)) else {
+      // NPM包bin格式有问题
       @log.warn(
-        "NPM包 \{pkg} 的package.json中的bin格式有问题，文件路径：\{pkg_package_json_file_path}",
+        @i18n.t("npm.pkg_bin_format_error", args={"pkg": pkg, "path": pkg_package_json_file_path}),
       )
       continue
     }
     let pkg_root_dir = @fs_ext.join_path(pkg_package_json_file_path, "../")
     for cmd_name, cmd_path in bin {
+      // NPM包bin配置调试信息
       @log.debug(
-        "NPM包的bin配置: \{cmd_name}\n\{cmd_path.stringify(indent=2)}",
+        @i18n.t("npm.bin_config_debug", args={"cmd_name": cmd_name, "bin_json": cmd_path.stringify(indent=2)}),
       )
       guard cmd_path is String(cmd_path) else {
-        @log.warn("NPM包的bin配置 \{cmd_name} 有问题")
+        // NPM包bin配置有问题
+        // NPM包bin配置有问题
+        @log.warn(@i18n.t("npm.bin_config_error", args={"cmd_name": cmd_name}))
         continue
       }
       let target_file_path = @fs_ext.join_path(pkg_root_dir, cmd_path)
@@ -126,8 +131,10 @@ async fn handle_install_npm_global_package(
   pkgs : ArrayView[String],
 ) -> Unit {
   // 全局安装
-  @log.debug("NPM执行文件路径: \{npm_exe_path}")
-  @log.debug("全局安装NPM包: \{to_repr(pkgs)}")
+  // NPM执行文件路径
+  @log.debug(@i18n.t("npm.exe_path_debug", args={"path": npm_exe_path}))
+  // 全局安装NPM包
+  @log.debug(@i18n.t("npm.global_install_debug", args={"pkgs": to_repr(pkgs).to_string()}))
 
   let npm_pkg_home = @tool_def.mvm_npm_pkg_home()
   let os = @os.get_os_name()
@@ -146,7 +153,8 @@ async fn handle_install_npm_global_package(
         @tools.create_tool_cmd_windows(Node, cmd_name, cmd_dir=@tools.NPM_PKG)
       _ => ()
     }
-    @log.debug("已在目录 \{npm_pkg_home} 安装全局命令 \{cmd_name}")
+    // 已安装全局命令
+    @log.debug(@i18n.t("npm.global_cmd_installed", args={"dir": npm_pkg_home, "cmd": cmd_name}))
   })
 }
 

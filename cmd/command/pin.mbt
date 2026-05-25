@@ -6,9 +6,9 @@ async fn run_pin(tool : @tools.Tool, version : String) -> CommandResult {
 
   // 写入项目配置
   let config_file_path = @tools.write_project_config(tool, version)
-  // @log 日志不捕获到 CommandResult
+  // 已锁定项目版本
   @log.success(
-    "已将目录 \{config_file_path} 下的 \{tool} 版本锁定为 \{version}",
+    @i18n.t("pin.set_project_with_path", args={ "path": config_file_path, "tool": tool.to_string(), "version": version }),
   )
   result
 }

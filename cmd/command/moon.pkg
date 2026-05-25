@@ -13,6 +13,7 @@ import {
   "username/mvm/cmd/tools",
   "username/mvm/utils",
   "username/mvm/log",
+  "username/mvm/i18n",
   "username/mvm/zip",
   "username/mvm/progress",
   "username/mvm/checksum",
