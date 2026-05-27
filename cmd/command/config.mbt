@@ -198,7 +198,7 @@ fn get_preset_config(name : String) -> @tools.GlobalConfig? {
         python_mirror: Some("https://mirrors.aliyun.com/python"),
         rust_mirror: Some("https://mirrors.aliyun.com/rustup"),
         java_mirror: Some("https://mirrors.aliyun.com/adoptium"),
-        language: None,
+        language: Some("zh"),
       })
     _ => None
   }
