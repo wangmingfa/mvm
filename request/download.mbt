@@ -388,7 +388,7 @@ pub async fn download_by_native_command(
         url +
         "' -OutFile '" +
         dest +
-        "' -UserAgent 'Mozilla/5.0' -MaximumRedirection 5 -TimeoutSec 300 -Resume" +
+        "' -UserAgent 'Mozilla/5.0' -MaximumRedirection 5 -TimeoutSec 300" +
         headers_str
 
       ["-Command", ps_script]
