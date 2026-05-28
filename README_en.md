@@ -179,14 +179,19 @@ mvm which python
 
 9. `mvm run`——Temporarily run with a specific version
 ```bash
-# Run a command with a specific version
-mvm run node@18 -- node -v
-mvm run node@20 -- npm install
-mvm run node@lts -- node -e "console.log(1)"
+# Positional syntax: run a command with a specific version
+mvm run node@18 node -v
+mvm run node@20 npm install
+mvm run node@lts node -e "console.log(1)"
 
 # Without version, use the current directory's version
-mvm run node -- npm -v
-mvm run bun -- bun run dev
+mvm run node npm -v
+mvm run bun bun run dev
+
+# Volta-compatible syntax
+mvm run --node 18 node app.js
+mvm run --bun 1.1.0 bun run dev
+mvm run --go 1.23 go build
 ```
 
 10. `mvm setup`——Initialize tool scripts and PATH
@@ -258,8 +263,8 @@ mvm's core design is inspired by Volta, achieving seamless multi-language versio
 
 When you run `mvm setup`, mvm creates lightweight proxy scripts (shims) in the `$MVM_HOME/bin/` directory for each tool:
 
-- **Unix (macOS/Linux)**: Creates shell scripts with content like `#!/bin/sh\nmvm run node -- node "$@"`
-- **Windows**: Creates `.ps1` and `.cmd` files with content like `mvm run node -- node %*`
+- **Unix (macOS/Linux)**: Creates shell scripts with content like `#!/bin/sh\nmvm run node node "$@"`
+- **Windows**: Creates `.ps1` and `.cmd` files with content like `mvm run node node %*`
 
 When you type `node`, `bun`, `zig`, `go`, `python`, `rustc`, `deno`, `java`, `kotlinc`, etc. in your terminal, you're actually executing these proxy scripts, which automatically call `mvm run` to resolve the correct version and execute the corresponding real binary.
 

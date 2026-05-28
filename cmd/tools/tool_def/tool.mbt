@@ -144,7 +144,7 @@ pub fn Tool::from_string(tool : String) -> Tool raise {
 }
 
 ///|
-fn Tool::from_string_with_option_result(tool : String) -> Tool? {
+pub fn Tool::from_string_with_option_result(tool : String) -> Tool? {
   let tool = Tool::from_string(tool) catch { _ => return None }
   Some(tool)
 }

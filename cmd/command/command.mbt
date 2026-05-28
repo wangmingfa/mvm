@@ -221,7 +221,26 @@ pub fn get_command(argv : ArrayView[String]) -> Command raise {
     ["run"] =>
       // 请指定要运行的工具和版本
       raise fail(@i18n.t("command.run_no_tool_version"))
-    ["run", tool_version, "--", .. run_args] =>
+    // Volta 兼容语法：mvm run --node 18 node app.js
+    ["run", tool_flag, .. run_args] if tool_flag.has_prefix("--") => {
+      let tool_name = tool_flag[2:].to_owned()
+      match Tool::from_string_with_option_result(tool_name) {
+        Some(t) => {
+          guard run_args.length() >= 1 else {
+            // 缺少版本号
+            raise fail(@i18n.t("command.run_volta_missing_version", args={ "flag": tool_flag }))
+          }
+          let version = run_args[0]
+          let cmd_args = run_args[1:].to_owned()
+          Run(t, version, cmd_args)
+        }
+        None =>
+          // 不支持的 -- 选项
+          raise fail(@i18n.t("command.run_volta_unknown_tool", args={ "flag": tool_flag }))
+      }
+    }
+    // 位置参数语法：mvm run node@18 node -v 或 mvm run node npm -v
+    ["run", tool_version, .. run_args] =>
       match tool_version.split("@").to_array() {
         // 支持：node@18
         [tool, version] => {
@@ -237,9 +256,6 @@ pub fn get_command(argv : ArrayView[String]) -> Command raise {
         _ =>
           raise fail(@i18n.t("command.run_invalid_version_format", args={ "version": tool_version }))
       }
-    // 请使用--分隔版本和命令
-    ["run", ..] =>
-      raise fail(@i18n.t("command.run_need_separator"))
     ["list"] | ["ls"] => List(None)
     ["list", tool] | ["ls", tool] => List(Some(Tool::from_string(tool)))
     ["cache", "clean"] => CacheClean
@@ -485,13 +501,29 @@ test "get_command: list/current/which 命令" {
 }
 
 ///|
-test "get_command: run 命令" {
-  // run node@18 -- node -v
-  guard (try? get_command(["run", "node@18", "--", "node", "-v"])) is Ok(cmd)
+test "get_command: run 命令（位置参数新语法）" {
+  // run node@18 node -v
+  guard (try? get_command(["run", "node@18", "node", "-v"])) is Ok(cmd)
   debug_inspect(cmd, content=@debug.to_string(Run(Node, "18", ["node", "-v"])))
-  // run node -- npm -v (无版本号)
-  guard (try? get_command(["run", "node", "--", "npm", "-v"])) is Ok(cmd)
+  // run node npm -v (无版本号)
+  guard (try? get_command(["run", "node", "npm", "-v"])) is Ok(cmd)
   debug_inspect(cmd, content=@debug.to_string(Run(Node, "", ["npm", "-v"])))
+  // run bun@1.1.0 bun run dev
+  guard (try? get_command(["run", "bun@1.1.0", "bun", "run", "dev"])) is Ok(cmd)
+  debug_inspect(cmd, content=@debug.to_string(Run(Bun, "1.1.0", ["bun", "run", "dev"])))
+}
+
+///|
+test "get_command: run 命令（Volta 兼容语法）" {
+  // run --node 18 node app.js
+  guard (try? get_command(["run", "--node", "18", "node", "app.js"])) is Ok(cmd)
+  debug_inspect(cmd, content=@debug.to_string(Run(Node, "18", ["node", "app.js"])))
+  // run --bun 1.1.0 bun run dev
+  guard (try? get_command(["run", "--bun", "1.1.0", "bun", "run", "dev"])) is Ok(cmd)
+  debug_inspect(cmd, content=@debug.to_string(Run(Bun, "1.1.0", ["bun", "run", "dev"])))
+  // run --go 1.23 go version
+  guard (try? get_command(["run", "--go", "1.23", "go", "version"])) is Ok(cmd)
+  debug_inspect(cmd, content=@debug.to_string(Run(Go, "1.23", ["go", "version"])))
 }
 
 ///|
@@ -566,8 +598,10 @@ test "get_command: 错误命令" {
   guard (try? get_command(["which"])) is Err(_)
   // run 无参数 → 报错
   guard (try? get_command(["run"])) is Err(_)
-  // run 缺少 -- 分隔 → 报错
-  guard (try? get_command(["run", "node@18", "node", "-v"])) is Err(_)
+  // run 使用未知的 --flag → 报错
+  guard (try? get_command(["run", "--unknown", "1.0", "cmd"])) is Err(_)
+  // run 使用 --flag 但缺版本号 → 报错
+  guard (try? get_command(["run", "--node"])) is Err(_)
   // 不存在的命令 → 报错
   guard (try? get_command(["foobar"])) is Err(_)
   // pin 无版本号 → 报错

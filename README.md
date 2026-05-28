@@ -180,14 +180,19 @@ mvm which python
 
 9. `mvm run`——临时运行指定版本
 ```bash
-# 使用指定版本临时运行命令
-mvm run node@18 -- node -v
-mvm run node@20 -- npm install
-mvm run node@lts -- node -e "console.log(1)"
+# 位置参数语法：使用指定版本临时运行命令
+mvm run node@18 node -v
+mvm run node@20 npm install
+mvm run node@lts node -e "console.log(1)"
 
 # 不指定版本，使用当前目录的版本
-mvm run node -- npm -v
-mvm run bun -- bun run dev
+mvm run node npm -v
+mvm run bun bun run dev
+
+# Volta 兼容语法
+mvm run --node 18 node app.js
+mvm run --bun 1.1.0 bun run dev
+mvm run --go 1.23 go build
 ```
 
 10. `mvm setup`——初始化工具脚本和 PATH
@@ -258,8 +263,8 @@ mvm 的核心设计灵感来自 Volta，通过 **Shim 代理脚本 + 版本解�
 
 运行 `mvm setup` 时，mvm 会在 `$MVM_HOME/bin/` 目录下为每个工具创建轻量级的代理脚本（Shim）：
 
-- **Unix（macOS/Linux）**：创建 shell 脚本，内容为 `#!/bin/sh\nmvm run node -- node "$@"`
-- **Windows**：创建 `.ps1` 和 `.cmd` 文件，内容类似 `mvm run node -- node %*`
+- **Unix（macOS/Linux）**：创建 shell 脚本，内容为 `#!/bin/sh\nmvm run node node "$@"`
+- **Windows**：创建 `.ps1` 和 `.cmd` 文件，内容类似 `mvm run node node %*`
 
 当你在终端输入 `node`、`bun`、`zig`、`go`、`python`、`rustc`、`deno`、`java`、`kotlinc` 等时，实际上执行的是这些代理脚本，它们会自动调用 `mvm run` 来解析正确的版本并执行对应的真实二进制文件。
 
