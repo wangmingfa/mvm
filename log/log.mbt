@@ -44,22 +44,10 @@ fn[T : ToStr] log(prefix : String, loc? : String = "", msg : T) -> Unit {
 const FAILED_KEY = "FAILED:"
 
 ///|
-/// 是否打印取消的标记
-let print_cancelled_flag : Ref[Bool] = Ref(true)
-
-///|
-/// 取消操作的提示文本（可通过 set_cancelled_text 设置国际化文本）
-/// 默认英文，main.mbt 初始化时会根据语言设置覆盖
-let cancelled_text : Ref[String] = Ref("Operation cancelled")
-
-///|
-/// 设置取消操作的提示文本（用于国际化）
-pub fn set_cancelled_text(text : String) -> Unit {
-  cancelled_text.val = text
-}
-
-///|
 pub fn println_error(e : Error) -> Unit {
+  if @sys.is_cancelled(e) {
+    return
+  }
   let msg = match e {
     Failure::Failure(msg) => {
       let start_index = if is_release() &&
@@ -70,19 +58,7 @@ pub fn println_error(e : Error) -> Unit {
       }
       msg[start_index:].trim().to_owned()
     }
-    _ =>
-      if @sys.is_cancelled(e) {
-        if print_cancelled_flag.val {
-          // 只打印一次取消
-          print_cancelled_flag.val = false
-          println("")
-          cancelled_text.val
-        } else {
-          "\n"
-        }
-      } else {
-        e.to_string()
-      }
+    _ => e.to_string()
   }
   error(msg)
 }

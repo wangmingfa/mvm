@@ -191,6 +191,7 @@ pub async fn run_with_output(
       while r.read_some() is Some(b) {
         let (bytes, str) = gbk_to_utf8(b)
         @stdio.print(str)
+        @stdio.flush_stdout()
         buffer.write_bytes(bytes)
       }
       buffer.contents()

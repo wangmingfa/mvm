@@ -19,7 +19,11 @@ pub fn[T : @utils.ToStr] error(T, loc~ : SourceLoc) -> Unit
 #callsite(autofill(loc))
 pub fn[T : @utils.ToStr] info(T, loc~ : SourceLoc) -> Unit
 
+pub fn is_debug() -> Bool
+
 pub fn is_debug_log_level() -> Bool
+
+pub fn is_release() -> Bool
 
 pub fn println_error(Error) -> Unit
 

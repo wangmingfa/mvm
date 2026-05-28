@@ -25,7 +25,7 @@ pub async fn is_installed(Tool, String) -> Bool
 
 pub fn is_no_cache_mode() -> Bool
 
-pub fn make_global_config(existing_config? : GlobalConfig, github_proxy? : String?, node_mirror? : String?, go_mirror? : String?, python_mirror? : String?, rust_mirror? : String?, java_mirror? : String?) -> GlobalConfig
+pub fn make_global_config(existing_config? : GlobalConfig, github_proxy? : String?, node_mirror? : String?, go_mirror? : String?, python_mirror? : String?, rust_mirror? : String?, java_mirror? : String?, language? : String?) -> GlobalConfig
 
 pub fn mvm_bin_home() -> String raise
 
@@ -107,6 +107,7 @@ pub(all) struct GlobalConfig {
   python_mirror : String?
   rust_mirror : String?
   java_mirror : String?
+  language : String?
 } derive(ToJson, @json.FromJson)
 pub fn GlobalConfig::to_string(Self, indent? : Int) -> String
 
@@ -201,6 +202,7 @@ pub(all) enum Tool {
 } derive(@debug.Debug)
 pub fn Tool::all_tools() -> Array[Self]
 pub fn Tool::from_string(String) -> Self raise
+pub fn Tool::from_string_with_option_result(String) -> Self?
 pub fn Tool::get_belonging_tool(String) -> Self raise
 pub fn Tool::get_executable_programs(Self) -> ReadOnlyArray[String]
 pub fn Tool::installable_tools() -> Array[Self]

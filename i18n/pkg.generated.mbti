@@ -1,0 +1,48 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "username/mvm/i18n"
+
+// Values
+pub fn available_langs() -> Array[Lang]
+
+pub fn current_lang() -> Lang
+
+pub fn current_lang_code() -> String
+
+pub let en_dict : Map[String, String]
+
+pub fn get_exe_dir() -> String
+
+pub fn get_langs_dir() -> String
+
+pub async fn init_lang(String?) -> Unit
+
+pub fn installed_lang_codes() -> Array[String]
+
+pub fn is_lang_available(String) -> Bool
+
+pub async fn load_external_dict(String) -> Unit
+
+pub fn remove_external_dict(String) -> Unit
+
+pub fn set_lang(String) -> Unit
+
+pub fn set_langs_dir(String) -> Unit
+
+pub fn t(String, args? : Map[String, String]) -> String
+
+pub let zh_dict : Map[String, String]
+
+// Errors
+
+// Types and methods
+pub enum Lang {
+  Zh
+  En
+} derive(Eq)
+pub fn Lang::from_string(String) -> Self
+pub fn Lang::to_string(Self) -> String
+
+// Type aliases
+
+// Traits
+

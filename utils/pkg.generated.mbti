@@ -68,7 +68,7 @@ pub(all) enum Color {
 
 // Traits
 pub(open) trait ToStr {
-  to_str(Self) -> String
+  fn to_str(Self) -> String
 }
 pub impl ToStr for String
 pub impl[T : ToStr] ToStr for Array[T]

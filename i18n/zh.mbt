@@ -60,7 +60,7 @@ pub let zh_dict : Map[String, String] = {
   "command.config_unsupported_sub": "不支持的 config 子命令：{subcommand}",
   "command.lang_install_need_path": "请指定语言包 JSON 文件路径。示例：mvm lang install ./ja.json",
   "command.lang_remove_need_code": "请指定要移除的语言代码。示例：mvm lang remove ja",
-"command.lang_set_need_code": "请指定要设置的语言代码。示例：mvm lang set zh",
+  "command.lang_set_need_code": "请指定要设置的语言代码。示例：mvm lang set zh",
   "command.lang_list_hint": "请使用 mvm lang list 查看可用语言",
   "command.lang_unsupported_sub": "不支持的 lang 子命令：{subcommand}",
 
@@ -287,14 +287,14 @@ pub let zh_dict : Map[String, String] = {
   "lang.external_label": "外部语言:",
   "lang.current_lang_label": "当前语言: {code}",
   "lang.create_dir_failed": "创建目录失败: {path}",
-"lang.lang_not_installed": "语言包 {code} 未安装",
+  "lang.lang_not_installed": "语言包 {code} 未安装",
   "lang.delete_file_failed": "删除文件失败: {path}",
   "lang.deleted_file_label": "删除文件: {path}",
   "lang.installed_label": "语言包已安装: {code}",
   "lang.source_file_label": "源文件: {path}",
   "lang.dest_file_label": "目标文件: {path}",
   "lang.translation_count_label": "翻译键数量: {count}",
-"lang.set_success": "语言已设置为: {code}",
+  "lang.set_success": "语言已设置为: {code}",
 
   // === node 模块 ===
   "node.cannot_fetch_shasums": "无法从 {url} 获取 Node.js SHA256 校验文件: {code} {reason}",
@@ -308,7 +308,6 @@ pub let zh_dict : Map[String, String] = {
   "node.exe_info_not_found": "找不到 {program}@{version} 的可执行文件信息",
 
   // === log 模块（用户面向）===
-  "log.cancelled": "操作已取消",
   "log.operation_complete": "操作完成",
 
   // === 错误消息 ===

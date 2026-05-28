@@ -33,6 +33,10 @@ pub(all) enum Command {
   ConfigList
   ConfigSet(String, String)
   ConfigPreset(String)
+  LangInstall(String)
+  LangList
+  LangRemove(String)
+  LangSet(String)
 } derive(@debug.Debug)
 pub impl Show for Command
 

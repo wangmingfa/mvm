@@ -10,6 +10,8 @@ pub fn progress_bar(prefix? : String, Int64, Int64, suffix? : String, show_unit?
 pub struct ProgressBar {
   prefix : String
   mode : ProgressBarMode
+  show_speed : Bool
+  show_time_info : Bool
   show_unit : Bool
   total : Int64
   mut competed : Int64
@@ -19,7 +21,7 @@ pub struct ProgressBar {
   mut period : Int64
   mut completed_in_period : Int64
 }
-pub fn ProgressBar::ProgressBar(Int64, prefix? : String, mode? : ProgressBarMode, show_unit? : Bool) -> Self
+pub fn ProgressBar::ProgressBar(Int64, prefix? : String, mode? : ProgressBarMode, show_speed? : Bool, show_time_info? : Bool, show_unit? : Bool) -> Self
 pub fn ProgressBar::add_completed(Self, Int64) -> Unit
 pub fn ProgressBar::clear(Self) -> Unit
 pub fn ProgressBar::duration(Self) -> Int64

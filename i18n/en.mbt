@@ -60,7 +60,7 @@ pub let en_dict : Map[String, String] = {
   "command.config_unsupported_sub": "Unsupported config subcommand: {subcommand}",
   "command.lang_install_need_path": "Please specify a language JSON file path. Example: mvm lang install ./ja.json",
   "command.lang_remove_need_code": "Please specify a language code to remove. Example: mvm lang remove ja",
-"command.lang_set_need_code": "Please specify a language code to set. Example: mvm lang set en",
+  "command.lang_set_need_code": "Please specify a language code to set. Example: mvm lang set en",
   "command.lang_list_hint": "Please use mvm lang list to view available languages",
   "command.lang_unsupported_sub": "Unsupported lang subcommand: {subcommand}",
 
@@ -287,14 +287,14 @@ pub let en_dict : Map[String, String] = {
   "lang.external_label": "External languages:",
   "lang.current_lang_label": "Current language: {code}",
   "lang.create_dir_failed": "Failed to create directory: {path}",
-"lang.lang_not_installed": "Language pack {code} is not installed",
+  "lang.lang_not_installed": "Language pack {code} is not installed",
   "lang.delete_file_failed": "Failed to delete file: {path}",
   "lang.deleted_file_label": "Deleted file: {path}",
   "lang.installed_label": "Language pack installed: {code}",
   "lang.source_file_label": "Source file: {path}",
   "lang.dest_file_label": "Dest file: {path}",
   "lang.translation_count_label": "Translation key count: {count}",
-"lang.set_success": "Language set to: {code}",
+  "lang.set_success": "Language set to: {code}",
 
   // === node 模块 ===
   "node.cannot_fetch_shasums": "Cannot fetch Node.js SHA256 checksum file from {url}: {code} {reason}",
@@ -308,7 +308,6 @@ pub let en_dict : Map[String, String] = {
   "node.exe_info_not_found": "Cannot find executable info for {program}@{version}",
 
   // === log 模块（用户面向）===
-  "log.cancelled": "Operation cancelled",
   "log.operation_complete": "Operation complete",
 
   // === 错误消息 ===

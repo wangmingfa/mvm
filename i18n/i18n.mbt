@@ -1,8 +1,8 @@
 ///|
 /// 语言类型（仅内置语言）
 pub enum Lang {
-  Zh  // 中文简体 (zh-CN)
-  En  // 美式英文 (en-US)
+  Zh // 中文简体 (zh-CN)
+  En // 美式英文 (en-US)
 } derive(Eq)
 
 ///|
@@ -49,11 +49,11 @@ pub fn set_langs_dir(dir : String) -> Unit {
 pub fn get_langs_dir() -> String {
   match _langs_dir.val {
     Some(dir) => dir
-        None => get_exe_dir()
-      }
-    }
+    None => get_exe_dir()
+  }
+}
 
-    ///|
+///|
 /// 获取当前内置语言枚举
 pub fn current_lang() -> Lang {
   Lang::from_string(_current_lang_code.val)
@@ -94,13 +94,12 @@ fn _detect_lang_from_env() -> String {
     None => @env.get_env_var("LC_ALL")
   }
   match lang_env {
-    Some(env_val) => {
+    Some(env_val) =>
       if env_val.has_prefix("zh") || env_val.contains("zh_CN") {
         "zh"
       } else {
         "en"
       }
-    }
     None => "en"
   }
 }
@@ -117,11 +116,11 @@ async fn _load_external_dict(lang_code : String) -> Unit {
       let json = content.json()
       // 使用 @json.from_json 直接转换为 Map[String, String]
       let dict : Map[String, String] = @json.from_json(json) catch {
-        _ => return  // JSON 格式无效，静默忽略
+        _ => return // JSON 格式无效，静默忽略
       }
       _external_dicts.val.set(lang_code, dict)
     } catch {
-      _ => ()  // 其他错误也静默忽略，回退到内置字典
+      _ => () // 其他错误也静默忽略，回退到内置字典
     }
   }
 }
@@ -135,9 +134,7 @@ pub fn get_exe_dir() -> String {
     // 如果路径包含目录分隔符，提取父目录
     if exe_path.contains("/") || exe_path.contains("\\") {
       let exe_path = @fs_ext.canonicalize_path(exe_path)
-      let parent : String? = try {
-        @fs_ext.get_parent_dir(exe_path)
-      } catch {
+      let parent : String? = @fs_ext.get_parent_dir(exe_path) catch {
         _ => None
       }
       match parent {
@@ -187,10 +184,10 @@ fn _lookup(key : String, lang_code : String) -> String {
       if lower != "en" && lower != "en-us" {
         match en_dict.get(key) {
           Some(value) => value
-          None => key  // 英文也找不到，返回键本身
+          None => key // 英文也找不到，返回键本身
         }
       } else {
-        key  // 当前已是英文，返回键本身
+        key // 当前已是英文，返回键本身
       }
     }
   }
@@ -202,13 +199,12 @@ fn _get_dict(lang_code : String) -> Map[String, String] {
   match lang_code.to_lower() {
     "zh" | "zh-cn" => zh_dict
     "en" | "en-us" => en_dict
-    _ => {
+    _ =>
       // 扩展语言：从缓存的外部字典查找
       match _external_dicts.val.get(lang_code) {
         Some(dict) => dict
-        None => {}  // 外部字典不存在，回退到 en_dict（由 _lookup 处理）
+        None => {} // 外部字典不存在，回退到 en_dict（由 _lookup 处理）
       }
-    }
   }
 }
 
@@ -254,8 +250,11 @@ pub fn remove_external_dict(lang_code : String) -> Unit {
 /// 检查指定语言代码是否可用（内置或外部已加载）
 pub fn is_lang_available(lang_code : String) -> Bool {
   let lower = lang_code.to_lower()
-  lower == "zh" || lower == "zh-cn" || lower == "en" || lower == "en-us" ||
-    _external_dicts.val.contains(lang_code)
+  lower == "zh" ||
+  lower == "zh-cn" ||
+  lower == "en" ||
+  lower == "en-us" ||
+  _external_dicts.val.contains(lang_code)
 }
 
 ///|
@@ -307,12 +306,18 @@ test "翻译查找：回退到键本身" {
 ///|
 test "参数插值" {
   set_lang("zh")
-  let result = t("install.already_installed", args={ "tool": "node", "version": "v20" })
+  let result = t("install.already_installed", args={
+    "tool": "node",
+    "version": "v20",
+  })
   guard result == "node@v20 已安装" else {
     fail("zh interpolation failed, got: \{result}")
   }
   set_lang("en")
-  let result = t("install.already_installed", args={ "tool": "node", "version": "v20" })
+  let result = t("install.already_installed", args={
+    "tool": "node",
+    "version": "v20",
+  })
   guard result == "node@v20 is already installed" else {
     fail("en interpolation failed, got: \{result}")
   }
@@ -321,7 +326,7 @@ test "参数插值" {
   guard result == "node@{version} is already installed" else {
     fail("missing param should keep placeholder, got: \{result}")
   }
-  set_lang("en")  // restore default
+  set_lang("en") // restore default
 }
 
 ///|
@@ -330,7 +335,9 @@ test "Lang 枚举转换" {
   guard Lang::from_string("zh-CN") == Zh else { fail("from_string zh-CN") }
   guard Lang::from_string("en") == En else { fail("from_string en") }
   guard Lang::from_string("en-US") == En else { fail("from_string en-US") }
-  guard Lang::from_string("ja") == En else { fail("from_string ja should return En") }
+  guard Lang::from_string("ja") == En else {
+    fail("from_string ja should return En")
+  }
   guard Lang::Zh.to_string() == "zh" else { fail("Zh to_string") }
   guard Lang::En.to_string() == "en" else { fail("En to_string") }
 }
