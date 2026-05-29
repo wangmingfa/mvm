@@ -132,6 +132,8 @@ pub let zh_dict : Map[String, String] = {
   "config.china_preset_desc": "china - 中国大陆快速配置（GitHub 代理 + Node/Go/Python/Rust/Java 镝像）",
   "config.error_prefix": "错误: ",
   "config.unsupported_key_label": "不支持的配置项 ",
+  "config.managed_tools": "被管理的工具",
+  "config.managed_tools_all": "所有工具（默认）",
 
   // === setup 模块 ===
   "setup.install_complete": "安装完成！可执行文件已安装到 {dir}",
@@ -159,6 +161,8 @@ pub let zh_dict : Map[String, String] = {
   "setup.cannot_delete": "无法删除 {path} {error}",
   "setup.path_configured": "已将 PATH 配置写入 {path}",
   "setup.path_already_configured": "PATH 已配置，无需修改 {path}",
+  "setup.selected_tools": "已选择工具：{tools}",
+  "setup.select_tools_title": "请选择要管理的工具",
   "setup.path_configured_windows": "已将 PATH 配置写入 Windows 用户环境变量",
   "setup.windows_script_note": "(.ps1 for PowerShell, .cmd for cmd.exe/npm postinstall)",
   "setup.windows_path_hint": "$env:PATH = [Environment]::GetEnvironmentVariable(\"PATH\",\"User\") + \";\" + $env:PATH",
@@ -244,6 +248,7 @@ pub let zh_dict : Map[String, String] = {
   "run.empty_command": "运行的命令不能为空。\n位置参数语法：mvm run node@18 node -v\nVolta 兼容语法：mvm run --node 18 node -v",
   "run.debug_running_command": "使用 {tool}@{version} ({path}) 运行命令: {args}",
   "run.auto_installing": "{tool}@{version} 未安装，正在自动安装...",
+  "run.not_tty_environment": "非 TTY 环境不支持自动安装",
   "run.install_failed_fallback": "安装失败",
   "run.install_tool_failed": "安装 {tool}@{version} 失败",
   "run.program_not_exists": "要执行的程序 {program}({path}) 不存在",

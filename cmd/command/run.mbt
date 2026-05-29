@@ -2,7 +2,7 @@
 /// 判断是否应打印 logo：仅在 Help 和 Setup 命令中显示 logo，其他命令不显示
 fn should_print_logo(command : Command) -> Bool {
   match command {
-    Help | Setup(_) => true
+    Help | Setup(_, _) => true
     _ => false
   }
 }
@@ -22,7 +22,7 @@ pub async fn run(command : Command) -> CommandResult {
       Version => run_version()
       Upgrade(version, reinstall) => run_upgrade(version, reinstall)
       UpgradeList => run_upgrade_list()
-      Setup(use_prefix) => run_setup(use_prefix)
+      Setup(use_prefix, tools) => run_setup(use_prefix, tools)
       Install(tool, version, skip_verify, no_cache) =>
         run_install(tool, version, skip_verify, no_cache)
       Pin(tool, version) => run_pin(tool, version)

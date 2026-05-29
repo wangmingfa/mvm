@@ -21,7 +21,7 @@ async fn run_lang_install(path : String) -> CommandResult {
   // 从文件名提取语言代码（去掉目录和扩展名）
   let filename = @fs_ext.get_path_name(path)
   let lang_code : String = if filename.has_suffix(".json") {
-    filename[0:filename.length() - 5].to_owned()  // 去掉 .json 后缀
+    filename[0:filename.length() - 5].to_owned() // 去掉 .json 后缀
   } else {
     filename.to_string()
   }
@@ -29,7 +29,9 @@ async fn run_lang_install(path : String) -> CommandResult {
   let lower = lang_code.to_lower()
   if lower == "zh" || lower == "zh-cn" || lower == "en" || lower == "en-us" {
     // 不能覆盖内置语言
-    raise fail(@i18n.t("lang.cannot_override_builtin", args={ "lang": lang_code }))
+    raise fail(
+      @i18n.t("lang.cannot_override_builtin", args={ "lang": lang_code }),
+    )
   }
   // 复制到 MVM_HOME/langs 目录
   let mvm_home = @tools.mvm_home()
@@ -38,7 +40,10 @@ async fn run_lang_install(path : String) -> CommandResult {
   if !@fs.exists(langs_dir) {
     @fs.mkdir(langs_dir, recursive=true) catch {
       // 创建目录失败
-      _ => raise fail(@i18n.t("lang.create_dir_failed", args={ "path": langs_dir }))
+      _ =>
+        raise fail(
+          @i18n.t("lang.create_dir_failed", args={ "path": langs_dir }),
+        )
     }
   }
   let dest_path = @fs_ext.join_path(langs_dir, lang_code + ".json")
@@ -53,7 +58,12 @@ async fn run_lang_install(path : String) -> CommandResult {
   // 目标文件
   print_to(result, @i18n.t("lang.dest_file_label", args={ "path": dest_path }))
   // 翻译键数量
-  print_to(result, @i18n.t("lang.translation_count_label", args={ "count": map.length().to_string() }))
+  print_to(
+    result,
+    @i18n.t("lang.translation_count_label", args={
+      "count": map.length().to_string(),
+    }),
+  )
   result
 }
 
@@ -83,7 +93,10 @@ async fn run_lang_list() -> CommandResult {
           let code = entry[0:entry.length() - 5].to_owned()
           let lower = code.to_lower()
           // 排除内置语言
-          if lower != "zh" && lower != "zh-cn" && lower != "en" && lower != "en-us" {
+          if lower != "zh" &&
+            lower != "zh-cn" &&
+            lower != "en" &&
+            lower != "en-us" {
             external_langs.push(code)
           }
         }
@@ -107,7 +120,12 @@ async fn run_lang_list() -> CommandResult {
   // 当前语言
   print_to(result, "")
   // 当前语言
-  print_to(result, @i18n.t("lang.current_lang_label", args={ "code": @i18n.current_lang_code() }))
+  print_to(
+    result,
+    @i18n.t("lang.current_lang_label", args={
+      "code": @i18n.current_lang_code(),
+    }),
+  )
   result
 }
 
@@ -151,13 +169,17 @@ async fn run_lang_remove(code : String) -> CommandResult {
   }
   @fs.remove(json_path) catch {
     // 删除文件失败
-    _ => raise fail(@i18n.t("lang.delete_file_failed", args={ "path": json_path }))
+    _ =>
+      raise fail(@i18n.t("lang.delete_file_failed", args={ "path": json_path }))
   }
   // 清除缓存
   @i18n.remove_external_dict(code)
   // 已移除语言包
   print_to(result, @i18n.t("lang.remove_success", args={ "lang": code }))
   // 删除文件
-  print_to(result, @i18n.t("lang.deleted_file_label", args={ "path": json_path }))
+  print_to(
+    result,
+    @i18n.t("lang.deleted_file_label", args={ "path": json_path }),
+  )
   result
 }

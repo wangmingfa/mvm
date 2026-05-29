@@ -120,8 +120,9 @@ fi
 
 # 执行 setup（创建工具软连接、配置 PATH 等）
 # 默认无前缀；本地构建模式（非 --online 且非 --no-prefix）使用 f_ 前缀
+# prefix 模式下自动管理所有工具（--tools all），因为加了前缀不影响原有工具
 if [ "$ONLINE" = true ] || [ "$NO_PREFIX" = true ]; then
   "${BIN_DIR}/mvm" setup
 else
-  "${BIN_DIR}/mvm" setup -p
+  "${BIN_DIR}/mvm" setup -p --tools all
 fi

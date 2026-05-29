@@ -4,7 +4,7 @@ pub(all) enum Command {
   Version
   Upgrade(String?, Bool) // 可指定升级目标版本号，None 表示升级到最新版；Bool 为是否重新安装当前版本
   UpgradeList // 查询所有可用的 mvm 版本
-  Setup(Bool)
+  Setup(Bool, String?) // Bool: 是否使用前缀；String?: 指定管理的工具列表（"all" 或逗号分隔，None 表示交互选择）
   Install(Tool, String?, Bool, Bool) // 第一个 Bool 为是否跳过 SHA256 校验，第二个 Bool 为是否不使用缓存
   Pin(Tool, String)
   Use(Tool, String?)
@@ -18,21 +18,22 @@ pub(all) enum Command {
   ConfigList
   ConfigSet(String, String)
   ConfigPreset(String)
-  LangInstall(String)  // 安装语言包：mvm lang install <json文件路径>
-  LangList              // 列出可用语言：mvm lang list
-  LangRemove(String)    // 移除语言包：mvm lang remove <lang_code>
-  LangSet(String)       // 设置当前语言：mvm lang set <lang_code>
+  LangInstall(String) // 安装语言包：mvm lang install <json文件路径>
+  LangList // 列出可用语言：mvm lang list
+  LangRemove(String) // 移除语言包：mvm lang remove <lang_code>
+  LangSet(String) // 设置当前语言：mvm lang set <lang_code>
 } derive(Debug)
 
 ///|
-pub impl Show for Command with to_string(s) {
+pub impl Show for Command with fn to_string(s) {
   match s {
     Help => "Help"
     Version => "Version"
     Upgrade(version, reinstall) =>
       "Upgrade(\{@utils.option_to_string(version)}, reinstall=\{reinstall})"
     UpgradeList => "UpgradeList"
-    Setup(use_prefix) => "Setup(\{use_prefix})"
+    Setup(use_prefix, tools) =>
+      "Setup(\{use_prefix}, \{@utils.option_to_string(tools)})"
     Install(tool, version, skip_verify, no_cache) =>
       "Install(\{tool.to_string()}, \{@utils.option_to_string(version)}, skip_verify=\{skip_verify}, no_cache=\{no_cache})"
     Pin(tool, version) => "Pin(\{tool.to_string()}, \{version})"
@@ -60,7 +61,7 @@ pub impl Show for Command with to_string(s) {
 }
 
 ///|
-pub impl Show for Command with output(s, logger) {
+pub impl Show for Command with fn output(s, logger) {
   logger.write_string(s.to_string())
 }
 
@@ -85,7 +86,12 @@ fn Command::new_with_version(
     "use" => Use(t, version)
     "uninstall" => Uninstall(t, version)
     // 无效的命令类型
-    _ => raise fail(@i18n.t("command.invalid_command_type", args={ "command_type": command_type }))
+    _ =>
+      raise fail(
+        @i18n.t("command.invalid_command_type", args={
+          "command_type": command_type,
+        }),
+      )
   }
 }
 
@@ -113,7 +119,8 @@ fn parse_with_version(
         no_cache~,
       )
     // 无效的参数
-    _ => raise fail(@i18n.t("command.invalid_args", args={ "options": options }))
+    _ =>
+      raise fail(@i18n.t("command.invalid_args", args={ "options": options }))
   }
 }
 
@@ -150,6 +157,43 @@ fn _extract_upgrade_flags(args : ArrayView[String]) -> (Bool, Array[String]) {
 }
 
 ///|
+/// 从参数数组中提取 setup 命令的 flags，返回 (use_prefix, tools, 剩余位置参数)
+/// --prefix/-p → use_prefix=true
+/// --tools=value/-t value → tools=Some(value)
+fn _extract_setup_flags(
+  args : ArrayView[String],
+) -> (Bool, String?, Array[String]) {
+  let mut use_prefix = false
+  let mut tools : String? = None
+  let positional : Array[String] = []
+  let args_arr = args.to_owned()
+  let mut i = 0
+  while i < args_arr.length() {
+    let arg = args_arr[i]
+    match arg {
+      "--prefix" | "-p" => use_prefix = true
+      "--tools=" =>
+        // --tools= 空值情况
+        tools = Some("")
+      _ if arg.has_prefix("--tools=") =>
+        // --tools=value 形式
+        tools = Some(arg[7:].to_owned())
+      "--tools" | "-t" =>
+        // --tools value 形式，需要取下一个参数
+        if i + 1 < args_arr.length() {
+          tools = Some(args_arr[i + 1])
+          i += 1
+        } else {
+          tools = Some("")
+        }
+      _ => positional.push(arg)
+    }
+    i += 1
+  }
+  (use_prefix, tools, positional)
+}
+
+///|
 pub fn get_command(argv : ArrayView[String]) -> Command raise {
   // 处理 install/i 命令（支持灵活的 flag 位置）
   if argv.length() >= 2 && (argv[0] == "install" || argv[0] == "i") {
@@ -166,8 +210,7 @@ pub fn get_command(argv : ArrayView[String]) -> Command raise {
           no_cache~,
         )
       // install命令只接受一个工具参数
-      _ =>
-        raise fail(@i18n.t("command.install_one_tool"))
+      _ => raise fail(@i18n.t("command.install_one_tool"))
     }
   }
   // 处理 upgrade 命令（支持 --reinstall/-r flag 和灵活的参数位置）
@@ -184,17 +227,22 @@ pub fn get_command(argv : ArrayView[String]) -> Command raise {
         return Upgrade(Some(arg), reinstall)
       }
       // upgrade命令参数无效
-      _ =>
-        raise fail(@i18n.t("command.upgrade_invalid_args"))
+      _ => raise fail(@i18n.t("command.upgrade_invalid_args"))
     }
   }
   match argv {
     ["--help"] | ["-h"] | [] => Help
     ["--version"] | ["-v"] => Version
     ["upgrade"] => Upgrade(None, false)
-    ["setup"] => Setup(false)
-    ["setup", "--prefix"] => Setup(true)
-    ["setup", "-p"] => Setup(true)
+    // setup 命令支持 --prefix/-p 和 --tools/-t 参数
+    ["setup", ..] => {
+      let (use_prefix, tools, positional) = _extract_setup_flags(argv[1:])
+      // setup 不接受位置参数
+      guard positional.length() == 0 else {
+        raise fail(@i18n.t("command.setup_unexpected_args"))
+      }
+      Setup(use_prefix, tools)
+    }
     ["pin", options] => parse_with_version("pin", options)
     ["use", options] => parse_with_version("use", options)
     ["unuse"] =>
@@ -202,8 +250,7 @@ pub fn get_command(argv : ArrayView[String]) -> Command raise {
       raise fail(@i18n.t("command.unuse_no_tool"))
     ["unuse", tool] => Unuse(Tool::from_string(tool))
     // unuse命令只接受一个工具参数
-    ["unuse", ..] =>
-      raise fail(@i18n.t("command.unuse_one_tool"))
+    ["unuse", ..] => raise fail(@i18n.t("command.unuse_one_tool"))
     ["uninstall", options] | ["un", options] =>
       parse_with_version("uninstall", options)
     ["which"] =>
@@ -211,13 +258,11 @@ pub fn get_command(argv : ArrayView[String]) -> Command raise {
       raise fail(@i18n.t("command.which_no_tool"))
     ["which", tool] => Which(Tool::from_string(tool))
     // which命令只接受一个工具参数
-    ["which", ..] =>
-      raise fail(@i18n.t("command.which_one_tool"))
+    ["which", ..] => raise fail(@i18n.t("command.which_one_tool"))
     ["current"] => Current(None)
     ["current", tool] => Current(Some(Tool::from_string(tool)))
     // current命令只接受一个工具参数
-    ["current", ..] =>
-      raise fail(@i18n.t("command.current_one_tool"))
+    ["current", ..] => raise fail(@i18n.t("command.current_one_tool"))
     ["run"] =>
       // 请指定要运行的工具和版本
       raise fail(@i18n.t("command.run_no_tool_version"))
@@ -228,7 +273,11 @@ pub fn get_command(argv : ArrayView[String]) -> Command raise {
         Some(t) => {
           guard run_args.length() >= 1 else {
             // 缺少版本号
-            raise fail(@i18n.t("command.run_volta_missing_version", args={ "flag": tool_flag }))
+            raise fail(
+              @i18n.t("command.run_volta_missing_version", args={
+                "flag": tool_flag,
+              }),
+            )
           }
           let version = run_args[0]
           let cmd_args = run_args[1:].to_owned()
@@ -236,7 +285,9 @@ pub fn get_command(argv : ArrayView[String]) -> Command raise {
         }
         None =>
           // 不支持的 -- 选项
-          raise fail(@i18n.t("command.run_volta_unknown_tool", args={ "flag": tool_flag }))
+          raise fail(
+            @i18n.t("command.run_volta_unknown_tool", args={ "flag": tool_flag }),
+          )
       }
     }
     // 位置参数语法：mvm run node@18 node -v 或 mvm run node npm -v
@@ -254,7 +305,11 @@ pub fn get_command(argv : ArrayView[String]) -> Command raise {
         }
         // 无效的版本格式
         _ =>
-          raise fail(@i18n.t("command.run_invalid_version_format", args={ "version": tool_version }))
+          raise fail(
+            @i18n.t("command.run_invalid_version_format", args={
+              "version": tool_version,
+            }),
+          )
       }
     ["list"] | ["ls"] => List(None)
     ["list", tool] | ["ls", tool] => List(Some(Tool::from_string(tool)))
@@ -262,8 +317,7 @@ pub fn get_command(argv : ArrayView[String]) -> Command raise {
     // 请使用mvm cache clean清理缓存
     ["cache"] => raise fail(@i18n.t("command.cache_clean_hint"))
     // 不支持的cache子命令
-    ["cache", ..] =>
-      raise fail(@i18n.t("command.cache_unsupported_sub"))
+    ["cache", ..] => raise fail(@i18n.t("command.cache_unsupported_sub"))
     ["config", "list"] | ["config", "ls"] | ["config", "l"] => ConfigList
     // 请使用mvm config list查看配置
     ["config"] => raise fail(@i18n.t("command.config_list_hint"))
@@ -276,7 +330,11 @@ pub fn get_command(argv : ArrayView[String]) -> Command raise {
     }
     // 不支持的config子命令
     ["config", subcommand, ..] =>
-      raise fail(@i18n.t("command.config_unsupported_sub", args={ "subcommand": subcommand }))
+      raise fail(
+        @i18n.t("command.config_unsupported_sub", args={
+          "subcommand": subcommand,
+        }),
+      )
     ["lang", "install", path] => LangInstall(path)
     // 请指定语言包JSON文件路径
     ["lang", "install"] => raise fail(@i18n.t("command.lang_install_need_path"))
@@ -290,9 +348,15 @@ pub fn get_command(argv : ArrayView[String]) -> Command raise {
     // 请使用mvm lang list查看可用语言
     ["lang"] => raise fail(@i18n.t("command.lang_list_hint"))
     // 不支持的lang子命令
-    ["lang", subcommand, ..] => raise fail(@i18n.t("command.lang_unsupported_sub", args={ "subcommand": subcommand }))
+    ["lang", subcommand, ..] =>
+      raise fail(
+        @i18n.t("command.lang_unsupported_sub", args={
+          "subcommand": subcommand,
+        }),
+      )
     // 命令缺少参数
-    [cmd] => raise fail(@i18n.t("error.command_missing_args", args={ "cmd": cmd }))
+    [cmd] =>
+      raise fail(@i18n.t("error.command_missing_args", args={ "cmd": cmd }))
     _ => {
       // 无效的命令
       let msg = argv.join(" ")
@@ -510,20 +574,33 @@ test "get_command: run 命令（位置参数新语法）" {
   debug_inspect(cmd, content=@debug.to_string(Run(Node, "", ["npm", "-v"])))
   // run bun@1.1.0 bun run dev
   guard (try? get_command(["run", "bun@1.1.0", "bun", "run", "dev"])) is Ok(cmd)
-  debug_inspect(cmd, content=@debug.to_string(Run(Bun, "1.1.0", ["bun", "run", "dev"])))
+  debug_inspect(
+    cmd,
+    content=@debug.to_string(Run(Bun, "1.1.0", ["bun", "run", "dev"])),
+  )
 }
 
 ///|
 test "get_command: run 命令（Volta 兼容语法）" {
   // run --node 18 node app.js
   guard (try? get_command(["run", "--node", "18", "node", "app.js"])) is Ok(cmd)
-  debug_inspect(cmd, content=@debug.to_string(Run(Node, "18", ["node", "app.js"])))
+  debug_inspect(
+    cmd,
+    content=@debug.to_string(Run(Node, "18", ["node", "app.js"])),
+  )
   // run --bun 1.1.0 bun run dev
-  guard (try? get_command(["run", "--bun", "1.1.0", "bun", "run", "dev"])) is Ok(cmd)
-  debug_inspect(cmd, content=@debug.to_string(Run(Bun, "1.1.0", ["bun", "run", "dev"])))
+  guard (try? get_command(["run", "--bun", "1.1.0", "bun", "run", "dev"]))
+    is Ok(cmd)
+  debug_inspect(
+    cmd,
+    content=@debug.to_string(Run(Bun, "1.1.0", ["bun", "run", "dev"])),
+  )
   // run --go 1.23 go version
   guard (try? get_command(["run", "--go", "1.23", "go", "version"])) is Ok(cmd)
-  debug_inspect(cmd, content=@debug.to_string(Run(Go, "1.23", ["go", "version"])))
+  debug_inspect(
+    cmd,
+    content=@debug.to_string(Run(Go, "1.23", ["go", "version"])),
+  )
 }
 
 ///|
@@ -558,13 +635,25 @@ test "get_command: upgrade 命令" {
 test "get_command: setup/cache/config 命令" {
   // setup
   guard (try? get_command(["setup"])) is Ok(cmd)
-  debug_inspect(cmd, content=@debug.to_string(Setup(false)))
+  debug_inspect(cmd, content=@debug.to_string(Setup(false, None)))
   // setup --prefix
   guard (try? get_command(["setup", "--prefix"])) is Ok(cmd)
-  debug_inspect(cmd, content=@debug.to_string(Setup(true)))
+  debug_inspect(cmd, content=@debug.to_string(Setup(true, None)))
   // setup -p
   guard (try? get_command(["setup", "-p"])) is Ok(cmd)
-  debug_inspect(cmd, content=@debug.to_string(Setup(true)))
+  debug_inspect(cmd, content=@debug.to_string(Setup(true, None)))
+  // setup --tools all
+  guard (try? get_command(["setup", "--tools", "all"])) is Ok(cmd)
+  debug_inspect(cmd, content=@debug.to_string(Setup(false, Some("all"))))
+  // setup --tools=node,bun
+  guard (try? get_command(["setup", "--tools=node,bun"])) is Ok(cmd)
+  debug_inspect(cmd, content=@debug.to_string(Setup(false, Some("node,bun"))))
+  // setup -t node,bun
+  guard (try? get_command(["setup", "-t", "node,bun"])) is Ok(cmd)
+  debug_inspect(cmd, content=@debug.to_string(Setup(false, Some("node,bun"))))
+  // setup -p --tools all
+  guard (try? get_command(["setup", "-p", "--tools", "all"])) is Ok(cmd)
+  debug_inspect(cmd, content=@debug.to_string(Setup(true, Some("all"))))
   // cache clean
   guard (try? get_command(["cache", "clean"])) is Ok(cmd)
   debug_inspect(cmd, content=@debug.to_string(CacheClean))

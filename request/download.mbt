@@ -339,7 +339,7 @@ pub async fn download_by_native_command(
     "curl" | "curl.exe" => {
       // curl 命令
       if show_progress {
-        @log.add_log_lines(lines=2)
+        @log.add_log_lines(lines=3)
       }
       [
         "-L", // 跟随重定向

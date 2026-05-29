@@ -132,6 +132,8 @@ pub let en_dict : Map[String, String] = {
   "config.china_preset_desc": "china - China mainland quick setup (GitHub proxy + Node/Go/Python/Rust/Java mirrors)",
   "config.error_prefix": "Error: ",
   "config.unsupported_key_label": "Unsupported config item ",
+  "config.managed_tools": "Managed Tools",
+  "config.managed_tools_all": "All tools (default)",
 
   // === setup 模块 ===
   "setup.install_complete": "Installation complete! Executables installed to {dir}",
@@ -159,6 +161,8 @@ pub let en_dict : Map[String, String] = {
   "setup.cannot_delete": "Cannot delete {path} {error}",
   "setup.path_configured": "PATH configuration written to {path}",
   "setup.path_already_configured": "PATH already configured, no changes needed in {path}",
+  "setup.selected_tools": "Selected tools: {tools}",
+  "setup.select_tools_title": "Select tools to manage",
   "setup.path_configured_windows": "PATH configuration written to Windows user environment variables",
   "setup.windows_script_note": "(.ps1 for PowerShell, .cmd for cmd.exe/npm postinstall)",
   "setup.windows_path_hint": "$env:PATH = [Environment]::GetEnvironmentVariable(\"PATH\",\"User\") + \";\" + $env:PATH",
@@ -244,6 +248,7 @@ pub let en_dict : Map[String, String] = {
   "run.empty_command": "Command to run cannot be empty.\nPositional syntax: mvm run node@18 node -v\nVolta-compatible syntax: mvm run --node 18 node -v",
   "run.debug_running_command": "Using {tool}@{version} ({path}) to run command: {args}",
   "run.auto_installing": "{tool}@{version} is not installed, auto-installing...",
+  "run.not_tty_environment": "Auto-installation is not supported in non-TTY environment",
   "run.install_failed_fallback": "Installation failed",
   "run.install_tool_failed": "Failed to install {tool}@{version}",
   "run.program_not_exists": "Program {program}({path}) does not exist",

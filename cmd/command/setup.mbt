@@ -1,20 +1,108 @@
 ///|
+/// 交互式选择工具（使用 C 语言实现完整终端交互）
+/// 返回用户选择的工具列表
+async fn interactive_select_tools() -> Array[Tool] {
+  let all_tools = Tool::all_tools()
+
+  // 构建工具名数组
+  let tool_names = all_tools.map(tool => tool.to_string())
+
+  // 从 config 中读取之前保存的工具，用于预选中
+  let (_, global_config) = @tools.get_global_config()
+  let preselected = match global_config.managed_tools {
+    Some(str) if !str.is_blank() =>
+      str.split(",").map(s => s.trim().to_owned()).to_array()
+    _ => []
+  }
+
+  // 调用 C 语言实现的交互选择，传入预选中的工具和标题
+  let title = @i18n.t("setup.select_tools_title")
+
+  let selected_str = @stdio.interactive_select_tools_c(
+    tool_names, preselected, title,
+  )
+  println("标题：\{title}")
+
+  // 解析返回的选中工具名
+  let result : Array[Tool] = []
+  if selected_str.is_blank() {
+    raise fail("Can Not Be Empty.")
+  }
+  if selected_str == "_QUIT_" {
+    raise fail("Operation Cancelled.")
+  }
+  for name in selected_str.split(",") {
+    let trimmed = name.trim().to_owned()
+    if trimmed != "" {
+      let tool = Tool::from_string_with_option_result(trimmed)
+      match tool {
+        Some(t) => result.push(t)
+        None => ()
+      }
+    }
+  }
+  // 打印已选择的工具
+  let tool_names = result.map(tool => tool.to_string()).join(", ")
+  println(@i18n.t("setup.selected_tools", args={ "tools": tool_names }))
+  result
+}
+
+///|
 /// 执行 setup 命令：创建工具 wrapper 脚本，配置 PATH
 /// use_prefix=true 使用固定前缀 TOOL_PREFIX，use_prefix=false 不使用前缀（默认）
-async fn run_setup(use_prefix : Bool) -> CommandResult {
+/// tools=None 表示交互选择工具，tools=Some("all") 表示管理所有工具，tools=Some("node,bun") 表示管理指定工具
+async fn run_setup(use_prefix : Bool, tools : String?) -> CommandResult {
   let result = CommandResult::success()
   let prefix_str = if use_prefix { TOOL_PREFIX } else { "" }
   let os = @os.get_os_name()
   let bin_dir = @tool_def.mvm_bin_home()
   let npm_dir = @tool_def.mvm_npm_pkg_home()
-  let tools = Tool::all_tools()
+  // 根据 tools 参数决定管理哪些工具
+  let managed_tools = match tools {
+    None =>
+      // 交互选择工具
+      interactive_select_tools()
+    Some("all") => Tool::all_tools()
+    Some(value) =>
+      if value.is_blank() {
+        []
+      } else {
+        value
+        .split(",")
+        .filter(v => !v.is_blank())
+        .map(v => {
+          let trimmed = v.trim().to_owned()
+          match Tool::from_string_with_option_result(trimmed) {
+            Some(tool) => Some(tool)
+            None => {
+              @log.warn(
+                "setup --tools 中包含不支持的工具名：\{trimmed}",
+              )
+              None
+            }
+          }
+        })
+        .filter(v => v is Some(_))
+        .map(v => v.unwrap())
+        .to_array()
+      }
+  }
+  // 保存 managed_tools 到 GlobalConfig
+  let managed_tools_str = managed_tools.map(t => t.to_string()).join(",")
+  let (_, existing_config) = @tools.get_global_config()
+  let new_config = @tools.make_global_config(
+    existing_config~,
+    managed_tools=Some(managed_tools_str),
+  )
+  let _ = @tools.save_global_config(new_config)
   let delete_names = []
-  let add_names = []
-  for tool in tools {
+  let add_names = managed_tools
+    .map(v => v.get_executable_programs().iter().to_array())
+    .flatten()
+  for tool in Tool::all_tools() {
     delete_names.push(tool.to_string())
     let executable_names = tool.get_executable_programs()
     delete_names.append(executable_names)
-    add_names.append(executable_names)
   }
 
   // 确保 bin 目录和 npm-pkg 目录存在
@@ -27,10 +115,13 @@ async fn run_setup(use_prefix : Bool) -> CommandResult {
   create_new_shims(add_names, prefix_str)
 
   match os {
-    MacOS | Linux => setup_unix(bin_dir, npm_dir, tools, prefix_str, result)
-    Windows => setup_windows(bin_dir, npm_dir, tools, prefix_str, result)
+    MacOS | Linux =>
+      setup_unix(bin_dir, npm_dir, managed_tools, prefix_str, result)
+    Windows =>
+      setup_windows(bin_dir, npm_dir, managed_tools, prefix_str, result)
     // 不支持的操作系统
-    _ => raise fail(@i18n.t("setup.unsupported_os", args={ "os": os.to_string() }))
+    _ =>
+      raise fail(@i18n.t("setup.unsupported_os", args={ "os": os.to_string() }))
   }
   result
 }
@@ -47,7 +138,13 @@ async fn remove_names(
         let prefixed = @fs_ext.join_path(bin_dir, prefix + name + ext)
         let _ = @fs_ext.remove_if_exists(prefixed) catch {
           // 无法删除文件
-          e => @log.warn(@i18n.t("setup.cannot_delete", args={ "path": prefixed, "error": e.to_string() }))
+          e =>
+            @log.warn(
+              @i18n.t("setup.cannot_delete", args={
+                "path": prefixed,
+                "error": e.to_string(),
+              }),
+            )
         }
       }
     }
@@ -151,7 +248,9 @@ async fn configure_path_unix(bin_dir : String, npm_dir : String) -> Unit {
     @log.info(@i18n.t("setup.path_configured", args={ "path": profile_path }))
   } else {
     // PATH 已配置，无需修改
-    @log.info(@i18n.t("setup.path_already_configured", args={ "path": profile_path }))
+    @log.info(
+      @i18n.t("setup.path_already_configured", args={ "path": profile_path }),
+    )
   }
 }
 
@@ -172,20 +271,22 @@ fn print_success_unix(
   // 主命令
   print_to(result, "  - mvm         (\{@i18n.t("setup.main_command")})")
   // npm 全局包安装路径
+  print_to(result, @i18n.t("setup.npm_pkg_dir", args={ "dir": npm_dir }))
+  // 工具软连接
   print_to(
     result,
-    @i18n.t("setup.npm_pkg_dir", args={ "dir": npm_dir }),
+    "  \{@i18n.t("setup.tool_symlinks", args={ "tools": tools_str })}",
   )
-  // 工具软连接
-  print_to(result, "  \{@i18n.t("setup.tool_symlinks", args={ "tools": tools_str })}")
   print_to(result, "")
   // 如果 mvm 命令无效，请重启终端或执行
+  print_to(result, @utils.yellow(@i18n.t("setup.restart_hint")))
+  // source 命令
   print_to(
     result,
-    @utils.yellow(@i18n.t("setup.restart_hint")),
+    @utils.yellow(
+      "   \{@i18n.t("setup.source_command", args={ "path": profile_path })}",
+    ),
   )
-  // source 命令
-  print_to(result, @utils.yellow("   \{@i18n.t("setup.source_command", args={ "path": profile_path })}"))
 }
 
 ///|
@@ -247,20 +348,17 @@ fn print_success_windows(
   // 主命令
   print_to(result, "  - mvm.exe         (\{@i18n.t("setup.main_command")})")
   // npm 全局包安装路径
+  print_to(result, @i18n.t("setup.npm_pkg_dir", args={ "dir": npm_dir }))
+  // 工具脚本
   print_to(
     result,
-    @i18n.t("setup.npm_pkg_dir", args={ "dir": npm_dir }),
+    "  \{@i18n.t("setup.tool_scripts", args={ "tools": tools_str })}",
   )
-  // 工具脚本
-  print_to(result, "  \{@i18n.t("setup.tool_scripts", args={ "tools": tools_str })}")
   // Windows 脚本说明
   print_to(result, "  \{@i18n.t("setup.windows_script_note")}")
   print_to(result, "")
   // 如果 mvm 命令无效，请重启终端或执行
-  print_to(
-    result,
-    @utils.yellow(@i18n.t("setup.restart_hint")),
-  )
+  print_to(result, @utils.yellow(@i18n.t("setup.restart_hint")))
   // Windows PATH 提示
   print_to(result, @utils.yellow("   \{@i18n.t("setup.windows_path_hint")}"))
 }

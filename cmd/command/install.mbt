@@ -22,14 +22,24 @@ async fn run_install(
   // 检查是否已安装
   if @tools.is_installed(tool, version) {
     // {tool}@{version} 已安装
-    @log.warn(@i18n.t("install.already_installed", args={ "tool": tool.to_string(), "version": version }))
+    @log.warn(
+      @i18n.t("install.already_installed", args={
+        "tool": tool.to_string(),
+        "version": version,
+      }),
+    )
     // 修复installed.json里面缺失已安装的版本的问题
     add_installed(tool, version)
     return result
   }
 
   // 安装 {tool} {version}
-  @log.info(@i18n.t("install.installing", args={ "tool": @utils.yellow(tool.to_string()), "version": @utils.yellow(version) }))
+  @log.info(
+    @i18n.t("install.installing", args={
+      "tool": @utils.yellow(tool.to_string()),
+      "version": @utils.yellow(version),
+    }),
+  )
 
   // 确保目录存在
   ensure_dir(@tools.tool_dir(tool))
@@ -86,7 +96,11 @@ async fn run_install(
     match @fs.kind(cached_archive_file) {
       Regular => {
         // 发现已缓存的压缩包，直接复用
-        @log.info(@i18n.t("install.cached_archive", args={ "path": @utils.blue(cached_archive_file) }))
+        @log.info(
+          @i18n.t("install.cached_archive", args={
+            "path": @utils.blue(cached_archive_file),
+          }),
+        )
         // 使用拷贝而非移动，防止用户 Ctrl+C 中断时缓存文件丢失
         @fs_ext.copy(cached_archive_file, archive_file)
         skip_download = true
@@ -143,7 +157,9 @@ async fn run_install(
       }
       None =>
         // {tool} 不支持 SHA256 校验，跳过校验继续安装
-        @log.warn(@i18n.t("install.no_checksum", args={ "tool": tool.to_string() }))
+        @log.warn(
+          @i18n.t("install.no_checksum", args={ "tool": tool.to_string() }),
+        )
     }
   }
 
@@ -158,13 +174,23 @@ async fn run_install(
   let ignore_dirs = ["__MACOSX"]
 
   // 解压目录和目录深度
-  @log.debug(@i18n.t("install.debug_extract_info", args={ "extract_dir": extract_dir, "depth": root_path_depth.to_string() }))
+  @log.debug(
+    @i18n.t("install.debug_extract_info", args={
+      "extract_dir": extract_dir,
+      "depth": root_path_depth.to_string(),
+    }),
+  )
 
   while find_sub_dir_count < root_path_depth {
     let entries = @fs.readdir(src_dir)
     if entries.is_empty() {
       // 无法从目录找到指定深度的子目录
-      raise fail(@i18n.t("install.cannot_find_dir_depth", args={ "extract_dir": extract_dir, "depth": root_path_depth.to_string() }))
+      raise fail(
+        @i18n.t("install.cannot_find_dir_depth", args={
+          "extract_dir": extract_dir,
+          "depth": root_path_depth.to_string(),
+        }),
+      )
     }
 
     let dir_name = for entry in entries {
@@ -182,7 +208,9 @@ async fn run_install(
     }
     if dir_name.is_blank() {
       // 无法解析压缩包的内容
-      raise fail(@i18n.t("install.cannot_parse_archive", args={ "path": src_dir }))
+      raise fail(
+        @i18n.t("install.cannot_parse_archive", args={ "path": src_dir }),
+      )
     }
     src_dir = @fs_ext.join_path(src_dir, dir_name)
     find_sub_dir_count += 1
@@ -190,7 +218,12 @@ async fn run_install(
   // 移动到最终目录
   let final_dir = @tools.version_dir(tool, version)
   // 目录移动
-  @log.debug(@i18n.t("install.debug_move_info", args={ "src": @utils.yellow(src_dir), "dest": @utils.yellow(final_dir) }))
+  @log.debug(
+    @i18n.t("install.debug_move_info", args={
+      "src": @utils.yellow(src_dir),
+      "dest": @utils.yellow(final_dir),
+    }),
+  )
 
   @fs_ext.mv(src_dir, final_dir)
 
@@ -200,12 +233,19 @@ async fn run_install(
     let cached_archive_path = "\{temp_dir_root}/\{archive_file_name}"
     if @fs.exists(archive_file) {
       // 缓存压缩包
-      @log.debug(@i18n.t("install.debug_cache_move", args={ "src": archive_file, "dest": cached_archive_path }))
+      @log.debug(
+        @i18n.t("install.debug_cache_move", args={
+          "src": archive_file,
+          "dest": cached_archive_path,
+        }),
+      )
       // 如果缓存目录已有同名文件（极少见），先移除再移动
       @fs_ext.remove_if_exists(cached_archive_path)
       @fs_ext.mv(archive_file, cached_archive_path)
       // 压缩包已缓存到
-      @log.debug(@i18n.t("install.debug_cached_to", args={ "path": cached_archive_path }))
+      @log.debug(
+        @i18n.t("install.debug_cached_to", args={ "path": cached_archive_path }),
+      )
     }
   }
 
@@ -219,7 +259,12 @@ async fn run_install(
   add_installed(tool, version)
 
   // {tool} {version} 安装成功
-  @log.success(@i18n.t("install.install_success", args={ "tool": tool.to_string(), "version": version }))
+  @log.success(
+    @i18n.t("install.install_success", args={
+      "tool": tool.to_string(),
+      "version": version,
+    }),
+  )
   result
 }
 
@@ -246,6 +291,7 @@ async fn download_file(
       }
       // 原生命令下载失败，回退到 MoonBit HTTP 客户端下载
       @log.warn(@i18n.t("install.fallback_http"))
+      @log.warn(e.to_string())
       @request.download(url, dest, dest_is_file=true, headers~, show_progress~)
     }
   }
@@ -266,11 +312,16 @@ async fn extract_file(file : String, dest : String) -> Unit {
     _ => raise fail(@i18n.t("install.unknown_format", args={ "file": file }))
   }
   // 解压结果码
-  @log.debug(@i18n.t("install.debug_extract_result", args={ "code": code.to_string() }))
+  @log.debug(
+    @i18n.t("install.debug_extract_result", args={ "code": code.to_string() }),
+  )
   match code {
     0 => ()
     // 解压失败
-    _ => raise fail(@i18n.t("install.extract_failed", args={ "reason": data.text() }))
+    _ =>
+      raise fail(
+        @i18n.t("install.extract_failed", args={ "reason": data.text() }),
+      )
   }
 }
 

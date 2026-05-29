@@ -22,10 +22,18 @@ fn run_help() -> CommandResult {
     ("run", @i18n.t("help.cmd_run"), "mvm run node@18 -- node -v"),
     ("unuse", @i18n.t("help.cmd_unuse"), "mvm unuse node"),
     ("setup", @i18n.t("help.cmd_setup"), "mvm setup [-p]"),
-    ("upgrade", @i18n.t("help.cmd_upgrade"), "mvm upgrade / mvm upgrade -l / mvm upgrade -r"),
+    (
+      "upgrade",
+      @i18n.t("help.cmd_upgrade"),
+      "mvm upgrade / mvm upgrade -l / mvm upgrade -r",
+    ),
     ("cache clean", @i18n.t("help.cmd_cache_clean"), "mvm cache clean"),
     ("config", @i18n.t("help.cmd_config"), "mvm config list / mvm config ls"),
-    ("lang", @i18n.t("help.cmd_lang"), "mvm lang set zh / mvm lang list / mvm lang install ./ja.json"),
+    (
+      "lang",
+      @i18n.t("help.cmd_lang"),
+      "mvm lang set zh / mvm lang list / mvm lang install ./ja.json",
+    ),
   ]
   let mut max_name_w = 0
   let mut max_desc_w = 0

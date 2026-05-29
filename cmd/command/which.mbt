@@ -9,7 +9,10 @@ async fn run_which(tool : @tools.Tool) -> CommandResult {
       guard config.get_value(tool) is Some(version) else {
         // 未在配置文件中找到版本信息
         raise fail(
-          @i18n.t("which.version_not_found_in_config", args={ "config_path": @utils.yellow(config_path), "tool": tool.to_string() }),
+          @i18n.t("which.version_not_found_in_config", args={
+            "config_path": @utils.yellow(config_path),
+            "tool": tool.to_string(),
+          }),
         )
       }
       // 通过已有的公共 API 获取可执行文件路径
@@ -38,7 +41,10 @@ async fn run_which(tool : @tools.Tool) -> CommandResult {
         // 请使用 mvm install 安装该版本
         print_to(
           result,
-          @i18n.t("which.install_hint", args={ "tool": tool.to_string(), "version": version }),
+          @i18n.t("which.install_hint", args={
+            "tool": tool.to_string(),
+            "version": version,
+          }),
         )
       }
       result

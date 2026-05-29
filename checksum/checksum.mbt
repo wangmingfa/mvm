@@ -11,7 +11,9 @@ fn compute_file_sha256(file_path : String) -> String raise {
   let path = @ffi.string_to_c_bytes(file_path)
   let hash = c_sha256_file(path)
   guard hash.length() == 64 else {
-    raise fail("计算 SHA256 失败：无法读取文件 \{file_path}")
+    raise fail(
+      "计算 SHA256 失败：无法读取文件 \{file_path} | hash: \{to_repr(hash)}",
+    )
   }
   hash
 }

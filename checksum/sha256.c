@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
-#include "moonbit.h"
+#include "../ffi/string.c"
 
 #ifdef _WIN32
 #include <windows.h>
@@ -137,15 +137,6 @@ static void sha256_final(sha256_ctx *ctx, uint8_t hash[32]) {
         hash[i * 4 + 2] = (uint8_t)(ctx->state[i] >> 8);
         hash[i * 4 + 3] = (uint8_t)(ctx->state[i]);
     }
-}
-
-static moonbit_string_t make_moonbit_str(const char *s) {
-    int32_t len = strlen(s);
-    moonbit_string_t ms = moonbit_make_string(len, 0);
-    for (int i = 0; i < len; i++) {
-        ms[i] = (uint16_t)s[i];
-    }
-    return ms;
 }
 
 /* Compute SHA256 of a file, return hex string or NULL on error */

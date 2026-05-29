@@ -36,6 +36,8 @@ pub using @tool_def {
   type UrlReplaceContext,
   type GlobalConfig,
   NPM_PKG,
+  get_managed_tools,
+  validate_managed_tools_value,
 }
 
 ///|

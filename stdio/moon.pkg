@@ -1,7 +1,8 @@
 import {
   "username/mvm/ffi",
+  "moonbitlang/core/encoding/utf8",
 }
 
 options(
-  "native-stub": [ "print.c" ],
+  "native-stub": [ "print.c", "interactive_select.c", "tty.c" ],
 )

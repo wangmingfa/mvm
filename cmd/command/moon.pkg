@@ -2,6 +2,7 @@ import {
   "moonbitlang/core/env",
   "moonbitlang/core/json",
   "moonbitlang/core/debug",
+  "moonbitlang/core/string",
   "moonbitlang/async/fs",
   "moonbitlang/async/http",
   "moonbitlang/async/process",
@@ -20,6 +21,7 @@ import {
   "username/mvm/cmd/command/specials",
   "username/mvm/command" @mvm_cmd,
   "moonbitlang/async/io",
+  "username/mvm/stdio",
 }
 
 import {

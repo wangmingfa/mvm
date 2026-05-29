@@ -2,11 +2,12 @@
 /// 执行查看版本命令
 async fn run_list(tool : @tools.Tool?) -> CommandResult {
   let result = CommandResult::success()
-  // 如果没有指定tool，则查全部
+  // 如果没有指定tool，则查看被管理的工具
   let tools = if tool is Some(tool) {
     [tool]
   } else {
-    @tools.Tool::installable_tools()
+    let (_, global_config) = @tools.get_global_config()
+    @tools.get_managed_tools(global_config)
   }
 
   for tool in tools {
@@ -30,15 +31,24 @@ async fn run_list(tool : @tools.Tool?) -> CommandResult {
 
     // 当前目录版本
     @log.debug(
-      @i18n.t("list.debug_cwd_version", args={ "tool": tool.to_string(), "version": @utils.option_to_string(cwd_tool_version) }),
+      @i18n.t("list.debug_cwd_version", args={
+        "tool": tool.to_string(),
+        "version": @utils.option_to_string(cwd_tool_version),
+      }),
     )
     // 全局版本
     @log.debug(
-      @i18n.t("list.debug_global_version", args={ "tool": tool.to_string(), "version": @utils.option_to_string(global_tool_version) }),
+      @i18n.t("list.debug_global_version", args={
+        "tool": tool.to_string(),
+        "version": @utils.option_to_string(global_tool_version),
+      }),
     )
 
     // 工具标题
-    print_to(result, "\{@i18n.t("list.tool_header", args={ "tool": tool.to_string() })}")
+    print_to(
+      result,
+      "\{@i18n.t("list.tool_header", args={ "tool": tool.to_string() })}",
+    )
     if versions.is_empty() {
       // 暂无
       print_to(result, "  \{@i18n.t("list.no_versions")}")

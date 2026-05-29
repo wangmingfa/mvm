@@ -38,14 +38,29 @@ async fn run_run(
 
     // 使用tool@version运行命令
     @log.debug(
-      @i18n.t("run.debug_running_command", args={ "tool": tool.to_string(), "version": target_version, "path": exec_program_path, "args": to_repr(args).to_string() }),
+      @i18n.t("run.debug_running_command", args={
+        "tool": tool.to_string(),
+        "version": target_version,
+        "path": exec_program_path,
+        "args": to_repr(args).to_string(),
+      }),
     )
     // 检查工具是否安装，未安装则自动安装
     if !tool_exists {
       if try_install {
         try_install = false
+        // 非 TTY 环境不支持自动安装
+        if !@stdio.is_stdout_tty() {
+          // 非 TTY 环境不支持自动安装
+          raise fail(@i18n.t("run.not_tty_environment"))
+        }
         // 尝试安装
-        @log.info(@i18n.t("run.auto_installing", args={ "tool": tool.to_string(), "version": target_version }))
+        @log.info(
+          @i18n.t("run.auto_installing", args={
+            "tool": tool.to_string(),
+            "version": target_version,
+          }),
+        )
         let install_result = run_install(
           tool,
           Some(target_version),
@@ -54,18 +69,32 @@ async fn run_run(
         )
         if !install_result.is_success() {
           // 安装失败
-          raise fail(install_result.error.unwrap_or(@i18n.t("run.install_failed_fallback")))
+          raise fail(
+            install_result.error.unwrap_or(
+              @i18n.t("run.install_failed_fallback"),
+            ),
+          )
         }
         continue
       } else {
         // 安装后，工具还是不存在
-        raise fail(@i18n.t("run.install_tool_failed", args={ "tool": tool.to_string(), "version": target_version }))
+        raise fail(
+          @i18n.t("run.install_tool_failed", args={
+            "tool": tool.to_string(),
+            "version": target_version,
+          }),
+        )
       }
     }
     // 检查要运行的程序是否存在
     if !program_exists {
       // 要执行的程序不存在
-      raise fail(@i18n.t("run.program_not_exists", args={ "program": exec_program, "path": exec_program_path }))
+      raise fail(
+        @i18n.t("run.program_not_exists", args={
+          "program": exec_program,
+          "path": exec_program_path,
+        }),
+      )
     }
     break program_exe_info
   } nobreak {
@@ -81,11 +110,11 @@ async fn run_run(
 
   let { path: exec_program_path, envs: exec_envs, .. } = program_exe_info
 
-  let (exit_code, output) = @mvm_cmd.run_with_output(
-    exec_program_path,
-    exec_args,
-    extra_env=exec_envs,
-  )
+  let (exit_code, output) = if @log.is_debug() {
+    @mvm_cmd.run_with_output(exec_program_path, exec_args, extra_env=exec_envs)
+  } else {
+    (@process.run(exec_program_path, exec_args, extra_env=exec_envs), "")
+  }
 
   let result = CommandResult::success_with_output(output.text())
   result.exit_code = exit_code

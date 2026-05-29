@@ -10,7 +10,11 @@ async fn run_uninstall(tool : @tools.Tool, version : String?) -> CommandResult {
     let version_dir = @tools.tool_dir(tool)
     guard @fs.exists(version_dir) is true else {
       // 未安装该工具
-      @log.warn(@i18n.t("uninstall.not_installed_tool", args={ "tool": tool.to_string() }))
+      @log.warn(
+        @i18n.t("uninstall.not_installed_tool", args={
+          "tool": tool.to_string(),
+        }),
+      )
       return result
     }
     let dirs = []
@@ -34,7 +38,12 @@ async fn run_uninstall(tool : @tools.Tool, version : String?) -> CommandResult {
     }
     remove_versions.push(v)
     // 正在卸载
-    @log.info(@i18n.t("uninstall.uninstalling_version", args={ "tool": tool.to_string(), "version": v }))
+    @log.info(
+      @i18n.t("uninstall.uninstalling_version", args={
+        "tool": tool.to_string(),
+        "version": v,
+      }),
+    )
     // 删除目录
     let dir = @tools.version_dir(tool, v)
     @fs_ext.remove_dir(dir)
@@ -43,7 +52,9 @@ async fn run_uninstall(tool : @tools.Tool, version : String?) -> CommandResult {
   if remove_versions.is_empty() {
     // 未安装该版本
     @log.warn(
-      @i18n.t("uninstall.not_installed_version", args={ "version_str": @tools.tool_version_str(tool, version?) }),
+      @i18n.t("uninstall.not_installed_version", args={
+        "version_str": @tools.tool_version_str(tool, version?),
+      }),
     )
     return result
   }
@@ -55,15 +66,27 @@ async fn run_uninstall(tool : @tools.Tool, version : String?) -> CommandResult {
     0 =>
       // 未安装该版本
       @log.warn(
-        @i18n.t("uninstall.not_installed_version", args={ "version_str": @tools.tool_version_str(tool, version?) }),
+        @i18n.t("uninstall.not_installed_version", args={
+          "version_str": @tools.tool_version_str(tool, version?),
+        }),
       )
     1 =>
       // 已卸载单个版本
-      @log.success(@i18n.t("uninstall.uninstall_success", args={ "tool": tool.to_string(), "version": removed_versions[0] }))
+      @log.success(
+        @i18n.t("uninstall.uninstall_success", args={
+          "tool": tool.to_string(),
+          "version": removed_versions[0],
+        }),
+      )
     _ => {
       let version_msg = removed_versions.join("、")
       // 已卸载多个版本
-      @log.success(@i18n.t("uninstall.uninstall_multi_success", args={ "tool": tool.to_string(), "versions": version_msg }))
+      @log.success(
+        @i18n.t("uninstall.uninstall_multi_success", args={
+          "tool": tool.to_string(),
+          "versions": version_msg,
+        }),
+      )
     }
   }
   result

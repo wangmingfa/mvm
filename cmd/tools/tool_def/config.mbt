@@ -30,6 +30,9 @@ pub(all) struct GlobalConfig {
   java_mirror : String?
   // deno 和 kotlin 使用 github_proxy，无专属镜像
   language : String?
+  // 被 mvm 管理的工具列表，逗号分隔，如 "node,bun,go"
+  // None 或空字符串表示管理所有工具（向后兼容）
+  managed_tools : String?
 } derive(FromJson, ToJson)
 
 ///|
@@ -42,6 +45,7 @@ pub fn make_global_config(
     rust_mirror: None,
     java_mirror: None,
     language: None,
+    managed_tools: None,
   },
   github_proxy? : String? = None,
   node_mirror? : String? = None,
@@ -50,6 +54,7 @@ pub fn make_global_config(
   rust_mirror? : String? = None,
   java_mirror? : String? = None,
   language? : String? = None,
+  managed_tools? : String? = None,
 ) -> GlobalConfig {
   let github_proxy = if github_proxy is Some(v) {
     Some(v)
@@ -86,6 +91,11 @@ pub fn make_global_config(
   } else {
     existing_config.language
   }
+  let managed_tools = if managed_tools is Some(v) {
+    Some(v)
+  } else {
+    existing_config.managed_tools
+  }
   {
     github_proxy,
     node_mirror,
@@ -94,6 +104,7 @@ pub fn make_global_config(
     rust_mirror,
     java_mirror,
     language,
+    managed_tools,
   }
 }
 
@@ -107,6 +118,7 @@ pub fn GlobalConfig::to_string(s : Self, indent? : Int = 0) -> String {
   let rust_mirror = s.rust_mirror.unwrap_or("")
   let java_mirror = s.java_mirror.unwrap_or("")
   let language = s.language.unwrap_or("")
+  let managed_tools = s.managed_tools.unwrap_or("")
   (
     $|\{indent_str}github_proxy: \{github_proxy}
     $|\{indent_str}node_mirror: \{node_mirror}
@@ -115,6 +127,7 @@ pub fn GlobalConfig::to_string(s : Self, indent? : Int = 0) -> String {
     $|\{indent_str}rust_mirror: \{rust_mirror}
     $|\{indent_str}java_mirror: \{java_mirror}
     $|\{indent_str}language: \{language}
+    $|\{indent_str}managed_tools: \{managed_tools}
   )
 }
 
@@ -148,6 +161,7 @@ pub async fn get_global_config() -> (String, GlobalConfig) {
         rust_mirror: None,
         java_mirror: None,
         language: None,
+        managed_tools: None,
       },
     )
   }
@@ -162,6 +176,67 @@ pub async fn save_global_config(config : GlobalConfig) -> String {
   @fs.write_file(tmp_path, content, create_mode=CreateOrTruncate)
   @fs.rename(tmp_path, config_path)
   config_path
+}
+
+///|
+/// 获取当前被 mvm 管理的工具列表
+/// managed_tools 为 None 时返回所有工具（向后兼容）
+/// managed_tools 为 Some("") 时返回空列表
+/// managed_tools 为 Some("node,bun") 时返回 [Node, Bun]
+pub fn get_managed_tools(global_config : GlobalConfig) -> Array[Tool] {
+  match global_config.managed_tools {
+    None => Tool::all_tools()
+    Some(str) => {
+      if str.is_blank() {
+        []
+      } else {
+        str
+          .split(",")
+          .filter(v => !v.is_blank())
+          .map(v => {
+            let trimmed = v.trim().to_owned()
+            match Tool::from_string_with_option_result(trimmed) {
+              Some(tool) => Some(tool)
+              None => {
+                @log.warn("managed_tools 中包含不支持的工具名：\{trimmed}")
+                None
+              }
+            }
+          })
+          .filter(v => v is Some(_))
+          .map(v => v.unwrap())
+          .to_array()
+      }
+    }
+  }
+}
+
+///|
+/// 校验 managed_tools 值是否合法
+/// 值应为逗号分隔的工具名列表，每个工具名必须是 Tool 支持的值
+/// 返回解析后的 Tool 数组；如果包含非法工具名则 raise fail
+pub fn validate_managed_tools_value(value : String) -> Array[Tool] raise {
+  if value.is_blank() {
+    return []
+  }
+  let tools = []
+  let invalid_names = []
+  for v in value.split(",") {
+    let trimmed = v.trim().to_owned()
+    if trimmed.is_blank() {
+      continue
+    }
+    match Tool::from_string_with_option_result(trimmed) {
+      Some(tool) => tools.push(tool)
+      None => invalid_names.push(trimmed)
+    }
+  }
+  guard invalid_names.length() == 0 else {
+    raise fail(
+      "managed_tools 包含不支持的工具名：\{invalid_names.join(", ")}。支持的工具：\{Tool::all_tools().map(t => t.to_string()).join(", ")}",
+    )
+  }
+  tools
 }
 
 ///|
@@ -474,6 +549,7 @@ test "GlobalConfig to_string" {
     rust_mirror: None,
     java_mirror: None,
     language: None,
+    managed_tools: None,
   }
   let str = config.to_string()
   guard str.contains("github_proxy: https://proxy.org/$URL") else {
@@ -495,6 +571,7 @@ test "make_global_config 覆盖逻辑" {
     rust_mirror: None,
     java_mirror: None,
     language: None,
+    managed_tools: None,
   }
   // 覆盖 github_proxy
   let updated = make_global_config(
@@ -503,5 +580,98 @@ test "make_global_config 覆盖逻辑" {
   )
   guard updated.github_proxy is Some("https://new-proxy.org/$URL") else {
     fail("github_proxy should be updated")
+  }
+}
+
+///|
+test "get_managed_tools 返回所有工具（None 向后兼容）" {
+  let config : GlobalConfig = {
+    github_proxy: None,
+    node_mirror: None,
+    go_mirror: None,
+    python_mirror: None,
+    rust_mirror: None,
+    java_mirror: None,
+    language: None,
+    managed_tools: None,
+  }
+  let tools = get_managed_tools(config)
+  guard tools.length() == Tool::all_tools().length() else {
+    fail("managed_tools 为 None 时应返回所有工具")
+  }
+}
+
+///|
+test "get_managed_tools 返回指定工具" {
+  let config : GlobalConfig = {
+    github_proxy: None,
+    node_mirror: None,
+    go_mirror: None,
+    python_mirror: None,
+    rust_mirror: None,
+    java_mirror: None,
+    language: None,
+    managed_tools: Some("node,bun,go"),
+  }
+  let tools = get_managed_tools(config)
+  guard tools.length() == 3 else { fail("应返回 3 个工具") }
+  guard tools[0] is Node else { fail("第一个应是 Node") }
+  guard tools[1] is Bun else { fail("第二个应是 Bun") }
+  guard tools[2] is Go else { fail("第三个应是 Go") }
+}
+
+///|
+test "get_managed_tools 空字符串返回空列表" {
+  let config : GlobalConfig = {
+    github_proxy: None,
+    node_mirror: None,
+    go_mirror: None,
+    python_mirror: None,
+    rust_mirror: None,
+    java_mirror: None,
+    language: None,
+    managed_tools: Some(""),
+  }
+  let tools = get_managed_tools(config)
+  guard tools.length() == 0 else { fail("空字符串应返回空列表") }
+}
+
+///|
+test "get_managed_tools 非法工具名被过滤" {
+  let config : GlobalConfig = {
+    github_proxy: None,
+    node_mirror: None,
+    go_mirror: None,
+    python_mirror: None,
+    rust_mirror: None,
+    java_mirror: None,
+    language: None,
+    managed_tools: Some("node,foobar,bun"),
+  }
+  let tools = get_managed_tools(config)
+  guard tools.length() == 2 else { fail("非法名应被过滤，剩余 2 个") }
+  guard tools[0] is Node else { fail("第一个应是 Node") }
+  guard tools[1] is Bun else { fail("第二个应是 Bun") }
+}
+
+///|
+test "validate_managed_tools_value 合法值" {
+  let tools = validate_managed_tools_value("node,bun,go")
+  guard tools.length() == 3 else { fail("应返回 3 个工具") }
+  guard tools[0] is Node else { fail("第一个应是 Node") }
+  guard tools[1] is Bun else { fail("第二个应是 Bun") }
+  guard tools[2] is Go else { fail("第三个应是 Go") }
+}
+
+///|
+test "validate_managed_tools_value 空值" {
+  let tools = validate_managed_tools_value("")
+  guard tools.length() == 0 else { fail("空值应返回空列表") }
+}
+
+///|
+test "validate_managed_tools_value 非法值" {
+  guard (try? validate_managed_tools_value("node,foobar")) is Err(_) else {
+    fail("非法工具名应抛出错误")
   }
 }

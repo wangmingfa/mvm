@@ -41,11 +41,17 @@ async fn run_upgrade(version : String?, reinstall : Bool) -> CommandResult {
     Some(v) => {
       let v = normalize_version(v)
       // 正在验证版本
-      @log.info(@i18n.t("upgrade.verifying_version", args={ "version": @utils.yellow(v) }))
+      @log.info(
+        @i18n.t("upgrade.verifying_version", args={
+          "version": @utils.yellow(v),
+        }),
+      )
       if !check_version_exists(v) {
         // 版本不存在
         raise fail(
-          @i18n.t("upgrade.version_not_exists", args={ "version": @utils.yellow(v) }),
+          @i18n.t("upgrade.version_not_exists", args={
+            "version": @utils.yellow(v),
+          }),
         )
       }
       v
@@ -54,7 +60,11 @@ async fn run_upgrade(version : String?, reinstall : Bool) -> CommandResult {
       // --reinstall 时直接使用当前版本，跳过"已是最新版本"检查
       if reinstall {
         // 正在重新安装当前版本
-        @log.info(@i18n.t("upgrade.reinstalling_current", args={ "version": @utils.yellow(VERSION) }))
+        @log.info(
+          @i18n.t("upgrade.reinstalling_current", args={
+            "version": @utils.yellow(VERSION),
+          }),
+        )
         VERSION
       } else {
         // 正在检查最新版本
@@ -66,7 +76,10 @@ async fn run_upgrade(version : String?, reinstall : Bool) -> CommandResult {
         }
         // 当前版本和最新版本
         @log.info(
-          @i18n.t("upgrade.current_and_latest", args={ "current": @utils.yellow(VERSION), "latest": @utils.yellow(latest) }),
+          @i18n.t("upgrade.current_and_latest", args={
+            "current": @utils.yellow(VERSION),
+            "latest": @utils.yellow(latest),
+          }),
         )
         if latest == VERSION {
           // 已是最新版本
@@ -77,7 +90,11 @@ async fn run_upgrade(version : String?, reinstall : Bool) -> CommandResult {
       }
   }
   // 正在升级到
-  @log.info(@i18n.t("upgrade.upgrade_target", args={ "version": @utils.yellow(target_version) }))
+  @log.info(
+    @i18n.t("upgrade.upgrade_target", args={
+      "version": @utils.yellow(target_version),
+    }),
+  )
   // 使用 install_online 脚本升级；指定版本时通过 MVM_VERSION 环境变量传递
   let code = match @os.get_os_name() {
     Windows => {
@@ -101,7 +118,11 @@ async fn run_upgrade(version : String?, reinstall : Bool) -> CommandResult {
   match code {
     0 =>
       // 升级成功
-      @log.success(@i18n.t("upgrade.upgrade_success_msg", args={ "version": target_version }))
+      @log.success(
+        @i18n.t("upgrade.upgrade_success_msg", args={
+          "version": target_version,
+        }),
+      )
     // 升级失败
     _ => raise fail(@i18n.t("upgrade.upgrade_failed"))
   }
@@ -156,7 +177,11 @@ async fn run_upgrade_list() -> CommandResult {
   if res.code != 200 {
     // 无法获取版本列表
     raise fail(
-      @i18n.t("upgrade.cannot_fetch_version_list", args={ "code": res.code.to_string(), "reason": res.reason, "url": GITHUB_API_RELEASES }),
+      @i18n.t("upgrade.cannot_fetch_version_list", args={
+        "code": res.code.to_string(),
+        "reason": res.reason,
+        "url": GITHUB_API_RELEASES,
+      }),
     )
   }
   let body = data.text()
@@ -166,10 +191,18 @@ async fn run_upgrade_list() -> CommandResult {
     raise fail(@i18n.t("upgrade.no_versions_found"))
   }
   // 可用版本列表
-  @log.info(@i18n.t("upgrade.available_versions_count", args={ "count": versions.length().to_string() }))
+  @log.info(
+    @i18n.t("upgrade.available_versions_count", args={
+      "count": versions.length().to_string(),
+    }),
+  )
   for v in versions {
     // 当前版本标记
-    let marker = if v == VERSION { " \{@i18n.t("upgrade.current_marker")}" } else { "" }
+    let marker = if v == VERSION {
+      " \{@i18n.t("upgrade.current_marker")}"
+    } else {
+      ""
+    }
     print_to(result, "  \{@utils.yellow(v)}\{marker}")
   }
   result

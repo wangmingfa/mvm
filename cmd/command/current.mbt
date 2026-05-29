@@ -38,7 +38,9 @@ async fn run_current(tool : @tools.Tool?) -> CommandResult {
         }
         let installed = @tools.is_installed(tool, version)
         // 未安装
-        let not_installed_label = @utils.yellow(@i18n.t("current.not_installed"))
+        let not_installed_label = @utils.yellow(
+          @i18n.t("current.not_installed"),
+        )
         if installed {
           print_to(
             result,

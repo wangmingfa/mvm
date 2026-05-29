@@ -43,6 +43,7 @@ fn clean_config() -> @tools.GlobalConfig {
     rust_mirror: None,
     java_mirror: None,
     language: None,
+    managed_tools: None,
   }
 }
 

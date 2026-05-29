@@ -83,7 +83,7 @@ if ($ONLINE) {
     # 生成 update.bat：统一处理文件复制、setup、清理
     # 新安装时 mvm.exe 不存在 → 直接复制
     # 升级时 mvm.exe 被锁 → 每 100ms 检测，超 3 秒提示用户手动关闭
-    $SETUP_CMD = if ($USE_PREFIX) { "`"$MVM_DEST`" setup -p" } else { "`"$MVM_DEST`" setup" }
+    $SETUP_CMD = if ($USE_PREFIX) { "`"$MVM_DEST`" setup -p --tools all" } else { "`"$MVM_DEST`" setup" }
     $UPDATE_BAT = Join-Path $TMP_DIR "update.bat"
     $batLines = @(
         "@echo off",
@@ -151,5 +151,6 @@ if ($ONLINE) {
     Copy-Item -Path $MVM_EXE -Destination (Join-Path $BIN_DIR "mvm.exe") -Force
 
     # 执行 setup（创建工具脚本、配置 PATH 等）
-    if ($USE_PREFIX) { & (Join-Path $BIN_DIR "mvm.exe") setup '-p' } else { & (Join-Path $BIN_DIR "mvm.exe") setup }
+    # prefix 模式下自动管理所有工具（--tools all），因为加了前缀不影响原有工具
+    if ($USE_PREFIX) { & (Join-Path $BIN_DIR "mvm.exe") setup '-p' '--tools' 'all' } else { & (Join-Path $BIN_DIR "mvm.exe") setup }
 }

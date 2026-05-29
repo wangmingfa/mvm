@@ -3,5 +3,5 @@ import {
 }
 
 options(
-  "native-stub": [ "cwrap.c", "os.c" ],
+  "native-stub": [ "os.c" ],
 )
