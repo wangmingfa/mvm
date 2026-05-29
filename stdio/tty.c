@@ -1,6 +1,6 @@
 // tty.c
 
-// #include <stdio.h>
+#include <stdio.h>
 
 #ifdef _WIN32
 #include <io.h>
