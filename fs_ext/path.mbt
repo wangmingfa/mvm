@@ -124,7 +124,11 @@ pub fn canonicalize_path(path : String) -> String {
     }
   }
   let result = if is_absolute { "/\{result}" } else { result }
-  result
+  if result.has_suffix("/") {
+    result[0:-1].to_owned()
+  } else {
+    result
+  }
   // match @os.get_os_name() {
   //   Windows => result.replace_all(old="/", new="\\")
   //   _ => result
@@ -134,7 +138,7 @@ pub fn canonicalize_path(path : String) -> String {
 ///|
 test "canonicalize_path" {
   inspect(
-    canonicalize_path("/home/peter/sticky/../vscode/./code/abc"),
+    canonicalize_path("/home/peter/sticky/../vscode/./code/abc/"),
     content=(
       #|/home/peter/vscode/code/abc
     ),

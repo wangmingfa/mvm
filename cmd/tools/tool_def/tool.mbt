@@ -96,7 +96,7 @@ pub(all) enum Tool {
 } derive(Debug)
 
 ///|
-pub impl @utils.ToStr for Tool with to_str(s) {
+pub impl @utils.ToStr for Tool with fn to_str(s) {
   match s {
     Node => "node"
     Bun => "bun"
@@ -123,7 +123,7 @@ pub fn Tool::installable_tools() -> Array[Tool] {
 }
 
 ///|
-pub impl Show for Tool with output(s, logger) {
+pub impl Show for Tool with fn output(s, logger) {
   logger.write_string(s.to_str())
 }
 
@@ -316,7 +316,17 @@ pub fn ProgramExeInfo::ProgramExeInfo(
   tool_exists : Bool,
   extra_args? : Array[String] = [],
 ) -> ProgramExeInfo {
-  { name, tool, path, version, tool_version, envs, program_exists, tool_exists, extra_args }
+  {
+    name,
+    tool,
+    path,
+    version,
+    tool_version,
+    envs,
+    program_exists,
+    tool_exists,
+    extra_args,
+  }
 }
 
 ///|

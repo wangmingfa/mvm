@@ -319,35 +319,43 @@ pub fn get_command(argv : ArrayView[String]) -> Command raise {
     }
     // 位置参数语法：mvm run node@18 node -v 或 mvm run node npm -v
     ["run", tool_version, .. run_args] => {
-      @log.debug(@i18n.t("command.debug_positional_syntax_entry", args={
-        "tool_version": tool_version,
-        "args": to_repr(run_args).to_string(),
-      }))
+      @log.debug(
+        @i18n.t("command.debug_positional_syntax_entry", args={
+          "tool_version": tool_version,
+          "args": to_repr(run_args).to_string(),
+        }),
+      )
       match tool_version.split("@").to_array() {
         // 支持：node@18
         [tool, version] => {
           let t = Tool::from_string(tool.to_owned())
-          @log.debug(@i18n.t("command.debug_positional_parsed", args={
-            "tool": t.to_string(),
-            "version": version.to_owned(),
-            "cmd_args": to_repr(run_args).to_string(),
-          }))
+          @log.debug(
+            @i18n.t("command.debug_positional_parsed", args={
+              "tool": t.to_string(),
+              "version": version.to_owned(),
+              "cmd_args": to_repr(run_args).to_string(),
+            }),
+          )
           Run(t, version.to_owned(), run_args.to_owned())
         }
         // 也支持不传版本号（自动根据运行目录获取版本号）：node
         [tool] => {
           let t = Tool::from_string(tool.to_owned())
-          @log.debug(@i18n.t("command.debug_positional_no_version", args={
-            "tool": t.to_string(),
-            "cmd_args": to_repr(run_args).to_string(),
-          }))
+          @log.debug(
+            @i18n.t("command.debug_positional_no_version", args={
+              "tool": t.to_string(),
+              "cmd_args": to_repr(run_args).to_string(),
+            }),
+          )
           Run(t, "", run_args.to_owned())
         }
         // 无效的版本格式
         _ => {
-          @log.debug(@i18n.t("command.debug_positional_invalid_format", args={
-            "version": tool_version,
-          }))
+          @log.debug(
+            @i18n.t("command.debug_positional_invalid_format", args={
+              "version": tool_version,
+            }),
+          )
           raise fail(
             @i18n.t("command.run_invalid_version_format", args={
               "version": tool_version,

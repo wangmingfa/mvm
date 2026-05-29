@@ -390,7 +390,7 @@ pub async fn download_by_native_command(
         dest +
         "' -UserAgent 'Mozilla/5.0' -MaximumRedirection 5 -TimeoutSec 300" +
         headers_str
-
+      @log.add_log_lines(lines=1)
       ["-Command", ps_script]
     }
     _ => raise fail("不支持的下载方式")

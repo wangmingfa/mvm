@@ -186,28 +186,29 @@ pub async fn save_global_config(config : GlobalConfig) -> String {
 pub fn get_managed_tools(global_config : GlobalConfig) -> Array[Tool] {
   match global_config.managed_tools {
     None => Tool::all_tools()
-    Some(str) => {
+    Some(str) =>
       if str.is_blank() {
         []
       } else {
         str
-          .split(",")
-          .filter(v => !v.is_blank())
-          .map(v => {
-            let trimmed = v.trim().to_owned()
-            match Tool::from_string_with_option_result(trimmed) {
-              Some(tool) => Some(tool)
-              None => {
-                @log.warn("managed_tools 中包含不支持的工具名：\{trimmed}")
-                None
-              }
+        .split(",")
+        .filter(v => !v.is_blank())
+        .map(v => {
+          let trimmed = v.trim().to_owned()
+          match Tool::from_string_with_option_result(trimmed) {
+            Some(tool) => Some(tool)
+            None => {
+              @log.warn(
+                "managed_tools 中包含不支持的工具名：\{trimmed}",
+              )
+              None
             }
-          })
-          .filter(v => v is Some(_))
-          .map(v => v.unwrap())
-          .to_array()
+          }
+        })
+        .filter(v => v is Some(_))
+        .map(v => v.unwrap())
+        .to_array()
       }
-    }
   }
 }
 
@@ -253,12 +254,12 @@ pub struct Config {
 } derive(FromJson, ToJson, Debug)
 
 ///|
-impl Show for Config with output(s, logger) {
+impl Show for Config with fn output(s, logger) {
   logger.write_string(s.to_string())
 }
 
 ///|
-impl Show for Config with to_string(s) {
+impl Show for Config with fn to_string(s) {
   (
     $|{node: \{@utils.option_to_string(s.node)}, bun: \{@utils.option_to_string(s.bun)}, zig: \{@utils.option_to_string(s.zig)}, go: \{@utils.option_to_string(s.go)}, python: \{@utils.option_to_string(s.python)}, rust: \{@utils.option_to_string(s.rust)}, deno: \{@utils.option_to_string(s.deno)}, java: \{@utils.option_to_string(s.java)}, kotlin: \{@utils.option_to_string(s.kotlin)}}
   )
@@ -649,7 +650,9 @@ test "get_managed_tools 非法工具名被过滤" {
     managed_tools: Some("node,foobar,bun"),
   }
   let tools = get_managed_tools(config)
-  guard tools.length() == 2 else { fail("非法名应被过滤，剩余 2 个") }
+  guard tools.length() == 2 else {
+    fail("非法名应被过滤，剩余 2 个")
+  }
   guard tools[0] is Node else { fail("第一个应是 Node") }
   guard tools[1] is Bun else { fail("第二个应是 Bun") }
 }

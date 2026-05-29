@@ -89,6 +89,7 @@ fn is_global_uninstall(args : ArrayView[String]) -> Bool {
   args.any(arg => global_flgas.any(flag => arg == flag))
 }
 
+///|
 /// 遍历指定 package.json 中的 bin 字段，对每个命令调用 handle_pkg_cmd
 async fn walk_pkg_bins(
   pkg_json_path : String,
@@ -102,23 +103,32 @@ async fn walk_pkg_bins(
   let json = @fs.read_file(pkg_json_path).json()
   guard json is Object(map) else {
     @log.warn(
-      @i18n.t("npm.pkg_json_format_error", args={"pkg": pkg_label, "path": pkg_json_path}),
+      @i18n.t("npm.pkg_json_format_error", args={
+        "pkg": pkg_label,
+        "path": pkg_json_path,
+      }),
     )
     return
   }
   guard map.get("bin") is Some(Object(bin)) else {
     @log.warn(
-      @i18n.t("npm.pkg_bin_format_error", args={"pkg": pkg_label, "path": pkg_json_path}),
+      @i18n.t("npm.pkg_bin_format_error", args={
+        "pkg": pkg_label,
+        "path": pkg_json_path,
+      }),
     )
     return
   }
   let pkg_root_dir = @fs_ext.join_path(pkg_json_path, "../")
   for cmd_name, cmd_path in bin {
     @log.debug(
-      @i18n.t("npm.bin_config_debug", args={"cmd_name": cmd_name, "bin_json": cmd_path.stringify(indent=2)}),
+      @i18n.t("npm.bin_config_debug", args={
+        "cmd_name": cmd_name,
+        "bin_json": cmd_path.stringify(indent=2),
+      }),
     )
     guard cmd_path is String(cmd_path) else {
-      @log.warn(@i18n.t("npm.bin_config_error", args={"cmd_name": cmd_name}))
+      @log.warn(@i18n.t("npm.bin_config_error", args={ "cmd_name": cmd_name }))
       continue
     }
     let target_file_path = @fs_ext.join_path(pkg_root_dir, cmd_path)
@@ -132,7 +142,9 @@ async fn walk_global_pkgs(
   pkgs : ArrayView[String],
   handle_pkg_cmd : async (String, String) -> Unit,
 ) -> Unit {
-  let { lib: lib_dir, .. } = @tool_def.Node::get_node_dir(npm_exe_path)
+  let { lib: lib_dir, .. } = @tool_def.Node::get_node_path_by_global_node_modules_inner_path(
+    npm_exe_path,
+  )
   // 在mvm_bin目录下的npm-pkg目录添加所安装的npm包的所有全局命令的软连接
   for pkg in pkgs {
     let pkg_json_path = @fs_ext.join_path(
@@ -150,9 +162,13 @@ async fn handle_install_npm_global_package(
 ) -> Unit {
   // 全局安装
   // NPM执行文件路径
-  @log.debug(@i18n.t("npm.exe_path_debug", args={"path": npm_exe_path}))
+  @log.debug(@i18n.t("npm.exe_path_debug", args={ "path": npm_exe_path }))
   // 全局安装NPM包
-  @log.debug(@i18n.t("npm.global_install_debug", args={"pkgs": to_repr(pkgs).to_string()}))
+  @log.debug(
+    @i18n.t("npm.global_install_debug", args={
+      "pkgs": to_repr(pkgs).to_string(),
+    }),
+  )
 
   let npm_pkg_home = @tool_def.mvm_npm_pkg_home()
   let os = @os.get_os_name()
@@ -172,10 +188,16 @@ async fn handle_install_npm_global_package(
       _ => ()
     }
     // 已安装全局命令
-    @log.debug(@i18n.t("npm.global_cmd_installed", args={"dir": npm_pkg_home, "cmd": cmd_name}))
+    @log.debug(
+      @i18n.t("npm.global_cmd_installed", args={
+        "dir": npm_pkg_home,
+        "cmd": cmd_name,
+      }),
+    )
   })
 }
 
+///|
 /// 处理 npm link（无参数）：将当前项目链接到全局，并创建 bin 命令
 async fn handle_npm_link() -> Unit {
   guard @env.current_dir() is Some(cwd) else {
@@ -184,10 +206,10 @@ async fn handle_npm_link() -> Unit {
   }
   let pkg_json_path = @fs_ext.join_path(cwd, "package.json")
   if !@fs.exists(pkg_json_path) {
-    @log.warn(@i18n.t("npm.link_no_package_json", args={"dir": cwd}))
+    @log.warn(@i18n.t("npm.link_no_package_json", args={ "dir": cwd }))
     return
   }
-  @log.debug(@i18n.t("npm.link_debug", args={"dir": cwd}))
+  @log.debug(@i18n.t("npm.link_debug", args={ "dir": cwd }))
   let npm_pkg_home = @tool_def.mvm_npm_pkg_home()
   let os = @os.get_os_name()
   walk_pkg_bins(pkg_json_path, cwd, async fn(cmd_name, _cmd_path) {
@@ -199,10 +221,16 @@ async fn handle_npm_link() -> Unit {
         @tools.create_tool_cmd_windows(Node, cmd_name, cmd_dir=@tools.NPM_PKG)
       _ => ()
     }
-    @log.debug(@i18n.t("npm.link_cmd_created", args={"dir": npm_pkg_home, "cmd": cmd_name}))
+    @log.debug(
+      @i18n.t("npm.link_cmd_created", args={
+        "dir": npm_pkg_home,
+        "cmd": cmd_name,
+      }),
+    )
   })
 }
 
+///|
 /// 处理 npm unlink（无参数）：从全局取消链接当前项目，并删除 bin 命令
 async fn handle_npm_unlink() -> Unit {
   guard @env.current_dir() is Some(cwd) else {
@@ -211,10 +239,10 @@ async fn handle_npm_unlink() -> Unit {
   }
   let pkg_json_path = @fs_ext.join_path(cwd, "package.json")
   if !@fs.exists(pkg_json_path) {
-    @log.warn(@i18n.t("npm.unlink_no_package_json", args={"dir": cwd}))
+    @log.warn(@i18n.t("npm.unlink_no_package_json", args={ "dir": cwd }))
     return
   }
-  @log.debug(@i18n.t("npm.unlink_debug", args={"dir": cwd}))
+  @log.debug(@i18n.t("npm.unlink_debug", args={ "dir": cwd }))
   let npm_pkg_home = @tool_def.mvm_npm_pkg_home()
   let os = @os.get_os_name()
   walk_pkg_bins(pkg_json_path, cwd, async fn(cmd_name, _cmd_path) {
@@ -227,6 +255,11 @@ async fn handle_npm_unlink() -> Unit {
       let shim_path = @fs_ext.join_paths([npm_pkg_home, cmd_name + ext])
       @fs_ext.remove_if_exists(shim_path)
     }
-    @log.debug(@i18n.t("npm.unlink_cmd_removed", args={"dir": npm_pkg_home, "cmd": cmd_name}))
+    @log.debug(
+      @i18n.t("npm.unlink_cmd_removed", args={
+        "dir": npm_pkg_home,
+        "cmd": cmd_name,
+      }),
+    )
   })
 }
