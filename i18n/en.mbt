@@ -332,6 +332,11 @@ pub let en_dict : Map[String, String] = {
   "node.debug_no_package_json": "Skipping {path} (no package.json)",
   "node.debug_bin_keys": "Package {pkg} bin commands: {keys}",
   "node.debug_program_matched": "Program {program} matched in package {pkg}",
+  "node.debug_bin_value_not_string": "Program {program} bin value in package {pkg} is not a string",
+  "node.debug_actual_bin_path": "Actual executable path: {path}",
+  "node.debug_bin_path_not_exists": "Program {program} executable path {path} does not exist (declared in {pkg_json})",
+  "node.debug_js_file_use_node": "Detected .js file {js_file}, using same version node to execute: {node_exe}",
+  "node.warn_cannot_get_node_exe": "Cannot get node executable path for version {version}, falling back to system node",
 
   // === log 模块（用户面向）===
   "log.operation_complete": "Operation complete",

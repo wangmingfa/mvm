@@ -290,14 +290,18 @@ pub struct ProgramExeInfo {
   name : String
   // 程序的可执行文件路径
   path : String
-  // 程序的版本
+  // 程序的版本（例如 npm 包的版本号）
   version : String
+  // 工具的版本（例如 Node.js 的版本号，用于定位工具安装目录）
+  tool_version : String
   // 运行程序需要的环境变量
   envs : Map[String, String]
   program_exists : Bool
   // 命令对应的工具
   tool : Tool
   tool_exists : Bool
+  // 额外的参数（例如 .js 文件路径，需要在可执行文件之后、用户参数之前插入）
+  extra_args : Array[String]
 } derive(Debug)
 
 ///|
@@ -305,12 +309,14 @@ pub fn ProgramExeInfo::ProgramExeInfo(
   name : String,
   path : String,
   version : String,
+  tool_version : String,
   envs? : Map[String, String] = {},
   program_exists : Bool,
   tool : Tool,
   tool_exists : Bool,
+  extra_args? : Array[String] = [],
 ) -> ProgramExeInfo {
-  { name, tool, path, version, envs, program_exists, tool_exists }
+  { name, tool, path, version, tool_version, envs, program_exists, tool_exists, extra_args }
 }
 
 ///|

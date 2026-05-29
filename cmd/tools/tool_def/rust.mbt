@@ -317,6 +317,7 @@ pub fn Rust::get_rust_builtin_tool_path_and_version(
       tool.to_str(),
       tool_path,
       rust_tool_exe.version,
+      rust_tool_exe.tool_version,
       envs=rust_tool_exe.envs,
       true,
       rust_tool_exe.tool,
@@ -339,6 +340,7 @@ pub async fn Rust::get_program_exe_info(
     "rustc",
     program_path,
     version,
+    version,
     envs={},
     exists,
     Tool::Rust,
@@ -359,6 +361,7 @@ pub async fn Rust::get_program_exe_info(
         return ProgramExeInfo(
           prog_low,
           tool_path,
+          version,
           version,
           envs={},
           cargo_exists,

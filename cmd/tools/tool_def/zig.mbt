@@ -224,6 +224,7 @@ pub async fn Zig::get_program_exe_info(
       "zig",
       program_path,
       version,
+      version,
       envs={},
       exists,
       Tool::Zig,

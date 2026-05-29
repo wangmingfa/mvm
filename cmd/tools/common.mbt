@@ -16,6 +16,7 @@ pub using @tool_def {
   type Tool,
   type ProgramExeInfo,
   type DownloadInfo,
+  type NodePath,
   set_no_cache_mode,
   is_no_cache_mode,
   write_global_config,
@@ -356,4 +357,23 @@ pub fn tool_version_str(tool : Tool, version? : String) -> String {
   [tool.to_string(), if version is Some(v) { v } else { "" }]
   .filter(v => !v.is_blank())
   .join("@")
+}
+
+///|
+/// 准备运行命令的参数
+/// 根据工具类型对 program_exe_info 和 exec_args 进行预处理
+/// 返回最终要执行的可执行文件路径和参数列表
+/// 例如：Node 工具中，如果程序是 .js 文件，需要用 node 来执行
+pub fn prepare_run_command(
+  program_exe_info : ProgramExeInfo,
+  exec_args : ArrayView[String],
+) -> (String, Array[String]) {
+  let { tool, path, extra_args, .. } = program_exe_info
+  match tool {
+    Node => Node::prepare_run_command(program_exe_info, exec_args)
+    // 其他工具目前直接使用原始路径和参数
+    Bun | Zig | Go | Python | Rust | Deno | Java | Kotlin => {
+      (path, [..extra_args, ..exec_args])
+    }
+  }
 }

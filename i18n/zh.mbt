@@ -332,6 +332,11 @@ pub let zh_dict : Map[String, String] = {
   "node.debug_no_package_json": "跳过 {path} (无 package.json)",
   "node.debug_bin_keys": "包 {pkg} 的 bin 命令: {keys}",
   "node.debug_program_matched": "程序 {program} 在包 {pkg} 中匹配成功",
+  "node.debug_bin_value_not_string": "程序 {program} 在包 {pkg} 中的 bin 值不是字符串",
+  "node.debug_actual_bin_path": "实际的可执行文件路径: {path}",
+  "node.debug_bin_path_not_exists": "程序 {program} 的可执行文件路径 {path} 不存在 (声明于 {pkg_json})",
+  "node.debug_js_file_use_node": "检测到 .js 文件 {js_file}，使用同版本 node 执行: {node_exe}",
+  "node.warn_cannot_get_node_exe": "无法获取版本 {version} 的 node 可执行文件路径，回退使用系统 node",
 
   // === log 模块（用户面向）===
   "log.operation_complete": "操作完成",

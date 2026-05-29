@@ -313,6 +313,7 @@ pub async fn Go::get_program_exe_info(
       "go",
       program_path,
       version,
+      version,
       envs={},
       exists,
       Tool::Go,
@@ -326,6 +327,7 @@ pub async fn Go::get_program_exe_info(
     return ProgramExeInfo(
       "gofmt",
       gofmt_path,
+      version,
       version,
       envs={},
       gofmt_exists,

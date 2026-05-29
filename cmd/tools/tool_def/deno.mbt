@@ -173,6 +173,7 @@ pub async fn Deno::get_program_exe_info(
       "deno",
       program_path,
       version,
+      version,
       envs={},
       exists,
       Tool::Deno,

@@ -230,6 +230,7 @@ pub async fn Python::get_program_exe_info(
       "python",
       program_path,
       version,
+      version,
       envs={},
       exists,
       Tool::Python,
@@ -245,6 +246,7 @@ pub async fn Python::get_program_exe_info(
     return ProgramExeInfo(
       "pip",
       pip_path,
+      version,
       version,
       envs={},
       pip_exists,

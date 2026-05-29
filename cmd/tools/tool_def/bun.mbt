@@ -355,6 +355,7 @@ pub async fn Bun::get_program_exe_info(
       "bun",
       program_path,
       version,
+      version,
       envs={},
       exists,
       Tool::Bun,

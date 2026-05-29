@@ -267,6 +267,7 @@ pub async fn Node::get_program_exe_info(
         program,
         program_path,
         version,
+        version,
         envs={},
         node_exists,
         Tool::Node,
@@ -286,6 +287,7 @@ pub async fn Node::get_program_exe_info(
         return ProgramExeInfo(
           program,
           program_path,
+          version,
           version,
           envs={},
           false,
@@ -317,7 +319,7 @@ pub async fn Node::get_program_exe_info(
             @log.warn(@i18n.t("node.parse_json_not_object", args={ "path": package_json_path }))
             continue
           }
-          let version = match map.get("version") {
+          let pkg_version = match map.get("version") {
             Some(String(v)) => v
             _ => {
                 // 没有version字段
@@ -334,28 +336,33 @@ pub async fn Node::get_program_exe_info(
           // 记录 bin_map 中的所有命令名
           let bin_keys = bin_map.keys().map(k => k).join(", ")
           @log.debug(@i18n.t("node.debug_bin_keys", args={ "pkg": lib, "keys": bin_keys }))
-          for key, _ in bin_map {
+          for key, value in bin_map {
             if key == program {
               @log.debug(@i18n.t("node.debug_program_matched", args={ "program": program, "pkg": lib }))
-              // let bin_path = match value {
-              //   String(s) => @fs_ext.join_path(lib, s)
-              //   Object(map) =>
-              //     match map.get("default") {
-              //       Some(String(s)) => @fs_ext.join_path(lib, s)
-              //       _ => continue
-              //     }
-              //   _ => continue
-              // }
-              // let bin_path = @fs_ext.join_path(lib_dir, bin_path)
-              // guard @fs.exists(bin_path) else {
-              //   @log.warn(
-              //     "程序 \{program} 在 \{package_json_path} 中声明的路径 \{bin_path} 不存在",
-              //   )
-              //   continue
-              // }
+              // 从 package.json 的 bin 字段提取实际的可执行文件路径
+              let bin_relative_path = match value {
+                String(s) => s
+                _ => {
+                  @log.debug(@i18n.t("node.debug_bin_value_not_string", args={ "program": program, "pkg": lib }))
+                  continue
+                }
+              }
+              // 构建实际的可执行文件路径：lib/node_modules/<pkg>/<bin_path>
+              let actual_bin_path = @fs_ext.join_path(lib_path, bin_relative_path)
+              @log.debug(@i18n.t("node.debug_actual_bin_path", args={ "path": actual_bin_path }))
+              // 检查实际的可执行文件是否存在
+              if !@fs.exists(actual_bin_path) {
+                @log.warn(@i18n.t("node.debug_bin_path_not_exists", args={
+                  "program": program,
+                  "path": actual_bin_path,
+                  "pkg_json": package_json_path,
+                }))
+                continue
+              }
               return ProgramExeInfo(
                 program,
-                program_path,
+                actual_bin_path,
+                pkg_version,
                 version,
                 envs={},
                 true,
@@ -371,6 +378,7 @@ pub async fn Node::get_program_exe_info(
       ProgramExeInfo(
         program,
         program_path,
+        version,
         version,
         envs={},
         false,
@@ -445,7 +453,20 @@ fn NodePath::get_exe_path(self : Self, program : String) -> String {
 
 ///|
 /// 从npm可执行文件路径获取NodeDir
+/// 支持两种路径格式：
+///   1. bin目录下的npm: node_dir/bin/npm
+///   2. .js文件路径: node_dir/lib/node_modules/npm/bin/npm-cli.js
 pub fn Node::get_node_dir(npm_exe_path : String) -> NodePath raise {
+  // 如果是 .js 文件，通过 /lib/node_modules/ 标记提取 Node.js 目录
+  if npm_exe_path.has_suffix(".js") {
+    let lib_marker = "/lib/node_modules/"
+    guard npm_exe_path.find(lib_marker) is Some(idx) else {
+      raise fail(@i18n.t("node.cannot_infer_install_dir", args={ "path": npm_exe_path }))
+    }
+    let node_dir = npm_exe_path[0:idx].to_owned()
+    let version = @fs_ext.get_path_name(node_dir)
+    return NodePath(version)
+  }
   // npm通常位于Node的bin目录下
   // Windows: node_dir/npm.exe
   // macOS/Linux: node_dir/bin/npm
@@ -472,4 +493,36 @@ pub fn Node::get_node_dir(npm_exe_path : String) -> NodePath raise {
 
   // 使用版本号构造NodeDir
   NodePath(version)
+}
+
+///|
+/// 准备 Node 运行命令的参数
+/// 如果程序是 .js 文件，需要用同版本的 node 来执行，避免 shebang 递归调用问题
+pub fn Node::prepare_run_command(
+  program_exe_info : ProgramExeInfo,
+  exec_args : ArrayView[String],
+) -> (String, Array[String]) {
+  let { path, extra_args, tool_version, .. } = program_exe_info
+  // 如果程序不是 .js 文件，直接使用原始路径和参数
+  if !path.has_suffix(".js") {
+    return (path, [..extra_args, ..exec_args])
+  }
+  // .js 文件需要用同版本的 node 来执行
+  // 通过版本号构造 NodePath 获取 node 可执行文件路径
+  let node_exe = try {
+    let node_path = NodePath(tool_version)
+    @fs_ext.join_path(node_path.bin, "node")
+  } catch {
+    _ => {
+      @log.warn(@i18n.t("node.warn_cannot_get_node_exe", args={
+        "version": tool_version,
+      }))
+      "node"
+    }
+  }
+  @log.debug(@i18n.t("node.debug_js_file_use_node", args={
+    "js_file": path,
+    "node_exe": node_exe,
+  }))
+  (node_exe, [path, ..exec_args])
 }

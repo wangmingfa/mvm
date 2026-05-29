@@ -114,12 +114,15 @@ async fn run_run(
     @log.clear_all_lines()
   }
 
-  let { path: exec_program_path, envs: exec_envs, .. } = program_exe_info
+  let { envs: exec_envs, .. } = program_exe_info
+
+  // 通过 prepare_run_command 处理命令参数（例如 Node 的 .js 文件需要用 node 执行）
+  let (actual_program, actual_args) = @tools.prepare_run_command(program_exe_info, exec_args)
 
   let (exit_code, output) = if @log.is_debug() {
-    @mvm_cmd.run_with_output(exec_program_path, exec_args, extra_env=exec_envs)
+    @mvm_cmd.run_with_output(actual_program, actual_args, extra_env=exec_envs)
   } else {
-    (@process.run(exec_program_path, exec_args, extra_env=exec_envs), "")
+    (@process.run(actual_program, actual_args, extra_env=exec_envs), "")
   }
 
   let result = CommandResult::success_with_output(output.text())

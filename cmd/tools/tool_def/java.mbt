@@ -357,6 +357,7 @@ pub fn Java::get_java_builtin_tool_path_and_version(
       tool.to_str(),
       tool_path,
       java_tool_exe.version,
+      java_tool_exe.tool_version,
       envs=java_tool_exe.envs,
       true,
       java_tool_exe.tool,
@@ -379,6 +380,7 @@ pub async fn Java::get_program_exe_info(
     "java",
     program_path,
     version,
+    version,
     envs={},
     exists,
     Tool::Java,
@@ -399,6 +401,7 @@ pub async fn Java::get_program_exe_info(
         return ProgramExeInfo(
           prog_low,
           tool_path,
+          version,
           version,
           envs={},
           tool_exists,
