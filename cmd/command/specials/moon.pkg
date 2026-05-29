@@ -1,5 +1,6 @@
 import {
   "moonbitlang/async/fs",
+  "moonbitlang/core/env",
   "username/mvm/log",
   "username/mvm/fs_ext",
   "username/mvm/os",

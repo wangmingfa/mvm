@@ -251,12 +251,18 @@ pub async fn Node::get_program_exe_info(
   if program.is_blank() || version.is_blank() {
     raise fail(@i18n.t("node.specify_program_or_version"))
   }
+  // 入口日志：记录请求参数
+  @log.debug(@i18n.t("node.debug_get_exe_info_entry", args={ "program": program, "version": version }))
   let node_path = NodePath(version)
-  let { lib: lib_dir, .. } = node_path
+  let { lib: lib_dir, bin: bin_dir, .. } = node_path
   let program_path = node_path.get_exe_path(program)
   let node_exists = @fs.exists(program_path)
+  // 路径信息日志
+  @log.debug(@i18n.t("node.debug_node_path_info", args={ "lib_dir": lib_dir, "bin_dir": bin_dir, "program_path": program_path }))
+  @log.debug(@i18n.t("node.debug_program_exists", args={ "path": program_path, "exists": node_exists.to_string() }))
   match program {
-    "node" =>
+    "node" => {
+      @log.debug(@i18n.t("node.debug_returning_node_info", args={ "path": program_path, "exists": node_exists.to_string() }))
       return ProgramExeInfo(
         program,
         program_path,
@@ -266,19 +272,39 @@ pub async fn Node::get_program_exe_info(
         Tool::Node,
         node_exists,
       )
+    }
     _ => {
       // 运行的程序不一定能对应到lib目录下的包，例如：
       //   vite安装后，程序名称就是vite
       //   docsify-cli安装后，程序名称是docsify
       // 所以要去lib目录下找所有的包，找到对应的bin目录，去找有没有这个程序
       let lib_node_modules_dir = @fs_ext.join_path(lib_dir, "node_modules")
-      for lib in @fs.readdir(lib_node_modules_dir) {
+      @log.debug(@i18n.t("node.debug_searching_node_modules", args={ "dir": lib_node_modules_dir }))
+      // 检查 node_modules 目录是否存在
+      if !@fs.exists(lib_node_modules_dir) {
+        @log.debug(@i18n.t("node.debug_node_modules_not_exists", args={ "dir": lib_node_modules_dir }))
+        return ProgramExeInfo(
+          program,
+          program_path,
+          version,
+          envs={},
+          false,
+          Tool::Node,
+          node_exists,
+        )
+      }
+      let libs = @fs.readdir(lib_node_modules_dir)
+      @log.debug(@i18n.t("node.debug_found_packages", args={ "count": libs.length().to_string(), "dir": lib_node_modules_dir }))
+      for lib in libs {
         let lib_path = @fs_ext.join_path(lib_node_modules_dir, lib)
         // 从lib_path中查找
         @log.debug(@i18n.t("node.debug_searching_in", args={ "path": @utils.yellow(lib_path) }))
         if @fs.kind(lib_path) is Directory {
           let package_json_path = @fs_ext.join_path(lib_path, "package.json")
-          guard @fs.exists(package_json_path) else { continue }
+          guard @fs.exists(package_json_path) else {
+            @log.debug(@i18n.t("node.debug_no_package_json", args={ "path": lib_path }))
+            continue
+          }
           let json = @fs.read_file(package_json_path).json() catch {
             e => {
               // 解析JSON失败
@@ -305,8 +331,12 @@ pub async fn Node::get_program_exe_info(
             @log.warn(@i18n.t("node.parse_json_no_bin", args={ "path": package_json_path }))
             continue
           }
+          // 记录 bin_map 中的所有命令名
+          let bin_keys = bin_map.keys().map(k => k).join(", ")
+          @log.debug(@i18n.t("node.debug_bin_keys", args={ "pkg": lib, "keys": bin_keys }))
           for key, _ in bin_map {
             if key == program {
+              @log.debug(@i18n.t("node.debug_program_matched", args={ "program": program, "pkg": lib }))
               // let bin_path = match value {
               //   String(s) => @fs_ext.join_path(lib, s)
               //   Object(map) =>
@@ -336,8 +366,17 @@ pub async fn Node::get_program_exe_info(
           }
         }
       }
-      // 找不到可执行文件信息
-      raise fail(@i18n.t("node.exe_info_not_found", args={ "program": program, "version": version }))
+      // 找不到可执行文件信息，返回 program_exists=false 的结构体
+      @log.debug(@i18n.t("node.exe_info_not_found", args={ "program": program, "version": version }))
+      ProgramExeInfo(
+        program,
+        program_path,
+        version,
+        envs={},
+        false,
+        Tool::Node,
+        node_exists,
+      )
     }
   }
 }

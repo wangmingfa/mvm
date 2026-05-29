@@ -253,6 +253,8 @@ pub let en_dict : Map[String, String] = {
   "run.install_tool_failed": "Failed to install {tool}@{version}",
   "run.program_not_exists": "Program {program}({path}) does not exist",
   "run.cannot_run_command": "Cannot run command",
+  "run.debug_fetching_program_info": "Fetching program info",
+  "run.debug_program_info": "Program info {info}",
 
   // === cache_clean 模块 ===
   "cache.cleaned_cache": "Cache directory cleaned: {dir}",
@@ -311,6 +313,16 @@ pub let en_dict : Map[String, String] = {
   "node.parse_json_no_version": "Failed to parse {path}, reason: no version field or version field is not a string",
   "node.parse_json_no_bin": "Failed to parse {path}, reason: no bin field or bin field is not an object",
   "node.exe_info_not_found": "Cannot find executable info for {program}@{version}",
+  "node.debug_get_exe_info_entry": "Getting program executable info: program={program}, version={version}",
+  "node.debug_node_path_info": "Node path info: lib_dir={lib_dir}, bin_dir={bin_dir}, program_path={program_path}",
+  "node.debug_program_exists": "Program path {path} exists: {exists}",
+  "node.debug_returning_node_info": "Returning node program info: path={path}, exists={exists}",
+  "node.debug_searching_node_modules": "Searching node_modules directory: {dir}",
+  "node.debug_node_modules_not_exists": "node_modules directory does not exist: {dir}",
+  "node.debug_found_packages": "Found {count} packages in {dir}",
+  "node.debug_no_package_json": "Skipping {path} (no package.json)",
+  "node.debug_bin_keys": "Package {pkg} bin commands: {keys}",
+  "node.debug_program_matched": "Program {program} matched in package {pkg}",
 
   // === log 模块（用户面向）===
   "log.operation_complete": "Operation complete",
@@ -343,6 +355,14 @@ pub let en_dict : Map[String, String] = {
   "npm.exe_path_debug": "NPM executable path: {path}",
   "npm.global_install_debug": "Global installing NPM packages: {pkgs}",
   "npm.global_cmd_installed": "Installed global command {cmd} in directory {dir}",
+  "npm.link_debug": "npm link: linking current project {dir} to global",
+  "npm.link_cmd_created": "Created link command {cmd} in directory {dir}",
+  "npm.link_no_cwd": "npm link: unable to get current working directory",
+  "npm.link_no_package_json": "npm link: package.json not found in current directory {dir}",
+  "npm.unlink_debug": "npm unlink: unlinking current project {dir}",
+  "npm.unlink_cmd_removed": "Removed link command {cmd} from directory {dir}",
+  "npm.unlink_no_cwd": "npm unlink: unable to get current working directory",
+  "npm.unlink_no_package_json": "npm unlink: package.json not found in current directory {dir}",
 
   // === 通用 ===
   "common.yes": "Yes",

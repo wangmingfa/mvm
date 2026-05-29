@@ -253,6 +253,8 @@ pub let zh_dict : Map[String, String] = {
   "run.install_tool_failed": "安装 {tool}@{version} 失败",
   "run.program_not_exists": "要执行的程序 {program}({path}) 不存在",
   "run.cannot_run_command": "无法运行命令",
+  "run.debug_fetching_program_info": "获取程序信息",
+  "run.debug_program_info": "程序信息 {info}",
 
   // === cache_clean 模块 ===
   "cache.cleaned_cache": "已清理缓存目录: {dir}",
@@ -311,6 +313,16 @@ pub let zh_dict : Map[String, String] = {
   "node.parse_json_no_version": "解析 {path} 失败，原因：没有version字段或者version字段不是字符串",
   "node.parse_json_no_bin": "解析 {path} 失败，原因：没有bin字段或者bin字段不是对象",
   "node.exe_info_not_found": "找不到 {program}@{version} 的可执行文件信息",
+  "node.debug_get_exe_info_entry": "获取程序可执行信息: program={program}, version={version}",
+  "node.debug_node_path_info": "Node路径信息: lib_dir={lib_dir}, bin_dir={bin_dir}, program_path={program_path}",
+  "node.debug_program_exists": "程序路径 {path} 存在性: {exists}",
+  "node.debug_returning_node_info": "返回 node 程序信息: path={path}, exists={exists}",
+  "node.debug_searching_node_modules": "搜索 node_modules 目录: {dir}",
+  "node.debug_node_modules_not_exists": "node_modules 目录不存在: {dir}",
+  "node.debug_found_packages": "在 {dir} 中找到 {count} 个包",
+  "node.debug_no_package_json": "跳过 {path} (无 package.json)",
+  "node.debug_bin_keys": "包 {pkg} 的 bin 命令: {keys}",
+  "node.debug_program_matched": "程序 {program} 在包 {pkg} 中匹配成功",
 
   // === log 模块（用户面向）===
   "log.operation_complete": "操作完成",
