@@ -268,11 +268,25 @@ pub fn get_command(argv : ArrayView[String]) -> Command raise {
       raise fail(@i18n.t("command.run_no_tool_version"))
     // Volta 兼容语法：mvm run --node 18 node app.js
     ["run", tool_flag, .. run_args] if tool_flag.has_prefix("--") => {
+      @log.debug(
+        @i18n.t("command.debug_volta_syntax_entry", args={
+          "flag": tool_flag,
+          "args": to_repr(run_args).to_string(),
+        }),
+      )
       let tool_name = tool_flag[2:].to_owned()
+      @log.debug(
+        @i18n.t("command.debug_volta_tool_name", args={ "name": tool_name }),
+      )
       match Tool::from_string_with_option_result(tool_name) {
         Some(t) => {
           guard run_args.length() >= 1 else {
             // 缺少版本号
+            @log.debug(
+              @i18n.t("command.debug_volta_missing_version", args={
+                "flag": tool_flag,
+              }),
+            )
             raise fail(
               @i18n.t("command.run_volta_missing_version", args={
                 "flag": tool_flag,
@@ -281,36 +295,67 @@ pub fn get_command(argv : ArrayView[String]) -> Command raise {
           }
           let version = run_args[0]
           let cmd_args = run_args[1:].to_owned()
+          @log.debug(
+            @i18n.t("command.debug_volta_parsed", args={
+              "tool": t.to_string(),
+              "version": version,
+              "cmd_args": to_repr(cmd_args).to_string(),
+            }),
+          )
           Run(t, version, cmd_args)
         }
-        None =>
+        None => {
           // 不支持的 -- 选项
+          @log.debug(
+            @i18n.t("command.debug_volta_unknown_tool", args={
+              "flag": tool_flag,
+            }),
+          )
           raise fail(
             @i18n.t("command.run_volta_unknown_tool", args={ "flag": tool_flag }),
           )
+        }
       }
     }
     // 位置参数语法：mvm run node@18 node -v 或 mvm run node npm -v
-    ["run", tool_version, .. run_args] =>
+    ["run", tool_version, .. run_args] => {
+      @log.debug(@i18n.t("command.debug_positional_syntax_entry", args={
+        "tool_version": tool_version,
+        "args": to_repr(run_args).to_string(),
+      }))
       match tool_version.split("@").to_array() {
         // 支持：node@18
         [tool, version] => {
           let t = Tool::from_string(tool.to_owned())
+          @log.debug(@i18n.t("command.debug_positional_parsed", args={
+            "tool": t.to_string(),
+            "version": version.to_owned(),
+            "cmd_args": to_repr(run_args).to_string(),
+          }))
           Run(t, version.to_owned(), run_args.to_owned())
         }
         // 也支持不传版本号（自动根据运行目录获取版本号）：node
         [tool] => {
           let t = Tool::from_string(tool.to_owned())
+          @log.debug(@i18n.t("command.debug_positional_no_version", args={
+            "tool": t.to_string(),
+            "cmd_args": to_repr(run_args).to_string(),
+          }))
           Run(t, "", run_args.to_owned())
         }
         // 无效的版本格式
-        _ =>
+        _ => {
+          @log.debug(@i18n.t("command.debug_positional_invalid_format", args={
+            "version": tool_version,
+          }))
           raise fail(
             @i18n.t("command.run_invalid_version_format", args={
               "version": tool_version,
             }),
           )
+        }
       }
+    }
     ["list"] | ["ls"] => List(None)
     ["list", tool] | ["ls", tool] => List(Some(Tool::from_string(tool)))
     ["cache", "clean"] => CacheClean

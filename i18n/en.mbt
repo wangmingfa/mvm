@@ -63,6 +63,15 @@ pub let en_dict : Map[String, String] = {
   "command.lang_set_need_code": "Please specify a language code to set. Example: mvm lang set en",
   "command.lang_list_hint": "Please use mvm lang list to view available languages",
   "command.lang_unsupported_sub": "Unsupported lang subcommand: {subcommand}",
+  "command.debug_volta_syntax_entry": "Volta-compatible syntax parsing: flag={flag}, args={args}",
+  "command.debug_volta_tool_name": "Volta tool name: {name}",
+  "command.debug_volta_missing_version": "Volta syntax missing version: {flag}",
+  "command.debug_volta_parsed": "Volta syntax parsed successfully: tool={tool}, version={version}, cmd_args={cmd_args}",
+  "command.debug_volta_unknown_tool": "Volta syntax unsupported tool: {flag}",
+  "command.debug_positional_syntax_entry": "Positional syntax parsing: tool_version={tool_version}, args={args}",
+  "command.debug_positional_parsed": "Positional syntax parsed successfully: tool={tool}, version={version}, cmd_args={cmd_args}",
+  "command.debug_positional_no_version": "Positional syntax no version: tool={tool}, cmd_args={cmd_args}",
+  "command.debug_positional_invalid_format": "Positional syntax invalid format: version={version}",
 
   // === install 模块 ===
   "install.already_installed": "{tool}@{version} is already installed",

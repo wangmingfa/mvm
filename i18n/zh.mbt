@@ -63,6 +63,15 @@ pub let zh_dict : Map[String, String] = {
   "command.lang_set_need_code": "请指定要设置的语言代码。示例：mvm lang set zh",
   "command.lang_list_hint": "请使用 mvm lang list 查看可用语言",
   "command.lang_unsupported_sub": "不支持的 lang 子命令：{subcommand}",
+  "command.debug_volta_syntax_entry": "Volta 兼容语法解析: flag={flag}, args={args}",
+  "command.debug_volta_tool_name": "Volta 工具名称: {name}",
+  "command.debug_volta_missing_version": "Volta 语法缺少版本号: {flag}",
+  "command.debug_volta_parsed": "Volta 语法解析成功: tool={tool}, version={version}, cmd_args={cmd_args}",
+  "command.debug_volta_unknown_tool": "Volta 语法不支持的工具: {flag}",
+  "command.debug_positional_syntax_entry": "位置参数语法解析: tool_version={tool_version}, args={args}",
+  "command.debug_positional_parsed": "位置参数语法解析成功: tool={tool}, version={version}, cmd_args={cmd_args}",
+  "command.debug_positional_no_version": "位置参数语法无版本号: tool={tool}, cmd_args={cmd_args}",
+  "command.debug_positional_invalid_format": "位置参数语法无效格式: version={version}",
 
   // === install 模块 ===
   "install.already_installed": "{tool}@{version} 已安装",

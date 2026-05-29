@@ -29,7 +29,11 @@ async fn run_run(
     let program_exe_info = @tools.get_program_exe_info(
       tool, exec_program, version,
     )
-    @log.debug(@i18n.t("run.debug_program_info", args={"info": to_repr(program_exe_info).to_string()}))
+    @log.debug(
+      @i18n.t("run.debug_program_info", args={
+        "info": to_repr(program_exe_info).to_string(),
+      }),
+    )
     let {
       path: exec_program_path,
       version: target_version,
