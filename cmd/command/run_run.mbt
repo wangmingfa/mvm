@@ -124,6 +124,7 @@ async fn run_run(
   let (exit_code, output) = if @log.is_debug() {
     @mvm_cmd.run_with_output(actual_program, actual_args, extra_env=exec_envs)
   } else {
+    @log.debug("运行命令: \{actual_program} \{to_repr(actual_args)}")
     (@process.run(actual_program, actual_args, extra_env=exec_envs), "")
   }
 
