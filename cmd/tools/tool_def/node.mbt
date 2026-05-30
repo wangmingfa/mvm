@@ -335,122 +335,133 @@ pub async fn Node::get_program_exe_info(
           "dir": lib_node_modules_dir,
         }),
       )
-      for lib in libs {
-        let lib_path = @fs_ext.join_path(lib_node_modules_dir, lib)
-        // 从lib_path中查找
-        @log.debug(
-          @i18n.t("node.debug_searching_in", args={
-            "path": @utils.yellow(lib_path),
-          }),
-        )
-        if @fs.kind(lib_path) is Directory {
-          let package_json_path = @fs_ext.join_path(lib_path, "package.json")
-          guard @fs.exists(package_json_path) else {
-            @log.debug(
-              @i18n.t("node.debug_no_package_json", args={ "path": lib_path }),
-            )
-            continue
-          }
-          let json = @fs.read_file(package_json_path).json() catch {
-            e => {
-              // 解析JSON失败
-              @log.warn(
-                @i18n.t("node.parse_json_failed", args={
-                  "path": package_json_path,
-                  "reason": e.to_string(),
-                }),
-              )
-              continue
-            }
-          }
-          guard json is Object(map) else {
-            // JSON不是对象
-            @log.warn(
-              @i18n.t("node.parse_json_not_object", args={
-                "path": package_json_path,
-              }),
-            )
-            continue
-          }
-          let pkg_version = match map.get("version") {
-            Some(String(v)) => v
-            _ => {
-              // 没有version字段
-              @log.warn(
-                @i18n.t("node.parse_json_no_version", args={
-                  "path": package_json_path,
-                }),
-              )
-              continue
-            }
-          }
-          let bin = map.get("bin")
-          guard bin is Some(Object(bin_map)) else {
-            // 没有bin字段
-            @log.warn(
-              @i18n.t("node.parse_json_no_bin", args={
-                "path": package_json_path,
-              }),
-            )
-            continue
-          }
-          // 记录 bin_map 中的所有命令名
-          let bin_keys = bin_map.keys().map(k => k).join(", ")
+      lib_loop~: for lib in libs {
+        // 有的npm包有多层目录，比如@google/gemini-cli，他在node_modules下是一个@google目录，@google目录下才是gemini-cli包，所以要特殊处理一下
+        let (lib_path, package_json_path) = for path = @fs_ext.join_path(
+                                                    lib_node_modules_dir, lib,
+                                                  ) {
           @log.debug(
-            @i18n.t("node.debug_bin_keys", args={ "pkg": lib, "keys": bin_keys }),
+            @i18n.t("node.debug_searching_in", args={
+              "path": @utils.yellow(path),
+            }),
           )
-          for key, value in bin_map {
-            if key == program {
-              @log.debug(
-                @i18n.t("node.debug_program_matched", args={
-                  "program": program,
-                  "pkg": lib,
-                }),
-              )
-              // 从 package.json 的 bin 字段提取实际的可执行文件路径
-              let bin_relative_path = match value {
-                String(s) => s
-                _ => {
-                  @log.debug(
-                    @i18n.t("node.debug_bin_value_not_string", args={
-                      "program": program,
-                      "pkg": lib,
-                    }),
-                  )
-                  continue
-                }
-              }
-              // 构建实际的可执行文件路径：lib/node_modules/<pkg>/<bin_path>
-              let actual_bin_path = @fs_ext.join_path(
-                lib_path, bin_relative_path,
-              )
-              @log.debug(
-                @i18n.t("node.debug_actual_bin_path", args={
-                  "path": actual_bin_path,
-                }),
-              )
-              // 检查实际的可执行文件是否存在
-              if !@fs.exists(actual_bin_path) {
-                @log.warn(
-                  @i18n.t("node.debug_bin_path_not_exists", args={
+          let package_json_path = @fs_ext.join_path(path, "package.json")
+          if @fs.exists(package_json_path) {
+            @log.debug("找到package.json: \{package_json_path}")
+            break (path, package_json_path)
+          }
+          let subs = @fs.readdir(path)
+          if subs.length() == 1 {
+            continue @fs_ext.join_path(path, subs[0])
+          }
+          // 有多个文件夹，不再继续查找
+          continue lib_loop~
+        } nobreak {
+          @log.debug(
+            @i18n.t("node.debug_no_package_json_found_in", args={
+              "dir": @utils.yellow(path),
+            }),
+          )
+          continue lib_loop~
+        }
+        @log.debug(
+          "找到包的根目录: \{lib_path}, package.json路径: \{package_json_path}",
+        )
+        let json = @fs.read_file(package_json_path).json() catch {
+          e => {
+            // 解析JSON失败
+            @log.warn(
+              @i18n.t("node.parse_json_failed", args={
+                "path": package_json_path,
+                "reason": e.to_string(),
+              }),
+            )
+            continue
+          }
+        }
+        guard json is Object(map) else {
+          // JSON不是对象
+          @log.warn(
+            @i18n.t("node.parse_json_not_object", args={
+              "path": package_json_path,
+            }),
+          )
+          continue
+        }
+        let pkg_version = match map.get("version") {
+          Some(String(v)) => v
+          _ => {
+            // 没有version字段
+            @log.warn(
+              @i18n.t("node.parse_json_no_version", args={
+                "path": package_json_path,
+              }),
+            )
+            continue
+          }
+        }
+        let bin = map.get("bin")
+        guard bin is Some(Object(bin_map)) else {
+          // 没有bin字段
+          @log.warn(
+            @i18n.t("node.parse_json_no_bin", args={ "path": package_json_path }),
+          )
+          continue
+        }
+        // 记录 bin_map 中的所有命令名
+        let bin_keys = bin_map.keys().map(k => k).join(", ")
+        @log.debug(
+          @i18n.t("node.debug_bin_keys", args={ "pkg": lib, "keys": bin_keys }),
+        )
+        for key, value in bin_map {
+          if key == program {
+            @log.debug(
+              @i18n.t("node.debug_program_matched", args={
+                "program": program,
+                "pkg": lib,
+              }),
+            )
+            // 从 package.json 的 bin 字段提取实际的可执行文件路径
+            let bin_relative_path = match value {
+              String(s) => s
+              _ => {
+                @log.debug(
+                  @i18n.t("node.debug_bin_value_not_string", args={
                     "program": program,
-                    "path": actual_bin_path,
-                    "pkg_json": package_json_path,
+                    "pkg": lib,
                   }),
                 )
                 continue
               }
-              return ProgramExeInfo(
-                program,
-                actual_bin_path,
-                pkg_version,
-                version,
-                envs={},
-                true,
-                Tool::Node,
-                node_exists,
-              )
             }
+            // 构建实际的可执行文件路径：lib/node_modules/<pkg>/<bin_path>
+            let actual_bin_path = @fs_ext.join_path(lib_path, bin_relative_path)
+            @log.debug(
+              @i18n.t("node.debug_actual_bin_path", args={
+                "path": actual_bin_path,
+              }),
+            )
+            // 检查实际的可执行文件是否存在
+            if !@fs.exists(actual_bin_path) {
+              @log.warn(
+                @i18n.t("node.debug_bin_path_not_exists", args={
+                  "program": program,
+                  "path": actual_bin_path,
+                  "pkg_json": package_json_path,
+                }),
+              )
+              continue
+            }
+            return ProgramExeInfo(
+              program,
+              actual_bin_path,
+              pkg_version,
+              version,
+              envs={},
+              true,
+              Tool::Node,
+              node_exists,
+            )
           }
         }
       }
@@ -537,7 +548,6 @@ fn NodePath::get_exe_path(self : Self, program : String) -> String {
   @fs_ext.join_paths([bin_dir, program + suffix].filter(v => !v.is_blank()))
 }
 
-
 ///|
 /// 从node内的文件路径获取NodePath
 /// 比如：/Users/xxx/.mvm-test/tools/node/v24.16.0/lib/node_modules/npm/bin/npm-cli.js -> /Users/xxx/.mvm-test/tools/node/v24.16.0
@@ -548,14 +558,14 @@ pub fn Node::get_node_path_by_node_inner_path(
   let node_inner_path = @fs_ext.canonicalize_path(node_inner_path)
   @log.debug("node_inner_path: \{node_inner_path}")
   let node_tool_root_path = tool_dir(Node)
-    // 先判断前缀
+  // 先判断前缀
   guard node_inner_path.has_prefix(node_tool_root_path) is true else {
     raise fail("无效的路径 \{node_inner_path}")
   }
   // 一直往上级目录找
   let node_root_dir = for dir = node_inner_path
-                             @fs_ext.get_parent_dir(dir) is Some(parent_dir)
-                             dir = parent_dir {
+                          @fs_ext.get_parent_dir(dir) is Some(parent_dir)
+                          dir = parent_dir {
     // 如果上级目录与node_tool_root_path相等，则表示当前dir就是node的根目录
     if parent_dir == node_tool_root_path {
       break dir
@@ -563,7 +573,6 @@ pub fn Node::get_node_path_by_node_inner_path(
   } nobreak {
     raise fail("无效的路径 \{node_inner_path}")
   }
-
 
   // 从node_dir中提取版本号（目录名）
   let version = @fs_ext.get_path_name(node_root_dir)
