@@ -360,6 +360,121 @@ pub let zh_dict : Map[String, String] = {
   "error.config_save_failed": "配置保存失败",
   "error.operation_cancelled": "操作已取消",
   "error.no_downloader": "没有找到合适的下载器，请安装curl或者wget",
+  "error.specify_program_or_version": "请指定 program 或 version",
+  "error.exe_info_not_found": "找不到 {program}@{version} 的可执行文件信息",
+  "error.version_not_found_detail": "找不到版本：{version}",
+  "error.invalid_version_detail": "无效的版本号：{version}",
+  "error.unsupported_os_detail": "不支持的操作系统：{name}",
+  "error.unsupported_arch": "不支持的架构：{arch}",
+  "error.version_info_format_wrong": "{tool}版本信息格式不对",
+  "error.version_info_empty": "{tool}版本信息为空",
+  "error.parse_version_info_failed": "解析{tool}版本信息失败，原因：{reason}",
+  "error.cannot_get_bin_dir": "无法获取到 {tool} 的 bin 目录",
+  "error.version_os_arch_unsupported": "版本 {version} 不支持 {os} 操作系统下的 {arch} 架构",
+  "error.cannot_be_empty": "不能为空",
+  "error.invalid_path": "无效的路径 {path}",
+  "error.managed_tools_unsupported": "managed_tools 中包含不支持的工具名：{names}。支持的工具：{tools}",
+  "error.path_not_exists": "路径不存在 {path}",
+  "error.levels_must_positive": "levels 必须大于 0，当前值：{levels}",
+
+  // === download 模块 ===
+  "download.file_already_complete": "文件已完整下载，跳过",
+  "download.cannot_get_parent_dir": "无法获取到 {dest} 的父目录",
+  "download.file_saved": "文件已保存：{path}",
+  "download.file_saved_with_time": "文件已保存：{path} 耗时：{time}",
+  "download.retry_attempt": "下载失败，第 {attempt} 次重试...",
+  "download.redirect_failed": "重定向失败: 未找到 Location 头",
+  "download.unsupported_method": "不支持的下载方式",
+  "download.debug_file_size": "文件大小：{size}",
+  "download.debug_resume_info": "文件 {path} 支持断点续传，已下载大小：{size}",
+  "download.debug_redirect_to": "重定向到：{location}",
+  "download.debug_no_resume": "服务器不支持断点续传（416），将重新下载...",
+  "download.debug_download_cmd": "下载命令: {cmd}",
+  "download.downloader_failed": "使用 {downloader} 下载失败",
+
+  // === checksum 模块 ===
+  "checksum.failed": "计算 SHA256 失败：无法读取文件 {path}",
+  "checksum.cannot_compute": "无法计算文件 SHA256：{reason}",
+  "checksum.debug_verify": "SHA256 校验：期望={expected} 实际={actual}",
+
+  // === fs 模块 ===
+  "fs.debug_dest": "目标为 {dest}",
+  "fs.debug_copy": "拷贝 {src} => {dest}",
+  "fs.debug_open_dest": "打开目标文件 {dest}",
+  "fs.debug_write_dest": "写入目标文件 {dest}",
+
+  // === url 模块 ===
+  "url.debug_node_mirror": "使用 Node 镜像: {mirror}",
+  "url.debug_go_mirror": "使用 Go 镜像: {mirror}",
+  "url.debug_python_mirror": "使用 Python 镜像: {mirror}",
+  "url.debug_rust_mirror": "使用 Rust 镜像: {mirror}",
+  "url.debug_java_mirror": "使用 Java 镜像: {mirror}",
+  "url.debug_github_proxy": "使用 GitHub 代理: {proxy}",
+
+  // === bun 模块 ===
+  "bun.cannot_fetch_version_info": "无法获取到Bun版本信息（HTTP {code} {reason}，URL: {url}）",
+  "bun.cannot_parse_version": "无法解析到Bun的版本号",
+  "bun.debug_all_versions": "所有Bun版本({count}个): {versions}",
+  "bun.sha256_checksum_file": "Bun SHA256 校验文件",
+
+  // === java 模块 ===
+  "java.debug_latest_lts": "最新的LTS主版本 {major}",
+  "java.cannot_fetch_versions": "无法获取 Java 可用版本信息（HTTP {code} {reason}，URL: {url}）",
+  "java.parse_version_info_failed": "解析 Java 版本信息失败：{reason}",
+  "java.parse_cache_failed": "解析 Java {version} 版本缓存失败：{reason}",
+  "java.cannot_parse_from_tag": "无法从缓存 tag {tag} 解析 Java 版本号",
+  "java.cannot_fetch_version_info": "无法获取 Java {version} 的版本信息（HTTP {code}，URL: {url}）",
+  "java.api_returned_empty": "无法获取 Java {version} 的版本信息：API 返回空列表",
+  "java.version_missing_build": "Java 版本号 {version} 缺少 build 号（需要格式如 25.0.3+9），无法构造下载链接",
+  "java.debug_fetch_url": "获取Java版本的url {url}",
+
+  // === rust 模块 ===
+  "rust.cannot_fetch_manifest": "无法获取 Rust {channel} manifest（HTTP {code} {reason}，URL: {url}）",
+  "rust.cannot_extract_version": "无法从 Rust manifest 中提取 [pkg.rust] 版本号",
+
+  // === go 模块 ===
+  "go.cache_not_exists": "Go 索引缓存不存在，无法获取校验值",
+  "go.cache_format_error": "Go 索引缓存格式错误，无法获取校验值",
+  "go.version_not_in_index": "Go 版本 {version} 不在索引中，无法获取校验值",
+  "go.missing_sha256": "Go {version}/{platform} 缺少 sha256 字段",
+  "go.archive_not_found": "Go {version} 未找到 {platform} 的 archive 文件",
+
+  // === zig 模块 ===
+  "zig.cache_not_exists": "Zig 索引缓存不存在，无法获取校验值",
+  "zig.cache_format_error": "Zig 索引缓存格式错误，无法获取校验值",
+  "zig.version_not_in_index": "Zig 版本 {version} 不在索引中，无法获取校验值",
+  "zig.platform_info_missing": "Zig 版本 {version} 不包含 {platform} 平台信息，无法获取校验值",
+  "zig.missing_shasum": "Zig {version}/{platform} 缺少 shasum 字段",
+  "zig.debug_check_compat": "检查兼容性 {key}",
+
+  // === kotlin 模块 ===
+  "kotlin.parse_version_info_failed": "解析Kotlin版本信息失败，原因：{reason}",
+  "kotlin.stable_version_empty": "Kotlin稳定版本信息为空",
+
+  // === python 模块 ===
+  "python.cannot_fetch_shasums": "无法从 {url} 获取 Python SHA256 校验文件: {code} {reason}",
+  "python.unsupported_os": "不支持的操作系统",
+
+  // === cache 模块（补充） ===
+  "cache.debug_skip_no_cache": "no_cache 模式：跳过读取缓存 {path}",
+  "cache.cannot_fetch_version_info": "无法获取到{tool}版本信息（HTTP {code} {reason}，URL: {url}）",
+
+  // === tool 模块 ===
+  "tool.debug_create_shell": "创建shell文件 {path}",
+  "tool.debug_create_ps1": "创建ps1文件 {path}",
+  "tool.debug_create_cmd": "创建cmd文件 {path}",
+  "tool.debug_find_version": "在 {dir} 查找 {tool} 的版本号",
+  "tool.debug_found_version": "在 {path} 找到 {tool} 版本 {version}",
+  "tool.debug_volta_node_version": "从 Volta package.json 找到 node 版本: {version}",
+  "tool.debug_search_mvm_home": "从 MVM_HOME 查找",
+  "tool.debug_search_parent": "从父目录查找",
+
+  // === cmd 模块 ===
+  "cmd.debug_running": "运行: {cmd} {args}",
+  "cmd.debug_running_cmd": "运行 {cmd}",
+
+  // === main 模块 ===
+  "main.debug_running": "运行: {args}",
 
   // === npm ===
   "npm.pkg_json_format_error": "NPM包 {pkg} 的package.json格式有问题，文件路径：{path}",
@@ -369,6 +484,14 @@ pub let zh_dict : Map[String, String] = {
   "npm.exe_path_debug": "NPM执行文件路径: {path}",
   "npm.global_install_debug": "全局安装NPM包: {pkgs}",
   "npm.global_cmd_installed": "已在目录 {dir} 安装全局命令 {cmd}",
+  "npm.link_debug": "npm link: 将当前项目 {dir} 链接到全局",
+  "npm.link_cmd_created": "在目录 {dir} 创建了链接命令 {cmd}",
+  "npm.link_no_cwd": "npm link: 无法获取当前工作目录",
+  "npm.link_no_package_json": "npm link: 当前目录 {dir} 未找到 package.json",
+  "npm.unlink_debug": "npm unlink: 取消当前项目 {dir} 的全局链接",
+  "npm.unlink_cmd_removed": "从目录 {dir} 移除了链接命令 {cmd}",
+  "npm.unlink_no_cwd": "npm unlink: 无法获取当前工作目录",
+  "npm.unlink_no_package_json": "npm unlink: 当前目录 {dir} 未找到 package.json",
 
   // === 通用 ===
   "common.yes": "是",
@@ -377,4 +500,9 @@ pub let zh_dict : Map[String, String] = {
   "common.failed": "失败",
   "common.progress": "{current}/{total}",
   "common.percent": "{percent}%",
+  "common.file_format_abnormal_backup": "文件 {path} 格式异常，已备份至 {backup}，将重建空记录",
+  "common.backup_failed_delete": "备份损坏文件失败，将直接删除损坏文件",
+  "common.cannot_create_empty_json": "无法创建空 JSON 记录",
+  "common.file_still_wrong_after_recovery": "文件 {path} 恢复后格式仍不对",
+  "common.setup_tools_unsupported": "setup --tools 中包含不支持的工具名：{name}",
 }

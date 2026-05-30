@@ -360,6 +360,121 @@ pub let en_dict : Map[String, String] = {
   "error.config_save_failed": "Configuration save failed",
   "error.operation_cancelled": "Operation cancelled",
   "error.no_downloader": "No suitable downloader found, please install curl or wget",
+  "error.specify_program_or_version": "Please specify program or version",
+  "error.exe_info_not_found": "Cannot find executable info for {program}@{version}",
+  "error.version_not_found_detail": "Version not found: {version}",
+  "error.invalid_version_detail": "Invalid version number: {version}",
+  "error.unsupported_os_detail": "Unsupported operating system: {name}",
+  "error.unsupported_arch": "Unsupported architecture: {arch}",
+  "error.version_info_format_wrong": "{tool} version info format is wrong",
+  "error.version_info_empty": "{tool} version info is empty",
+  "error.parse_version_info_failed": "Failed to parse {tool} version info, reason: {reason}",
+  "error.cannot_get_bin_dir": "Cannot get {tool} bin directory",
+  "error.version_os_arch_unsupported": "Version {version} does not support {os} OS with {arch} architecture",
+  "error.cannot_be_empty": "Cannot be empty",
+  "error.invalid_path": "Invalid path {path}",
+  "error.managed_tools_unsupported": "managed_tools contains unsupported tool names: {names}. Supported tools: {tools}",
+  "error.path_not_exists": "Path does not exist {path}",
+  "error.levels_must_positive": "levels must be greater than 0, current value: {levels}",
+
+  // === download 模块 ===
+  "download.file_already_complete": "File already fully downloaded, skipping",
+  "download.cannot_get_parent_dir": "Cannot get parent directory of {dest}",
+  "download.file_saved": "File saved: {path}",
+  "download.file_saved_with_time": "File saved: {path} time: {time}",
+  "download.retry_attempt": "Download failed, retry {attempt}...",
+  "download.redirect_failed": "Redirect failed: Location header not found",
+  "download.unsupported_method": "Unsupported download method",
+  "download.debug_file_size": "File size: {size}",
+  "download.debug_resume_info": "File {path} supports resume, already downloaded: {size}",
+  "download.debug_redirect_to": "Redirected to: {location}",
+  "download.debug_no_resume": "Server doesn't support resume (416), re-downloading...",
+  "download.debug_download_cmd": "Download command: {cmd}",
+  "download.downloader_failed": "Download failed using {downloader}",
+
+  // === checksum 模块 ===
+  "checksum.failed": "SHA256 computation failed: cannot read file {path}",
+  "checksum.cannot_compute": "Cannot compute file SHA256: {reason}",
+  "checksum.debug_verify": "SHA256 verification: expected={expected} actual={actual}",
+
+  // === fs 模块 ===
+  "fs.debug_dest": "Destination: {dest}",
+  "fs.debug_copy": "Copy {src} => {dest}",
+  "fs.debug_open_dest": "Opening destination file {dest}",
+  "fs.debug_write_dest": "Writing to destination file {dest}",
+
+  // === url 模块 ===
+  "url.debug_node_mirror": "Using Node mirror: {mirror}",
+  "url.debug_go_mirror": "Using Go mirror: {mirror}",
+  "url.debug_python_mirror": "Using Python mirror: {mirror}",
+  "url.debug_rust_mirror": "Using Rust mirror: {mirror}",
+  "url.debug_java_mirror": "Using Java mirror: {mirror}",
+  "url.debug_github_proxy": "Using GitHub proxy: {proxy}",
+
+  // === bun 模块 ===
+  "bun.cannot_fetch_version_info": "Cannot fetch Bun version info (HTTP {code} {reason}, URL: {url})",
+  "bun.cannot_parse_version": "Cannot parse Bun version numbers",
+  "bun.debug_all_versions": "All Bun versions ({count}): {versions}",
+  "bun.sha256_checksum_file": "Bun SHA256 checksum file",
+
+  // === java 模块 ===
+  "java.debug_latest_lts": "Latest LTS major version {major}",
+  "java.cannot_fetch_versions": "Cannot fetch Java available version info (HTTP {code} {reason}, URL: {url})",
+  "java.parse_version_info_failed": "Failed to parse Java version info: {reason}",
+  "java.parse_cache_failed": "Failed to parse Java {version} version cache: {reason}",
+  "java.cannot_parse_from_tag": "Cannot parse Java version number from cache tag {tag}",
+  "java.cannot_fetch_version_info": "Cannot fetch Java {version} version info (HTTP {code}, URL: {url})",
+  "java.api_returned_empty": "Cannot get Java {version} version info: API returned empty list",
+  "java.version_missing_build": "Java version {version} missing build number (needs format like 25.0.3+9), cannot construct download link",
+  "java.debug_fetch_url": "Java version fetch URL: {url}",
+
+  // === rust 模块 ===
+  "rust.cannot_fetch_manifest": "Cannot fetch Rust {channel} manifest (HTTP {code} {reason}, URL: {url})",
+  "rust.cannot_extract_version": "Cannot extract [pkg.rust] version number from Rust manifest",
+
+  // === go 模块 ===
+  "go.cache_not_exists": "Go index cache does not exist, cannot get checksum",
+  "go.cache_format_error": "Go index cache format error, cannot get checksum",
+  "go.version_not_in_index": "Go version {version} not in index, cannot get checksum",
+  "go.missing_sha256": "Go {version}/{platform} missing sha256 field",
+  "go.archive_not_found": "Go {version} did not find archive file for {platform}",
+
+  // === zig 模块 ===
+  "zig.cache_not_exists": "Zig index cache does not exist, cannot get checksum",
+  "zig.cache_format_error": "Zig index cache format error, cannot get checksum",
+  "zig.version_not_in_index": "Zig version {version} not in index, cannot get checksum",
+  "zig.platform_info_missing": "Zig version {version} does not contain {platform} platform info, cannot get checksum",
+  "zig.missing_shasum": "Zig {version}/{platform} missing shasum field",
+  "zig.debug_check_compat": "Checking compatibility {key}",
+
+  // === kotlin 模块 ===
+  "kotlin.parse_version_info_failed": "Failed to parse Kotlin version info, reason: {reason}",
+  "kotlin.stable_version_empty": "Kotlin stable version info is empty",
+
+  // === python 模块 ===
+  "python.cannot_fetch_shasums": "Cannot fetch Python SHA256 checksum file from {url}: {code} {reason}",
+  "python.unsupported_os": "Unsupported operating system",
+
+  // === cache 模块（补充） ===
+  "cache.debug_skip_no_cache": "no_cache mode: skipping cache read {path}",
+  "cache.cannot_fetch_version_info": "Cannot fetch {tool} version info (HTTP {code} {reason}, URL: {url})",
+
+  // === tool 模块 ===
+  "tool.debug_create_shell": "Creating shell file {path}",
+  "tool.debug_create_ps1": "Creating ps1 file {path}",
+  "tool.debug_create_cmd": "Creating cmd file {path}",
+  "tool.debug_find_version": "Looking for {tool} version number in {dir}",
+  "tool.debug_found_version": "Found {tool} version {version} in {path}",
+  "tool.debug_volta_node_version": "Found node version from Volta package.json: {version}",
+  "tool.debug_search_mvm_home": "Searching from MVM_HOME",
+  "tool.debug_search_parent": "Searching from parent directory",
+
+  // === cmd 模块 ===
+  "cmd.debug_running": "Running: {cmd} {args}",
+  "cmd.debug_running_cmd": "Running {cmd}",
+
+  // === main 模块 ===
+  "main.debug_running": "Running: {args}",
 
   // === npm ===
   "npm.pkg_json_format_error": "NPM package {pkg} has invalid package.json format, file path: {path}",
@@ -385,4 +500,9 @@ pub let en_dict : Map[String, String] = {
   "common.failed": "Failed",
   "common.progress": "{current}/{total}",
   "common.percent": "{percent}%",
+  "common.file_format_abnormal_backup": "File {path} format abnormal, backed up to {backup}, rebuilding empty record",
+  "common.backup_failed_delete": "Failed to backup corrupted file, will delete directly",
+  "common.cannot_create_empty_json": "Cannot create empty JSON record",
+  "common.file_still_wrong_after_recovery": "File {path} format still wrong after recovery",
+  "common.setup_tools_unsupported": "setup --tools contains unsupported tool name: {name}",
 }

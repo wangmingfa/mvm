@@ -47,7 +47,14 @@ pub async fn Bun::get_target_version(
   )
   guard res.code is (200..<300) else {
     raise fail(
-      "无法获取到Bun版本信息（HTTP \{res.code} \{res.reason}，URL: \{BUN_VERSION_URL}）",
+      @i18n.t(
+        "bun.cannot_fetch_version_info",
+        args={
+          "code": res.code.to_string(),
+          "reason": res.reason,
+          "url": BUN_VERSION_URL,
+        },
+      ),
     )
   }
   let html = data.text()
@@ -100,7 +107,7 @@ fn Bun::_parse_versions_from_html(html : String) -> Array[String] raise {
     version_content.find(props_start_key) is Some(props_start_index) &&
     version_content[props_start_index + props_start_key.length():].find("\"")
     is Some(props_end_index) else {
-    raise fail("无法解析到Bun的版本号")
+    raise fail(@i18n.t("bun.cannot_parse_version"))
   }
   // 替换转义字符
   let props_content = version_content[props_start_index +
@@ -111,7 +118,7 @@ fn Bun::_parse_versions_from_html(html : String) -> Array[String] raise {
   guard (try? @json.parse(props_content)) is Ok(Object(json)) &&
     json.get("versions") is Some(Array(versions)) &&
     versions.get(1) is Some(Array(versions)) else {
-    raise fail("无法解析到Bun的版本号")
+    raise fail(@i18n.t("bun.cannot_parse_version"))
   }
 
   let bun_versions : Array[String] = []
@@ -147,7 +154,9 @@ fn Bun::_parse_versions_from_html(html : String) -> Array[String] raise {
     bun_versions.push("v\{version}")
   }
 
-  guard bun_versions.length() > 0 else { raise fail("Bun版本信息为空") }
+  guard bun_versions.length() > 0 else {
+    raise fail(@i18n.t("error.version_info_empty", args={"tool": "Bun"}))
+  }
 
   bun_versions.sort_by((a, b) => {
     @utils.compare_version(Bun::_strip_v_prefix(b), Bun::_strip_v_prefix(a)) catch {
@@ -156,7 +165,12 @@ fn Bun::_parse_versions_from_html(html : String) -> Array[String] raise {
   })
 
   let all_versions : String = bun_versions.join("、")
-  @log.debug("所有Bun版本(\{bun_versions.length()}个): \{all_versions}")
+  @log.debug(
+    @i18n.t(
+      "bun.debug_all_versions",
+      args={"count": bun_versions.length().to_string(), "versions": all_versions},
+    ),
+  )
 
   bun_versions
 }
@@ -195,7 +209,9 @@ fn Bun::_find_version(
   version_count : Int,
   versions : Array[String],
 ) -> String raise {
-  guard versions.length() > 0 else { raise fail("Bun版本信息为空") }
+  guard versions.length() > 0 else {
+    raise fail(@i18n.t("error.version_info_empty", args={"tool": "Bun"}))
+  }
   match version {
     "" | "latest" => versions[0]
     _ =>
@@ -214,11 +230,11 @@ fn Bun::_find_version(
               }
             })
             is Some(idx) else {
-            raise fail("找不到版本：\{version}")
+          raise fail(@i18n.t("error.version_not_found_detail", args={"version": version}))
           }
           versions[idx]
         }
-        _ => raise fail("无效的版本号：\{version}")
+      raise fail(@i18n.t("error.invalid_version_detail", args={"version": version}))
       }
   }
 }
@@ -230,13 +246,13 @@ fn Bun::_get_platform_asset_name() -> String raise {
     MacOS => "darwin"
     Linux => "linux"
     Windows => "windows"
-    name => raise fail("不支持的操作系统：\{name}")
+    name => raise fail(@i18n.t("error.unsupported_os_detail", args={"name": name.to_string()}))
   }
   let arch_str = match os.arch {
     Aarch64 => "aarch64"
     X86_64 => "x64"
     X86 => "x64"
-    arch => raise fail("不支持的架构：\{arch}")
+    arch => raise fail(@i18n.t("error.unsupported_arch", args={"arch": arch.to_string()}))
   }
   "bun-\{os_str}-\{arch_str}"
 }
@@ -301,7 +317,7 @@ pub async fn Bun::get_expected_checksum(
     Some(content) => content
     None => {
       // 顺序尝试 URL 列表，首个成功即返回
-      let result = @request.try_urls(urls, "Bun SHA256 校验文件")
+      let result = @request.try_urls(urls, @i18n.t("bun.sha256_checksum_file"))
       guard result is Some((_, content)) else { return None }
       write_cache_file_content(cache_file, content)
       content
@@ -346,7 +362,7 @@ pub async fn Bun::get_program_exe_info(
   version : String,
 ) -> ProgramExeInfo {
   if program.is_blank() || version.is_blank() {
-    raise fail("请指定 program 或 version")
+    raise fail(@i18n.t("error.specify_program_or_version"))
   }
   let program_path = Bun::get_exe_path(version)
   let exists = @fs.exists(program_path)
@@ -362,5 +378,5 @@ pub async fn Bun::get_program_exe_info(
       exists,
     )
   }
-  raise fail("找不到 \{program}@\{version} 的可执行文件信息")
+  raise fail(@i18n.t("error.exe_info_not_found", args={"program": program, "version": version}))
 }

@@ -40,7 +40,7 @@ fn Zig::_get_proper_version(
   version_count : Int,
   json : Json,
 ) -> String raise {
-  guard json is Object(map) else { raise fail("Zig版本信息格式不对") }
+  guard json is Object(map) else { raise fail(@i18n.t("error.version_info_format_wrong", args={"tool": "Zig"})) }
   // 收集所有稳定版本及其 JSON 值（跳过 master 和 dev 版本）
   let versions : Array[(String, Json)] = []
   for key, value in map {
@@ -50,14 +50,14 @@ fn Zig::_get_proper_version(
   }
   // 按版本号倒序排序
   versions.sort_by((a, b) => @utils.compare_version(b.0, a.0) catch { _ => 0 })
-  guard versions.length() > 0 else { raise fail("Zig版本信息为空") }
+  guard versions.length() > 0 else { raise fail(@i18n.t("error.version_info_empty", args={"tool": "Zig"})) }
   match version {
     "" | "latest" =>
       Zig::_check_os_compatiable(
         os,
         versions[0].0,
         versions[0].1,
-        error_msg_tpl="当前最新版本 {version} 不支持 {os.name} 操作系统下的 {os.arch} 架构",
+        error_msg_tpl=@i18n.t("error.version_os_arch_unsupported"),
       )
     _ =>
       match version_count {
@@ -70,16 +70,16 @@ fn Zig::_get_proper_version(
               }
             })
             is Some(idx) else {
-            raise fail("找不到版本：\{version}")
+            raise fail(@i18n.t("error.version_not_found_detail", args={"version": version}))
           }
           Zig::_check_os_compatiable(
             os,
             versions[idx].0,
             versions[idx].1,
-            error_msg_tpl="版本 {version} 不支持 {os.name} 操作系统下的 {os.arch} 架构",
+            error_msg_tpl=@i18n.t("error.version_os_arch_unsupported"),
           )
         }
-        _ => raise fail("无效的版本号：\{version}")
+        _ => raise fail(@i18n.t("error.invalid_version_detail", args={"version": version}))
       }
   }
 }
@@ -92,13 +92,13 @@ fn Zig::_get_version_release_key() -> String raise {
       Aarch64 => "aarch64"
       X86_64 => "x86_64"
       X86 => "x86"
-      arch => raise fail("不支持的架构：\{arch}")
+      arch => raise fail(@i18n.t("error.unsupported_arch", args={"arch": arch.to_string()}))
     },
     match os.name {
       Windows => "windows"
       MacOS => "macos"
       Linux => "linux"
-      name => raise fail("不支持的操作系统：\{name}")
+      name => raise fail(@i18n.t("error.unsupported_os_detail", args={"name": name.to_string()}))
     },
   ].join("-")
 }
@@ -108,13 +108,13 @@ fn Zig::_check_os_compatiable(
   os : @os.OsInfo,
   version : String,
   version_json : Json,
-  error_msg_tpl? : String = "版本 {version} 不支持 {os.name} 操作系统下的 {os.arch} 架构",
+  error_msg_tpl? : String = @i18n.t("error.version_os_arch_unsupported"),
 ) -> String raise {
   let version_release_key = Zig::_get_version_release_key()
   guard version_json is Object(map) else {
-    raise fail("版本 \{version} 的信息格式不对")
+    raise fail(@i18n.t("error.version_info_format_wrong", args={"tool": "Zig"}))
   }
-  @log.debug("检查兼容性 \{version_release_key}")
+  @log.debug(@i18n.t("zig.debug_check_compat", args={"key": version_release_key}))
   if !map.contains(version_release_key) {
     raise fail(format_os_compat_error(error_msg_tpl, version, os))
   }
@@ -134,7 +134,7 @@ pub fn Zig::get_download_info(
     Windows => "zip"
     Linux => "tar.xz"
     MacOS => "tar.xz"
-    name => raise fail("不支持的操作系统：\{name}")
+    name => raise fail(@i18n.t("error.unsupported_os_detail", args={"name": name.to_string()}))
   }
   let url = "\{ZIG_RELEASE_URL}/\{version}/zig-\{version_release_key}-\{version}.\{ext}"
   { url, headers: {}, root_path_depth: 1 }
@@ -166,12 +166,12 @@ pub async fn Zig::get_expected_checksum(
   // 从缓存读取索引 JSON
   let cached_content = read_cache_file_content(ZIG_INDEX_CACHE_FILE)
   guard cached_content is Some(content) else {
-    @log.warn("Zig 索引缓存不存在，无法获取校验值")
+    @log.warn(@i18n.t("zig.cache_not_exists"))
     return None
   }
   let json = @json.parse(content) catch {
     _ => {
-      @log.warn("Zig 索引缓存格式错误，无法获取校验值")
+      @log.warn(@i18n.t("zig.cache_format_error"))
       return None
     }
   }
@@ -179,16 +179,14 @@ pub async fn Zig::get_expected_checksum(
 
   // 查找版本对应的 JSON 值
   guard map.get(version) is Some(version_json) else {
-    @log.warn("Zig 版本 \{version} 不在索引中，无法获取校验值")
+    @log.warn(@i18n.t("zig.version_not_in_index", args={"version": version}))
     return None
   }
   guard version_json is Object(version_map) else { return None }
 
   // 查找平台键对应的 shasum
   guard version_map.get(version_release_key) is Some(platform_json) else {
-    @log.warn(
-      "Zig 版本 \{version} 不包含 \{version_release_key} 平台信息，无法获取校验值",
-    )
+    @log.warn(@i18n.t("zig.platform_info_missing", args={"version": version, "platform": version_release_key}))
     return None
   }
   guard platform_json is Object(platform_map) else { return None }
@@ -196,7 +194,7 @@ pub async fn Zig::get_expected_checksum(
   match platform_map.get("shasum") {
     Some(String(hash)) => Some(hash)
     _ => {
-      @log.warn("Zig \{version}/\{version_release_key} 缺少 shasum 字段")
+      @log.warn(@i18n.t("zig.missing_shasum", args={"version": version, "platform": version_release_key}))
       None
     }
   }
@@ -215,7 +213,7 @@ pub async fn Zig::get_program_exe_info(
   version : String,
 ) -> ProgramExeInfo {
   if program.is_blank() || version.is_blank() {
-    raise fail("请指定 program 或 version")
+    raise fail(@i18n.t("error.specify_program_or_version"))
   }
   let program_path = Zig::get_exe_path(version)
   let exists = @fs.exists(program_path)
@@ -231,5 +229,5 @@ pub async fn Zig::get_program_exe_info(
       exists,
     )
   }
-  raise fail("找不到 \{program}@\{version} 的可执行文件信息")
+  raise fail(@i18n.t("error.exe_info_not_found", args={"program": program, "version": version}))
 }

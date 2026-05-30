@@ -39,21 +39,21 @@ fn _build_rust_target(os_info : @os.OsInfo) -> String raise {
       match os_info.arch {
         Aarch64 => "aarch64-apple-darwin"
         X86_64 => "x86_64-apple-darwin"
-        arch => raise fail("不支持的架构：\{arch}")
+        arch => raise fail(@i18n.t("error.unsupported_arch", args={"arch": arch.to_string()}))
       }
     Linux =>
       match os_info.arch {
         X86_64 => "x86_64-unknown-linux-gnu"
         Aarch64 => "aarch64-unknown-linux-gnu"
-        arch => raise fail("不支持的架构：\{arch}")
+        arch => raise fail(@i18n.t("error.unsupported_arch", args={"arch": arch.to_string()}))
       }
     Windows =>
       match os_info.arch {
         X86_64 => "x86_64-pc-windows-msvc"
         Aarch64 => "aarch64-pc-windows-msvc"
-        arch => raise fail("不支持的架构：\{arch}")
+        arch => raise fail(@i18n.t("error.unsupported_arch", args={"arch": arch.to_string()}))
       }
-    name => raise fail("不支持的操作系统：\{name}")
+    name => raise fail(@i18n.t("error.unsupported_os_detail", args={"name": name.to_string()}))
   }
 }
 
@@ -122,9 +122,7 @@ async fn Rust::_get_channel_version(
         headers=@request.merge_detault_headers(),
       )
       if !(res.code is (200..<300)) {
-        raise fail(
-          "无法获取 Rust \{channel} manifest（HTTP \{res.code} \{res.reason}，URL: \{manifest_url}）",
-        )
+        raise fail(@i18n.t("rust.cannot_fetch_manifest", args={"channel": channel, "code": res.code.to_string(), "reason": res.reason, "url": manifest_url}))
       }
       let content = data.text()
       write_cache_file_content(cache_file, content)
@@ -179,7 +177,7 @@ fn _extract_rust_version(content : String) -> String raise {
       }
     }
   }
-  raise fail("无法从 Rust manifest 中提取 [pkg.rust] 版本号")
+  raise fail(@i18n.t("rust.cannot_extract_version"))
 }
 
 ///|
@@ -297,12 +295,12 @@ pub fn Rust::get_rust_builtin_tool_path_and_version(
 
   let rust_bin_dir : String? = @fs_ext.get_parent_dir(rust_exe_path) catch {
     _ => {
-      @log.error("无法获取到 rust 的 bin 目录")
+      @log.error(@i18n.t("error.cannot_get_bin_dir", args={"tool": "rust"}))
       return None
     }
   }
   guard rust_bin_dir is Some(dir) else {
-    @log.error("无法获取到 rust 的 bin 目录")
+    @log.error(@i18n.t("error.cannot_get_bin_dir", args={"tool": "rust"}))
     return None
   }
   let rust_bin_dir = dir
@@ -332,7 +330,7 @@ pub async fn Rust::get_program_exe_info(
   version : String,
 ) -> ProgramExeInfo {
   if program.is_blank() || version.is_blank() {
-    raise fail("请指定 program 或 version")
+    raise fail(@i18n.t("error.specify_program_or_version"))
   }
   let program_path = Rust::get_exe_path(version)
   let exists = @fs.exists(program_path)
@@ -372,5 +370,5 @@ pub async fn Rust::get_program_exe_info(
       _ => ()
     }
   }
-  raise fail("找不到 \{program}@\{version} 的可执行文件信息")
+  raise fail(@i18n.t("error.exe_info_not_found", args={"program": program, "version": version}))
 }

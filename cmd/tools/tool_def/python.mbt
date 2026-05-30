@@ -48,13 +48,13 @@ fn Python::_get_proper_version(
   version_count : Int,
   json : Json,
 ) -> String raise {
-  guard json is Array(arr) else { raise fail("Python版本信息格式不对") }
+  guard json is Array(arr) else { raise fail(@i18n.t("error.version_info_format_wrong", args={"tool": "Python"})) }
   let infos : Array[PythonVersionInfo] = arr.map(v => {
     @json.from_json(v) catch {
-      e => raise fail("解析Python版本信息失败，原因：\{e}")
+      e => raise fail(@i18n.t("error.parse_version_info_failed", args={"tool": "Python", "reason": e.to_string()}))
     }
   })
-  guard infos.length() > 0 else { raise fail("Python版本信息为空") }
+  guard infos.length() > 0 else { raise fail(@i18n.t("error.version_info_empty", args={"tool": "Python"})) }
   // 按版本号倒序排序
   infos.sort_by((a, b) => {
     @utils.compare_version(b.latest, a.latest) catch {
@@ -80,7 +80,7 @@ fn Python::_get_proper_version(
           // 查找以该主版本号开头的最新 cycle
           guard infos.search_by(fn(v) { v.cycle.has_prefix("\{ver}.") })
             is Some(idx) else {
-            raise fail("找不到版本：\{version}")
+            raise fail(@i18n.t("error.version_not_found_detail", args={"version": version}))
           }
           "v\{infos[idx].latest}"
         }
@@ -94,7 +94,7 @@ fn Python::_get_proper_version(
           // 去掉 v 前缀用于匹配 cycle
           let cycle = search_version.sub(start=1).to_owned()
           guard infos.search_by(fn(v) { v.cycle == cycle }) is Some(idx) else {
-            raise fail("找不到版本：\{version}")
+            raise fail(@i18n.t("error.version_not_found_detail", args={"version": version}))
           }
           "v\{infos[idx].latest}"
         }
@@ -110,11 +110,11 @@ fn Python::_get_proper_version(
           let parts = ver.split(".").collect()
           let major_minor = "\{parts[0]}.\{parts[1]}"
           guard infos.search_by(fn(v) { v.cycle == major_minor }) is Some(_) else {
-            raise fail("找不到版本：\{version}")
+            raise fail(@i18n.t("error.version_not_found_detail", args={"version": version}))
           }
           "v\{ver}"
         }
-        _ => raise fail("无效的版本号：\{version}")
+        _ => raise fail(@i18n.t("error.invalid_version_detail", args={"version": version}))
       }
   }
 }
@@ -138,7 +138,7 @@ pub fn Python::get_download_info(
     }
     Linux => "\{PYTHON_RELEASE_URL}/\{ver}/Python-\{ver}.tgz"
     MacOS => "\{PYTHON_RELEASE_URL}/\{ver}/Python-\{ver}.tgz"
-    name => raise fail("不支持的操作系统：\{name}")
+    name => raise fail(@i18n.t("error.unsupported_os_detail", args={"name": name.to_string()}))
   }
   let root_depth : UInt = match os_info.name {
     Windows => 0
@@ -187,9 +187,7 @@ pub async fn Python::get_expected_checksum(
         headers=@request.merge_detault_headers(),
       )
       if !(res.code is (200..<300)) {
-        @log.warn(
-          "无法从 \{@utils.blue(sha256_url)} 获取 Python SHA256 校验文件: \{res.code} \{res.reason}",
-        )
+        @log.warn(@i18n.t("python.cannot_fetch_shasums", args={"url": @utils.blue(sha256_url), "code": res.code.to_string(), "reason": res.reason}))
         return None
       }
       let content = data.text()
@@ -208,7 +206,7 @@ pub fn Python::get_exe_path(version : String) -> String raise {
     Windows => [version_dir(Tool::Python, version), "python.exe"].join("/")
     MacOS | Linux =>
       [version_dir(Tool::Python, version), "bin", "python3"].join("/")
-    _ => raise fail("不支持的操作系统")
+    _ => raise fail(@i18n.t("python.unsupported_os"))
   }
 }
 
@@ -218,7 +216,7 @@ pub async fn Python::get_program_exe_info(
   version : String,
 ) -> ProgramExeInfo {
   if program.is_blank() || version.is_blank() {
-    raise fail("请指定 program 或 version")
+    raise fail(@i18n.t("error.specify_program_or_version"))
   }
   let tool_dir = version_dir(Tool::Python, version)
   let program_path = Python::get_exe_path(version)
@@ -254,5 +252,5 @@ pub async fn Python::get_program_exe_info(
       exists,
     )
   }
-  raise fail("找不到 \{program}@\{version} 的可执行文件信息")
+  raise fail(@i18n.t("error.exe_info_not_found", args={"program": program, "version": version}))
 }

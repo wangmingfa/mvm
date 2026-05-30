@@ -47,10 +47,10 @@ fn Deno::_get_proper_version(
   version_count : Int,
   json : Json,
 ) -> String raise {
-  guard json is Array(arr) else { raise fail("Deno版本信息格式不对") }
+  guard json is Array(arr) else { raise fail(@i18n.t("error.version_info_format_wrong", args={"tool": "Deno"})) }
   let infos : Array[DenoReleaseInfo] = arr.map(v => {
     @json.from_json(v) catch {
-      e => raise fail("解析Deno版本信息失败，原因：\{e}")
+      e => raise fail(@i18n.t("error.parse_version_info_failed", args={"tool": "Deno", "reason": e.to_string()}))
     }
   })
   // 过滤出有效版本号（排除 nightly 等）
@@ -63,7 +63,7 @@ fn Deno::_get_proper_version(
     name[1] <= '9'
   })
   guard valid_versions.length() > 0 else {
-    raise fail("Deno版本信息为空")
+    raise fail(@i18n.t("error.version_info_empty", args={"tool": "Deno"}))
   }
   // 按版本号倒序排序
   valid_versions.sort_by((a, b) => {
@@ -87,7 +87,7 @@ fn Deno::_get_proper_version(
             // 精确匹配
             guard valid_versions.search_by(fn(v) { v.name == search_version })
               is Some(idx) else {
-              raise fail("找不到版本：\{version}")
+              raise fail(@i18n.t("error.version_not_found_detail", args={"version": version}))
             }
             valid_versions[idx].name
           } else {
@@ -96,12 +96,12 @@ fn Deno::_get_proper_version(
                 v.name.has_prefix(search_version + ".")
               })
               is Some(idx) else {
-              raise fail("找不到版本：\{version}")
+              raise fail(@i18n.t("error.version_not_found_detail", args={"version": version}))
             }
             valid_versions[idx].name
           }
         }
-        _ => raise fail("无效的版本号：\{version}")
+        _ => raise fail(@i18n.t("error.invalid_version_detail", args={"version": version}))
       }
   }
 }
@@ -120,21 +120,21 @@ pub fn Deno::get_download_info(
       match os_info.arch {
         Aarch64 => "aarch64-apple-darwin"
         X86_64 => "x86_64-apple-darwin"
-        arch => raise fail("不支持的架构：\{arch}")
+        arch => raise fail(@i18n.t("error.unsupported_arch", args={"arch": arch.to_string()}))
       }
     Linux =>
       match os_info.arch {
         X86_64 => "x86_64-unknown-linux-gnu"
         Aarch64 => "aarch64-unknown-linux-gnu"
-        arch => raise fail("不支持的架构：\{arch}")
+        arch => raise fail(@i18n.t("error.unsupported_arch", args={"arch": arch.to_string()}))
       }
     Windows =>
       match os_info.arch {
         X86_64 => "x86_64-pc-windows-msvc"
         Aarch64 => "aarch64-pc-windows-msvc"
-        arch => raise fail("不支持的架构：\{arch}")
+        arch => raise fail(@i18n.t("error.unsupported_arch", args={"arch": arch.to_string()}))
       }
-    name => raise fail("不支持的操作系统：\{name}")
+    name => raise fail(@i18n.t("error.unsupported_os_detail", args={"name": name.to_string()}))
   }
   let url = "\{DENO_RELEASE_URL}/\{ver}/deno-\{target}.zip"
   // Deno 是单一二进制文件，压缩包内无子目录
@@ -164,7 +164,7 @@ pub async fn Deno::get_program_exe_info(
   version : String,
 ) -> ProgramExeInfo {
   if program.is_blank() || version.is_blank() {
-    raise fail("请指定 program 或 version")
+    raise fail(@i18n.t("error.specify_program_or_version"))
   }
   let program_path = Deno::get_exe_path(version)
   let exists = @fs.exists(program_path)
@@ -180,5 +180,5 @@ pub async fn Deno::get_program_exe_info(
       exists,
     )
   }
-  raise fail("找不到 \{program}@\{version} 的可执行文件信息")
+  raise fail(@i18n.t("error.exe_info_not_found", args={"program": program, "version": version}))
 }
