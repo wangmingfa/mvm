@@ -537,49 +537,36 @@ fn NodePath::get_exe_path(self : Self, program : String) -> String {
   @fs_ext.join_paths([bin_dir, program + suffix].filter(v => !v.is_blank()))
 }
 
-///|
-const NODE_MODULES_DIR : String = "/node_modules"
 
 ///|
-/// 从全局的node_modules内的文件路径获取NodeDir
-/// 比如：/Users/xxx/.mvm-test/tools/node/v24.16.0/lib/node_modules/npm/bin/npm-cli.js
-///   或者：/Users/xxx/.mvm-test/tools/node/v24.16.0/lib/node_modules
-pub fn Node::get_node_path_by_global_node_modules_inner_path(
-  global_node_modules_inner_path : String,
+/// 从node内的文件路径获取NodePath
+/// 比如：/Users/xxx/.mvm-test/tools/node/v24.16.0/lib/node_modules/npm/bin/npm-cli.js -> /Users/xxx/.mvm-test/tools/node/v24.16.0
+///   或者：/Users/xxx/.mvm-test/tools/node/v24.16.0/lib/node_modules -> /Users/xxx/.mvm-test/tools/node/v24.16.0
+pub fn Node::get_node_path_by_node_inner_path(
+  node_inner_path : String,
 ) -> NodePath raise {
-  let global_node_modules_inner_path = @fs_ext.canonicalize_path(
-    global_node_modules_inner_path,
-  )
-  @log.debug("npm_inner_path: \{global_node_modules_inner_path}")
-  let node_modules_dir = for dir = Some(global_node_modules_inner_path)
-                             dir is Some(d)
-                             dir = @fs_ext.get_parent_dir(d) {
-    if d.has_suffix(NODE_MODULES_DIR) {
-      break d
+  let node_inner_path = @fs_ext.canonicalize_path(node_inner_path)
+  @log.debug("node_inner_path: \{node_inner_path}")
+  let node_tool_root_path = tool_dir(Node)
+    // 先判断前缀
+  guard node_inner_path.has_prefix(node_tool_root_path) is true else {
+    raise fail("无效的路径 \{node_inner_path}")
+  }
+  // 一直往上级目录找
+  let node_root_dir = for dir = node_inner_path
+                             @fs_ext.get_parent_dir(dir) is Some(parent_dir)
+                             dir = parent_dir {
+    // 如果上级目录与node_tool_root_path相等，则表示当前dir就是node的根目录
+    if parent_dir == node_tool_root_path {
+      break dir
     }
   } nobreak {
-    raise fail("无效的路径 \{global_node_modules_inner_path}")
+    raise fail("无效的路径 \{node_inner_path}")
   }
-  // npm通常位于Node的bin目录下
-  // Windows: node_dir/npm.exe
-  // macOS/Linux: node_dir/bin/npm
-  let os = @os.get_os_name()
-  let node_dir = @fs_ext.get_parent_dir(
-    node_modules_dir,
-    levels=if os is Windows { 1 } else { 2 },
-  )
 
-  // 无法推断Node安装目录
-  guard node_dir is Some(node_dir) else {
-    raise fail(
-      @i18n.t("node.cannot_infer_install_dir", args={
-        "path": global_node_modules_inner_path,
-      }),
-    )
-  }
 
   // 从node_dir中提取版本号（目录名）
-  let version = @fs_ext.get_path_name(node_dir)
+  let version = @fs_ext.get_path_name(node_root_dir)
 
   // 使用版本号构造NodeDir
   NodePath(version)

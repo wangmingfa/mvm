@@ -142,7 +142,7 @@ async fn walk_global_pkgs(
   pkgs : ArrayView[String],
   handle_pkg_cmd : async (String, String) -> Unit,
 ) -> Unit {
-  let { lib: lib_dir, .. } = @tool_def.Node::get_node_path_by_global_node_modules_inner_path(
+  let { lib: lib_dir, .. } = @tool_def.Node::get_node_path_by_node_inner_path(
     npm_exe_path,
   )
   // 在mvm_bin目录下的npm-pkg目录添加所安装的npm包的所有全局命令的软连接
