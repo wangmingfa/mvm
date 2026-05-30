@@ -4,7 +4,7 @@
 pub fn get_readable_speed(
   size : Int64,
   duration : Int64,
-  show_unit~ : Bool = true,
+  show_unit? : Bool = true,
 ) -> (String, Int64) {
   if duration == 0 {
     // duration 为 0 时无法计算速度

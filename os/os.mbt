@@ -19,7 +19,7 @@ pub enum OS {
 } derive(Debug, Eq)
 
 ///|
-pub impl Show for OS with output(self, logger) {
+pub impl Show for OS with fn output(self, logger) {
   match self {
     MacOS => logger.write_string("MacOS")
     Linux => logger.write_string("Linux")
@@ -52,7 +52,7 @@ pub enum Arch {
 } derive(Debug, Eq)
 
 ///|
-pub impl Show for Arch with output(self, logger) {
+pub impl Show for Arch with fn output(self, logger) {
   match self {
     X86_64 => logger.write_string("X86_64")
     X86 => logger.write_string("X86")

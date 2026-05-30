@@ -265,7 +265,8 @@ pub async fn Node::get_program_exe_info(
   let node_path = NodePath(version)
   let { lib: lib_dir, bin: bin_dir, .. } = node_path
   let program_path = node_path.get_exe_path(program)
-  let node_exists = @fs.exists(program_path)
+  // node是否存在
+  let node_exists = @fs.exists(node_path.get_exe_path(Node.to_string()))
   // 路径信息日志
   @log.debug(
     @i18n.t("node.debug_node_path_info", args={
@@ -615,4 +616,29 @@ pub fn Node::prepare_run_command(
     }),
   )
   (node_exe, [path, ..exec_args])
+}
+
+///|
+pub async fn Node::before_command(
+  program_exe_info : ProgramExeInfo,
+  exec_args : ArrayView[String],
+) -> Map[String, String]? {
+  let { name, path, .. } = program_exe_info
+  match name {
+    "npm" => Npm::before_npm_command(path, exec_args)
+    _ => None
+  }
+}
+
+///|
+pub async fn Node::after_command(
+  before_run_result : Map[String, String]?,
+  program_exe_info : ProgramExeInfo,
+  exec_args : ArrayView[String],
+) -> Unit {
+  let { name, path, .. } = program_exe_info
+  match name {
+    "npm" => Npm::after_npm_command(before_run_result, path, exec_args)
+    _ => ()
+  }
 }

@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git:*)",
+      "Bash(moon info 2>/dev/null | head -5; cat /home/wmf/code/mvm/cmd/tools/tool_def/pkg.generated.mbti | grep -c \"NodePath\")",
+      "Bash(moon info 2>&1 | head -50)",
+      "Bash(moon fmt:*)"
+    ]
+  }
+}

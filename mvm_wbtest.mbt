@@ -195,9 +195,7 @@ async test "config 逐项设置与验证" {
   )
   ignore(save_global_config(clean_config()))
   let clear_python = run(Command::ConfigList)
-  assert_true(
-    clear_python.plain_output().contains("python_mirror: (not set)"),
-  )
+  assert_true(clear_python.plain_output().contains("python_mirror: (not set)"))
 
   // ===== rust_mirror =====
   let set_rust = run(

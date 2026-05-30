@@ -18,7 +18,6 @@ import {
   "username/mvm/zip",
   "username/mvm/progress",
   "username/mvm/checksum",
-  "username/mvm/cmd/command/specials",
   "username/mvm/command" @mvm_cmd,
   "moonbitlang/async/io",
   "username/mvm/stdio",

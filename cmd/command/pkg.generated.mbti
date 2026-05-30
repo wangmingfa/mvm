@@ -19,7 +19,7 @@ pub(all) enum Command {
   Version
   Upgrade(String?, Bool)
   UpgradeList
-  Setup(Bool)
+  Setup(Bool, String?)
   Install(@tool_def.Tool, String?, Bool, Bool)
   Pin(@tool_def.Tool, String)
   Use(@tool_def.Tool, String?)

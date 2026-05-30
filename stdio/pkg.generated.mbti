@@ -6,7 +6,17 @@ pub fn clear_lines(Int) -> Unit
 
 pub fn flush_stdout() -> Unit
 
+pub fn interactive_select_tools_c(Array[String], Array[String], String) -> String
+
+pub fn is_stderr_tty() -> Bool
+
+pub fn is_stdin_tty() -> Bool
+
+pub fn is_stdout_tty() -> Bool
+
 pub fn print(String) -> Unit
+
+pub fn read_line() -> String
 
 // Errors
 

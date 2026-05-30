@@ -19,13 +19,15 @@ pub async fn get_config(tool? : Tool, dir? : String, search_upwards? : Bool, fal
 
 pub async fn get_global_config() -> (String, GlobalConfig)
 
+pub fn get_managed_tools(GlobalConfig) -> Array[Tool]
+
 pub async fn get_target_version_with_cache(String, String, String, @os.OsInfo, String, Int, (@os.OsInfo, String, Int, Json) -> String raise, headers? : Map[String, String]) -> String
 
 pub async fn is_installed(Tool, String) -> Bool
 
 pub fn is_no_cache_mode() -> Bool
 
-pub fn make_global_config(existing_config? : GlobalConfig, github_proxy? : String?, node_mirror? : String?, go_mirror? : String?, python_mirror? : String?, rust_mirror? : String?, java_mirror? : String?, language? : String?) -> GlobalConfig
+pub fn make_global_config(existing_config? : GlobalConfig, github_proxy? : String?, node_mirror? : String?, go_mirror? : String?, python_mirror? : String?, rust_mirror? : String?, java_mirror? : String?, language? : String?, managed_tools? : String?) -> GlobalConfig
 
 pub fn mvm_bin_home() -> String raise
 
@@ -46,6 +48,8 @@ pub fn set_no_cache_mode(Bool) -> Unit
 pub fn temp_dir() -> String raise
 
 pub fn tool_dir(Tool) -> String raise
+
+pub fn validate_managed_tools_value(String) -> Array[Tool] raise
 
 pub fn version_dir(Tool, String) -> String raise
 
@@ -108,6 +112,7 @@ pub(all) struct GlobalConfig {
   rust_mirror : String?
   java_mirror : String?
   language : String?
+  managed_tools : String?
 } derive(ToJson, @json.FromJson)
 pub fn GlobalConfig::to_string(Self, indent? : Int) -> String
 
@@ -146,9 +151,10 @@ type MavenCentralVersionDoc derive(@json.FromJson)
 type Node
 pub fn Node::get_download_info(@os.OsInfo, String) -> DownloadInfo raise
 pub async fn Node::get_expected_checksum(@os.OsInfo, String) -> String?
-pub fn Node::get_node_dir(String) -> NodePath raise
+pub fn Node::get_node_path_by_node_inner_path(String) -> NodePath raise
 pub async fn Node::get_program_exe_info(String, String) -> ProgramExeInfo
 pub async fn Node::get_target_version(@os.OsInfo, String, Int) -> String
+pub fn Node::prepare_run_command(ProgramExeInfo, ArrayView[String]) -> (String, Array[String])
 
 type NodeJsInfo derive(@json.FromJson)
 
@@ -165,12 +171,14 @@ pub struct ProgramExeInfo {
   name : String
   path : String
   version : String
+  tool_version : String
   envs : Map[String, String]
   program_exists : Bool
   tool : Tool
   tool_exists : Bool
+  extra_args : Array[String]
 } derive(@debug.Debug)
-pub fn ProgramExeInfo::ProgramExeInfo(String, String, String, envs? : Map[String, String], Bool, Tool, Bool) -> Self
+pub fn ProgramExeInfo::ProgramExeInfo(String, String, String, String, envs? : Map[String, String], Bool, Tool, Bool, extra_args? : Array[String]) -> Self
 
 type Python
 pub fn Python::get_download_info(@os.OsInfo, String) -> DownloadInfo raise

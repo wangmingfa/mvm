@@ -147,11 +147,7 @@ async fn before_run(
   get_program_exe_info : @tools.ProgramExeInfo,
   exec_args : ArrayView[String],
 ) -> Map[String, String]? {
-  let { tool, name: program, path: program_path, .. } = get_program_exe_info
-  match (tool, program) {
-    (Node, "npm") => @specials.before_npm_command(program_path, exec_args)
-    _ => None
-  }
+  @tools.before_command(get_program_exe_info, exec_args)
 }
 
 ///|
@@ -160,10 +156,5 @@ async fn after_run(
   get_program_exe_info : @tools.ProgramExeInfo,
   exec_args : ArrayView[String],
 ) -> Unit {
-  let { tool, name: program, path: program_path, .. } = get_program_exe_info
-  match (tool, program) {
-    (Node, "npm") =>
-      @specials.after_npm_command(before_run_result, program_path, exec_args)
-    _ => ()
-  }
+  @tools.after_command(before_run_result, get_program_exe_info, exec_args)
 }

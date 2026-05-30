@@ -39,6 +39,8 @@ pub using @tool_def {
   NPM_PKG,
   get_managed_tools,
   validate_managed_tools_value,
+  create_tool_cmd_unix,
+  create_tool_cmd_windows,
 }
 
 ///|
@@ -315,44 +317,6 @@ pub async fn post_install(tool : Tool, target_dir : String) -> Unit {
 }
 
 ///|
-pub async fn create_tool_cmd_unix(
-  tool : Tool,
-  cmd_name : String,
-  file_name? : String = cmd_name,
-  cmd_dir? : String = "",
-) -> Unit {
-  // 创建一个shell文件（不需要.sh后缀），里面执行mvm run {tool} -- {cmd_name} "$@"
-  let mvm_bin = @tool_def.mvm_bin_home()
-  let shell_file_path = @fs_ext.join_paths([mvm_bin, cmd_dir, file_name])
-  let tool_name = tool.to_string()
-  let shell_content = "#!/bin/sh\nmvm run \{tool_name} \{cmd_name} \"$@\""
-  @fs.write_file(shell_file_path, shell_content, create_mode=CreateOrTruncate)
-  // 添加可执行权限
-  @mvm_cmd.chmod_x([shell_file_path])
-  @log.debug("创建shell文件 \{shell_file_path}")
-}
-
-///|
-pub async fn create_tool_cmd_windows(
-  tool : Tool,
-  cmd_name : String,
-  file_name? : String = cmd_name,
-  cmd_dir? : String = "",
-) -> Unit {
-  // 创建ps1、cmd文件，里面执行mvm run {tool} -- {cmd_name} $args / %*
-  let mvm_bin = @tool_def.mvm_bin_home()
-  let ps1_file_path = @fs_ext.join_paths([mvm_bin, cmd_dir, "\{file_name}.ps1"])
-  let cmd_file_path = @fs_ext.join_paths([mvm_bin, cmd_dir, "\{file_name}.cmd"])
-  let tool_name = tool.to_string()
-  let ps1_content = "mvm run \{tool_name} \{cmd_name} $args"
-  let cmd_content = "@mvm run \{tool_name} \{cmd_name} %*"
-  @fs.write_file(ps1_file_path, ps1_content, create_mode=CreateOrTruncate)
-  @fs.write_file(cmd_file_path, cmd_content, create_mode=CreateOrTruncate)
-  @log.debug("创建ps1文件 \{ps1_file_path}")
-  @log.debug("创建cmd文件 \{cmd_file_path}")
-}
-
-///|
 pub fn tool_version_str(tool : Tool, version? : String) -> String {
   [tool.to_string(), if version is Some(v) { v } else { "" }]
   .filter(v => !v.is_blank())
@@ -372,8 +336,33 @@ pub fn prepare_run_command(
   match tool {
     Node => Node::prepare_run_command(program_exe_info, exec_args)
     // 其他工具目前直接使用原始路径和参数
-    Bun | Zig | Go | Python | Rust | Deno | Java | Kotlin => {
+    Bun | Zig | Go | Python | Rust | Deno | Java | Kotlin =>
       (path, [..extra_args, ..exec_args])
-    }
+  }
+}
+
+///|
+pub async fn before_command(
+  get_program_exe_info : ProgramExeInfo,
+  exec_args : ArrayView[String],
+) -> Map[String, String]? {
+  let { tool, .. } = get_program_exe_info
+  match tool {
+    Node => Node::before_command(get_program_exe_info, exec_args)
+    _ => None
+  }
+}
+
+///|
+pub async fn after_command(
+  before_run_result : Map[String, String]?,
+  get_program_exe_info : ProgramExeInfo,
+  exec_args : ArrayView[String],
+) -> Unit {
+  let { tool, .. } = get_program_exe_info
+  match tool {
+    Node =>
+      Node::after_command(before_run_result, get_program_exe_info, exec_args)
+    _ => ()
   }
 }

@@ -25,6 +25,8 @@ pub async fn get_expected_checksum(@os.OsInfo, @tool_def.Tool, String) -> String
 
 pub async fn get_global_config() -> (String, @tool_def.GlobalConfig)
 
+pub fn get_managed_tools(@tool_def.GlobalConfig) -> Array[@tool_def.Tool]
+
 pub async fn get_program_exe_info(@tool_def.Tool, String, String) -> @tool_def.ProgramExeInfo
 
 pub async fn get_target_version(@tool_def.Tool, String) -> String
@@ -33,13 +35,15 @@ pub async fn is_installed(@tool_def.Tool, String) -> Bool
 
 pub fn is_no_cache_mode() -> Bool
 
-pub fn make_global_config(existing_config? : @tool_def.GlobalConfig, github_proxy? : String?, node_mirror? : String?, go_mirror? : String?, python_mirror? : String?, rust_mirror? : String?, java_mirror? : String?, language? : String?) -> @tool_def.GlobalConfig
+pub fn make_global_config(existing_config? : @tool_def.GlobalConfig, github_proxy? : String?, node_mirror? : String?, go_mirror? : String?, python_mirror? : String?, rust_mirror? : String?, java_mirror? : String?, language? : String?, managed_tools? : String?) -> @tool_def.GlobalConfig
 
 pub fn match_version(@tool_def.Tool, String, String) -> Bool
 
 pub fn mvm_home() -> String raise
 
 pub async fn post_install(@tool_def.Tool, String) -> Unit
+
+pub fn prepare_run_command(@tool_def.ProgramExeInfo, ArrayView[String]) -> (String, Array[String])
 
 pub async fn remove_global_config(@tool_def.Tool) -> String
 
@@ -55,6 +59,8 @@ pub fn tool_dir(@tool_def.Tool) -> String raise
 
 pub fn tool_version_str(@tool_def.Tool, version? : String) -> String
 
+pub fn validate_managed_tools_value(String) -> Array[@tool_def.Tool] raise
+
 pub fn version_dir(@tool_def.Tool, String) -> String raise
 
 pub async fn write_global_config(@tool_def.Tool, String) -> String
@@ -69,6 +75,8 @@ pub async fn write_project_config(@tool_def.Tool, String) -> String
 pub using @tool_def {type DownloadInfo}
 
 pub using @tool_def {type GlobalConfig}
+
+pub using @tool_def {type NodePath}
 
 pub using @tool_def {type ProgramExeInfo}
 
