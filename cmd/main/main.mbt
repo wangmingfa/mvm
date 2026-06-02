@@ -14,7 +14,7 @@ async fn main {
 
   let args = @env.args()
   let arg_str = @utils.yellow(args)
-  @log.debug("运行: \{arg_str}")
+  @log.debug(@i18n.t("main.debug_running", args={"args": arg_str}))
   // get_command 可能 raise，run 内部已捕获错误返回 CommandResult
   try {
     let command = get_command(args[1:])

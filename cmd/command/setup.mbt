@@ -26,10 +26,10 @@ async fn interactive_select_tools() -> Array[Tool] {
   // 解析返回的选中工具名
   let result : Array[Tool] = []
   if selected_str.is_blank() {
-    raise fail("Can Not Be Empty.")
+    raise fail(@i18n.t("error.cannot_be_empty"))
   }
   if selected_str == "_QUIT_" {
-    raise fail("Operation Cancelled.")
+    raise fail(@i18n.t("error.operation_cancelled"))
   }
   for name in selected_str.split(",") {
     let trimmed = name.trim().to_owned()

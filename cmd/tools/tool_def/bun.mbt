@@ -234,7 +234,7 @@ fn Bun::_find_version(
           }
           versions[idx]
         }
-      raise fail(@i18n.t("error.invalid_version_detail", args={"version": version}))
+        _ => raise fail(@i18n.t("error.invalid_version_detail", args={"version": version}))
       }
   }
 }

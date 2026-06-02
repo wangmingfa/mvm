@@ -10,5 +10,6 @@ import {
   "username/mvm/log",
   "username/mvm/stdio",
   "username/mvm/ffi",
+  "username/mvm/i18n",
   "moonbitlang/core/env",
 }

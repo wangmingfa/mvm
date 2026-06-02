@@ -73,14 +73,14 @@ fn Kotlin::_get_proper_version(
 ) -> String raise {
   // 解析 Maven Central 搜索 API 响应
   let maven_response : MavenCentralResponse = @json.from_json(json) catch {
-    e => raise fail("解析Kotlin版本信息失败，原因：\{e}")
+    e => raise fail(@i18n.t("kotlin.parse_version_info_failed", args={"reason": e.to_string()}))
   }
   // 过滤出稳定版本（排除 RC、EAP、M 等预发布版本）
   let stable_versions = maven_response.response.docs
     .filter(fn(doc) { is_stable_version(doc.v) })
     .map(fn(doc) { doc.v })
   guard stable_versions.length() > 0 else {
-    raise fail("Kotlin稳定版本信息为空")
+    raise fail(@i18n.t("kotlin.stable_version_empty"))
   }
   // 按版本号倒序排序（最新版本在前）
   stable_versions.sort_by((a, b) => {
@@ -98,7 +98,7 @@ fn Kotlin::_get_proper_version(
           let prefix = "\{version}."
           guard stable_versions.search_by(fn(v) { v.has_prefix(prefix) })
             is Some(idx) else {
-            raise fail("找不到版本：\{version}")
+            raise fail(@i18n.t("error.version_not_found_detail", args={"version": version}))
           }
           stable_versions[idx]
         }
@@ -107,18 +107,18 @@ fn Kotlin::_get_proper_version(
           let prefix = "\{version}."
           guard stable_versions.search_by(fn(v) { v.has_prefix(prefix) })
             is Some(idx) else {
-            raise fail("找不到版本：\{version}")
+            raise fail(@i18n.t("error.version_not_found_detail", args={"version": version}))
           }
           stable_versions[idx]
         }
         // 精确版本号，如 "2.1.20" → 精确匹配
         3 => {
           guard stable_versions.search_by(fn(v) { v == version }) is Some(idx) else {
-            raise fail("找不到版本：\{version}")
+            raise fail(@i18n.t("error.version_not_found_detail", args={"version": version}))
           }
           stable_versions[idx]
         }
-        _ => raise fail("无效的版本号：\{version}")
+        _ => raise fail(@i18n.t("error.invalid_version_detail", args={"version": version}))
       }
   }
 }
@@ -164,12 +164,12 @@ pub fn Kotlin::get_kotlin_builtin_tool_path_and_version(
 
   let kotlin_bin_dir : String? = @fs_ext.get_parent_dir(kotlin_exe_path) catch {
     _ => {
-      @log.error("无法获取到 kotlin 的 bin 目录")
+      @log.error(@i18n.t("error.cannot_get_bin_dir", args={"tool": "kotlin"}))
       return None
     }
   }
   guard kotlin_bin_dir is Some(dir) else {
-    @log.error("无法获取到 kotlin 的 bin 目录")
+    @log.error(@i18n.t("error.cannot_get_bin_dir", args={"tool": "kotlin"}))
     return None
   }
   let kotlin_bin_dir = dir
@@ -199,7 +199,7 @@ pub async fn Kotlin::get_program_exe_info(
   version : String,
 ) -> ProgramExeInfo {
   if program.is_blank() || version.is_blank() {
-    raise fail("请指定 program 或 version")
+    raise fail(@i18n.t("error.specify_program_or_version"))
   }
   let program_path = Kotlin::get_exe_path(version)
   let exists = @fs.exists(program_path)
@@ -239,5 +239,5 @@ pub async fn Kotlin::get_program_exe_info(
       _ => ()
     }
   }
-  raise fail("找不到 \{program}@\{version} 的可执行文件信息")
+  raise fail(@i18n.t("error.exe_info_not_found", args={"program": program, "version": version}))
 }

@@ -118,7 +118,7 @@ pub async fn download(
       ) catch {
         e => {
           if e is DownloadError::FileAlreadyComplete {
-            @log.info("文件已完整下载，跳过")
+            @log.info(@i18n.t("download.file_already_complete"))
             return
           }
           raise e
@@ -128,7 +128,7 @@ pub async fn download(
 
       let dest_dir = if dest_is_file {
         guard get_parent_dir(dest) is Some(dir) else {
-          raise fail("无法获取到 \{dest} 的父目录")
+          raise fail(@i18n.t("download.cannot_get_parent_dir", args={"dest": dest}))
         }
         dir
       } else {
@@ -136,10 +136,10 @@ pub async fn download(
       }
       ensure_dir(dest_dir)
       let is_append = start > 0
-      @log.debug("文件大小：\{@utils.get_readable_file_size(size)}")
+      @log.debug(@i18n.t("download.debug_file_size", args={"size": @utils.get_readable_file_size(size)}))
       if is_append {
         @log.debug(
-          "文件 \{dest} 支持断点续传，已下载大小：\{@utils.get_readable_file_size(start)}",
+          @i18n.t("download.debug_resume_info", args={"path": dest, "size": @utils.get_readable_file_size(start)}),
         )
       }
       let file_path = if dest_is_file { dest } else { "\{dest_dir}/\{name}" }
@@ -167,11 +167,11 @@ pub async fn download(
         progress_bar.clear()
         println("")
         @log.info(
-          "文件已保存：\{file_path} 耗时：\{@utils.get_readable_time(progress_bar.duration())}",
+          @i18n.t("download.file_saved_with_time", args={"path": file_path, "time": @utils.get_readable_time(progress_bar.duration())}),
         )
       } else {
         file.write_reader(client)
-        @log.info("文件已保存：\{file_path}")
+        @log.info(@i18n.t("download.file_saved", args={"path": file_path}))
       }
       return // 下载成功，退出重试循环
     } catch {
@@ -183,7 +183,7 @@ pub async fn download(
           raise e // 用户手动取消
         }
         if attempt < max_retries {
-          @log.warn("下载失败，第 \{attempt + 1} 次重试...")
+          @log.warn(@i18n.t("download.retry_attempt", args={"attempt": (attempt + 1).to_string()}))
           @async.sleep(retry_intervals[attempt])
         } else {
           raise e // 重试次数已耗尽，抛出错误
@@ -212,9 +212,9 @@ async fn get_client(
       client.close()
       let location = @utils.get_from_map_ignore_case(res.headers, "Location")
       guard location is Some(location) else {
-        raise fail("重定向失败: 未找到 Location 头")
+        raise fail(@i18n.t("download.redirect_failed"))
       }
-      @log.debug("重定向到：\{location}")
+      @log.debug(@i18n.t("download.debug_redirect_to", args={"location": location}))
       get_client(location, range_start~, dest~, dest_is_file~, headers~)
     }
     416 => {
@@ -234,7 +234,7 @@ async fn get_client(
           _ => ()
         }
       }
-      @log.debug("服务器不支持断点续传（416），将重新下载...")
+      @log.debug(@i18n.t("download.debug_no_resume"))
       get_client(url, range_start=0, headers~)
     }
     200..<300 as code => {
@@ -262,7 +262,7 @@ async fn get_client(
         },
       )
     }
-    _ => raise fail("[HTTP]\{res.code} \{res.reason} (\{url})")
+    _ => raise fail(@i18n.t("download.http_error", args={"code": res.code.to_string(), "reason": res.reason, "url": url}))
   }
 }
 
@@ -393,11 +393,11 @@ pub async fn download_by_native_command(
       @log.add_log_lines(lines=1)
       ["-Command", ps_script]
     }
-    _ => raise fail("不支持的下载方式")
+    _ => raise fail(@i18n.t("download.unsupported_method"))
   }
   let args_str = args.join(" ")
   let cmd = "\{downloader} \{args_str}"
-  @log.debug("下载命令: \{cmd}")
+  @log.debug(@i18n.t("download.debug_download_cmd", args={"cmd": cmd}))
 
   let os = @os.get_os_name()
   let (downloader, args) = match os {
@@ -410,8 +410,8 @@ pub async fn download_by_native_command(
   match @process.run(downloader, args) {
     0 => ()
     _ => {
-      @log.warn("使用 \{downloader} 下载失败")
-      raise fail("下载失败")
+      @log.warn(@i18n.t("download.downloader_failed", args={"downloader": downloader}))
+      raise fail(@i18n.t("download.failed"))
     }
   }
 }

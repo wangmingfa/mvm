@@ -402,6 +402,9 @@ pub let en_dict : Map[String, String] = {
   "fs.debug_copy": "Copy {src} => {dest}",
   "fs.debug_open_dest": "Opening destination file {dest}",
   "fs.debug_write_dest": "Writing to destination file {dest}",
+  "fs.debug_remove_dir_start": "Starting to remove directory {dir}",
+  "fs.debug_dir_info": "Directory info {exists} | {info}",
+  "fs.debug_remove_dir": "Remove directory {dir}",
 
   // === url 模块 ===
   "url.debug_node_mirror": "Using Node mirror: {mirror}",
@@ -505,4 +508,25 @@ pub let en_dict : Map[String, String] = {
   "common.cannot_create_empty_json": "Cannot create empty JSON record",
   "common.file_still_wrong_after_recovery": "File {path} format still wrong after recovery",
   "common.setup_tools_unsupported": "setup --tools contains unsupported tool name: {name}",
+
+  // === download 模块（补充） ===
+  "download.http_error": "[HTTP]{code} {reason} ({url})",
+  "download.failed": "Download failed",
+
+  // === fs 模块（补充） ===
+  "fs.debug_remove_dir_start": "Removing directory {dir}",
+  "fs.debug_dir_info": "Directory info {exists} | {info}",
+  "fs.debug_remove_dir": "Remove directory {dir}",
+
+  // === node 模块（补充） ===
+  "node.debug_found_package_json": "Found package.json: {path}",
+  "node.debug_inner_path": "node_inner_path: {path}",
+
+  // === run 模块（补充） ===
+  "run.debug_params": "run_run params {tool} {version} {args}",
+  "run.debug_run_command": "Running command: {cmd} {args}",
+  "run.debug_exit_code": "{tool} exit code: {code}",
+
+  // === tool 模块（补充） ===
+  "tool.debug_chmod_x": "Adding executable permissions: {files}",
 }

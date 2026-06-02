@@ -12,19 +12,19 @@ fn get_installed_file_path() -> String raise {
 async fn recover_installed_file(installed_file_path : String) -> Json {
   let backup_path = installed_file_path + ".bak"
   @log.warn(
-    "文件 \{@utils.yellow(installed_file_path)} 格式异常，已备份至 \{@utils.yellow(backup_path)}，将重建空记录",
+    @i18n.t("common.file_format_abnormal_backup", args={"path": @utils.yellow(installed_file_path), "backup": @utils.yellow(backup_path)}),
   )
   // 将损坏文件备份（如果备份文件已存在则覆盖）
   @fs_ext.remove_if_exists(backup_path)
   let mv_result = try? @fs_ext.mv(installed_file_path, backup_path)
   if mv_result is Err(_) {
-    @log.warn("备份损坏文件失败，将直接删除损坏文件")
+    @log.warn(@i18n.t("common.backup_failed_delete"))
     @fs_ext.remove_if_exists(installed_file_path)
   }
   // 创建新的空记录文件并返回空 JSON Object
   @fs.write_file(installed_file_path, "{}", create_mode=CreateOrTruncate)
   @json.parse("{}") catch {
-    _ => raise fail("无法创建空 JSON 记录")
+    _ => raise fail(@i18n.t("common.cannot_create_empty_json"))
   }
 }
 
@@ -43,7 +43,7 @@ async fn add_installed(tool : Tool, version : String) -> Unit {
     let recovered = recover_installed_file(installed_file_path)
     guard recovered is Object(map) else {
       raise fail(
-        "文件 \{@utils.yellow(installed_file_path)} 恢复后格式仍不对",
+        @i18n.t("common.file_still_wrong_after_recovery", args={"path": @utils.yellow(installed_file_path)}),
       )
     }
     // 恢复成功，使用恢复后的 map 继续写入

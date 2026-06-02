@@ -43,35 +43,35 @@ pub fn apply_global_config(
 ) -> String {
   match config.node_mirror {
     Some(mirror) if mirror != "" && ctx.tool == "node" => {
-      @log.debug("使用 Node 镜像: \{mirror}")
+      @log.debug(@i18n.t("url.debug_node_mirror", args={"mirror": mirror}))
       return url.replace(old=NODE_RELEASE_URL, new=mirror)
     }
     _ => ()
   }
   match config.go_mirror {
     Some(mirror) if mirror != "" && ctx.tool == "go" => {
-      @log.debug("使用 Go 镜像: \{mirror}")
+      @log.debug(@i18n.t("url.debug_go_mirror", args={"mirror": mirror}))
       return url.replace(old=GO_RELEASE_URL, new=mirror)
     }
     _ => ()
   }
   match config.python_mirror {
     Some(mirror) if mirror != "" && ctx.tool == "python" => {
-      @log.debug("使用 Python 镜像: \{mirror}")
+      @log.debug(@i18n.t("url.debug_python_mirror", args={"mirror": mirror}))
       return url.replace(old=PYTHON_RELEASE_URL, new=mirror)
     }
     _ => ()
   }
   match config.rust_mirror {
     Some(mirror) if mirror != "" && ctx.tool == "rust" => {
-      @log.debug("使用 Rust 镜像: \{mirror}")
+      @log.debug(@i18n.t("url.debug_rust_mirror", args={"mirror": mirror}))
       return url.replace(old=RUST_RELEASE_URL, new=mirror)
     }
     _ => ()
   }
   match config.java_mirror {
     Some(mirror) if mirror != "" && ctx.tool == "java" => {
-      @log.debug("使用 Java 镜像: \{mirror}")
+      @log.debug(@i18n.t("url.debug_java_mirror", args={"mirror": mirror}))
       return url.replace(old=JAVA_RELEASE_URL, new=mirror)
     }
     _ => ()
@@ -79,7 +79,7 @@ pub fn apply_global_config(
   // Deno 和 Kotlin 使用 github_proxy，无专属镜像
   match config.github_proxy {
     Some(proxy) if proxy != "" && url.has_prefix("https://github.com/") => {
-      @log.debug("使用 GitHub 代理: \{proxy}")
+      @log.debug(@i18n.t("url.debug_github_proxy", args={"proxy": proxy}))
       return replace_url(proxy, ctx)
     }
     _ => ()

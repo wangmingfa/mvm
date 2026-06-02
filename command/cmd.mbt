@@ -141,7 +141,7 @@ pub async fn run(
 ) -> Int {
   let (cmd, args) = get_cmd_and_args(cmd, args)
   let arg_str = join_args(args)
-  @log.debug("运行: \{cmd} \{arg_str}")
+  @log.debug(@i18n.t("cmd.debug_running", args={"cmd": "\{cmd}", "args": arg_str}))
   @process.run(
     cmd,
     args,
@@ -182,7 +182,7 @@ pub async fn run_with_output(
   cwd? : StringView,
 ) -> (Int, &@io.Data) {
   let cmd_str = join_args([cmd.to_owned(), ..args])
-  @log.debug("运行 \{cmd_str}")
+  @log.debug(@i18n.t("cmd.debug_running_cmd", args={"cmd": cmd_str}))
   let (r, w) = @process.read_from_process()
   let (exit_code, output) = @async.with_task_group(group => {
     defer r.close()

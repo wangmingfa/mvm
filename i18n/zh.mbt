@@ -402,6 +402,9 @@ pub let zh_dict : Map[String, String] = {
   "fs.debug_copy": "拷贝 {src} => {dest}",
   "fs.debug_open_dest": "打开目标文件 {dest}",
   "fs.debug_write_dest": "写入目标文件 {dest}",
+  "fs.debug_remove_dir_start": "开始删除目录 {dir}",
+  "fs.debug_dir_info": "目录信息 {exists} | {info}",
+  "fs.debug_remove_dir": "删除目录 {dir}",
 
   // === url 模块 ===
   "url.debug_node_mirror": "使用 Node 镜像: {mirror}",
@@ -505,4 +508,25 @@ pub let zh_dict : Map[String, String] = {
   "common.cannot_create_empty_json": "无法创建空 JSON 记录",
   "common.file_still_wrong_after_recovery": "文件 {path} 恢复后格式仍不对",
   "common.setup_tools_unsupported": "setup --tools 中包含不支持的工具名：{name}",
+
+  // === download 模块（补充） ===
+  "download.http_error": "[HTTP]{code} {reason} ({url})",
+  "download.failed": "下载失败",
+
+  // === fs 模块（补充） ===
+  "fs.debug_remove_dir_start": "开始删除目录 {dir}",
+  "fs.debug_dir_info": "目录信息 {exists} | {info}",
+  "fs.debug_remove_dir": "删除目录 {dir}",
+
+  // === node 模块（补充） ===
+  "node.debug_found_package_json": "找到package.json: {path}",
+  "node.debug_inner_path": "node_inner_path: {path}",
+
+  // === run 模块（补充） ===
+  "run.debug_params": "run_run参数 {tool} {version} {args}",
+  "run.debug_run_command": "运行命令: {cmd} {args}",
+  "run.debug_exit_code": "{tool} 退出码: {code}",
+
+  // === tool 模块（补充） ===
+  "tool.debug_chmod_x": "增加可执行权限: {files}",
 }

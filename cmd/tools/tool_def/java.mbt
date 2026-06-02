@@ -67,7 +67,7 @@ pub async fn Java::get_target_version(
     // 默认/lts：安装最新 LTS 版本
     "" | "lts" => {
       let major = Java::_get_lts_major_version()
-      @log.info(@i18n.t("java.debug_latest_lts", args={"major": major}))
+      @log.info(@i18n.t("java.debug_latest_lts", args={"major": major.to_string()}))
       Java::_resolve_latest_patch_version(major.to_string())
     }
     // latest：安装最新版本（包括非 LTS）
@@ -167,7 +167,7 @@ async fn Java::_verify_major_version_available(major : Int) -> Unit {
   let releases = Java::_fetch_available_releases()
   if !releases.available_releases.contains(major) &&
     !releases.available_lts_releases.contains(major) {
-    raise fail(@i18n.t("error.version_not_found_detail", args={"version": major}))
+    raise fail(@i18n.t("error.version_not_found_detail", args={"version": major.to_string()}))
   }
 }
 
