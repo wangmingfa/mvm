@@ -1,110 +1,182 @@
 ///|
-type MoonBitCallback = (Float) -> Unit
-
-///|
-type OnProgressCallback = FuncRef[(MoonBitCallback, Float) -> Unit]
-
-///|
-#borrow(zip_file_path, output_dir)
-extern "C" fn unzip_to_dir_with_progress(
-  zip_file_path : Bytes,
-  output_dir : Bytes,
-  on_progress : OnProgressCallback,
-  callback : MoonBitCallback,
-) -> Int = "unzip_to_dir_with_progress"
-
-///|
 pub fn unzip(
   file_path : String,
   output_dir : String,
   on_progress? : (Float) -> Unit,
+  password? : String,
 ) -> Bool {
   let on_progress = if on_progress is Some(on_progress) {
     on_progress
   } else {
     _ => ()
   }
-  unzip_to_dir_with_progress(
-    @ffi.string_to_c_bytes(file_path),
-    @ffi.string_to_c_bytes(output_dir),
-    fn(on_progress, progress) {
-      // 取整数
-      let progress = progress.floor()
+
+  try {
+    let zip_data = @fs.read_file_to_bytes(file_path)
+    let archive = match @reader.read_zip(zip_data) {
+      Ok(arc) => arc
+      Err(_) => return false
+    }
+    let files = if password is Some(pwd) {
+      match @reader.extract_all(archive, zip_data, password=pwd) {
+        Ok(f) => f
+        Err(_) => return false
+      }
+    } else {
+      match @reader.extract_all(archive, zip_data) {
+        Ok(f) => f
+        Err(_) => return false
+      }
+    }
+
+    let total = files.length()
+    let mut count = 0
+
+    for filename, data in files {
+      let path = @fs_ext.join_paths([output_dir, filename])
+      let dir = match @fs_ext.get_parent_dir(path) {
+        Some(d) => d
+        None => return false
+      }
+      if !@fs.path_exists(dir) {
+        @fs.create_dir(dir)
+      }
+      @fs.write_bytes_to_file(path, data)
+
+      count = count + 1
+      let progress = Float::from_int(count) / Float::from_int(total) * 100.0
       on_progress(progress)
-    },
-    on_progress,
-  ) ==
-  0
+    }
+
+    true
+  } catch {
+    _ => false
+  }
 }
 
 ///|
-#cfg(platform="windows")
-pub async fn zip(
-  dir : String,
-  zip_file_path : String,
-  cwd? : StringView,
-) -> Bool {
-  let code = @mvm_cmd.run(
-    "Compress-Archive",
-    ["-Path", dir, "-DestinationPath", zip_file_path],
-    cwd?,
-  )
-  code == 0
+pub fn zip(dir : String, zip_file_path : String, password? : String) -> Bool {
+  try {
+    let writer = @writer.ZipWriter::new()
+
+    let entries = @fs.read_dir(dir)
+    for entry in entries {
+      let path = @fs_ext.join_paths([dir, entry])
+      if @fs.is_file(path) {
+        let data = @fs.read_file_to_bytes(path)
+        if password is Some(pwd) {
+          writer.add_file(entry, data, 6, password=pwd)
+        } else {
+          writer.add_file(entry, data, 6)
+        }
+      }
+    }
+
+    let zip_data = writer.finalize()
+    @fs.write_bytes_to_file(zip_file_path, zip_data)
+
+    true
+  } catch {
+    _ => false
+  }
 }
 
 ///|
-#cfg(not(platform="windows"))
-pub async fn zip(
-  dir : String,
-  zip_file_path : String,
-  cwd? : StringView,
-) -> Bool {
-  let code = @mvm_cmd.run("zip", ["-r", zip_file_path, dir], cwd?)
-  code == 0
-}
-
-///|
-async test "unzip" {
+test "unzip" {
   let dir_name = "unzip\{@env.now()}"
   let temp_dir = @test.get_temp_dir(sub_dir=dir_name)
-  println("临时目录 \{temp_dir}")
   let mut first_file_name = ""
   try {
-    @fs_ext.ensure_dir(temp_dir)
-    // 生成多个txt文件
+    if !@fs.path_exists(temp_dir) {
+      @fs.create_dir(temp_dir)
+    }
     for i in 1..<=10 {
       let content = "文件\{i}"
       let file_name = "test\{i}.txt"
       if first_file_name.is_blank() {
         first_file_name = file_name
       }
-      // 后面的文件放到子文件夹下
       let sub_dir = if i > 5 { "dir" } else { "" }
-      @fs_ext.ensure_paths([temp_dir, sub_dir])
       let path = @fs_ext.join_paths([temp_dir, sub_dir, file_name])
-      @fs.write_file(path, content, create_mode=CreateOrTruncate)
+      let dir = match @fs_ext.get_parent_dir(path) {
+        Some(d) => d
+        None => ""
+      }
+      if !@fs.path_exists(dir) {
+        @fs.create_dir(dir)
+      }
+      @fs.write_string_to_file(path, content)
     }
-    // 生成压缩文件
-    let zip_file = "\{temp_dir}/test.zip"
-    let _ = zip(dir_name, zip_file, cwd=@fs_ext.join_path(temp_dir, ".."))
-    // 解压文件
+    let zip_file = @fs_ext.join_paths([temp_dir, "test.zip"])
+    let _ = zip(temp_dir, zip_file)
     let success = unzip(zip_file, temp_dir, on_progress=progress => {
       println("解压进度 \{progress}")
     })
-    // 判断是否解压成功
     inspect(
       success,
       content=(
         #|true
       ),
     )
-    // 判断解压后的文件是否存在
     inspect(
-      @fs.exists(@fs_ext.join_paths([temp_dir, dir_name, first_file_name])),
+      @fs.path_exists(@fs_ext.join_paths([temp_dir, first_file_name])),
       content="true",
     )
   } catch {
     e => raise e
   }
-  @fs_ext.remove_dir(temp_dir)
+  for file in @fs.read_dir(temp_dir) {
+    let path = @fs_ext.join_paths([temp_dir, file])
+    if @fs.is_dir(path) {
+      for subfile in @fs.read_dir(path) {
+        @fs.remove_file(@fs_ext.join_paths([path, subfile]))
+      }
+      @fs.remove_dir(path)
+    } else {
+      @fs.remove_file(path)
+    }
+  }
+  @fs.remove_dir(temp_dir)
+}
+
+///|
+test "encrypted zip" {
+  let temp_dir = @test.get_temp_dir(sub_dir="encrypted_zip_test")
+  try {
+    if !@fs.path_exists(temp_dir) {
+      @fs.create_dir(temp_dir)
+    }
+
+    let test_file = @fs_ext.join_paths([temp_dir, "secret.txt"])
+    @fs.write_string_to_file(test_file, "This is encrypted content")
+
+    let zip_file = @fs_ext.join_paths([temp_dir, "encrypted.zip"])
+    let writer = @writer.ZipWriter::new()
+    let data = @fs.read_file_to_bytes(test_file)
+    writer.add_file("secret.txt", data, 0, password="mypassword")
+    let zip_data = writer.finalize()
+    @fs.write_bytes_to_file(zip_file, zip_data)
+
+    let extract_dir = @fs_ext.join_paths([temp_dir, "extracted"])
+    if !@fs.path_exists(extract_dir) {
+      @fs.create_dir(extract_dir)
+    }
+
+    let extract_success = unzip(zip_file, extract_dir, password="mypassword")
+    assert_true(extract_success)
+
+    let extracted_file = @fs_ext.join_paths([extract_dir, "secret.txt"])
+    assert_true(@fs.path_exists(extracted_file))
+
+    let content = @fs.read_file_to_string(extracted_file)
+    assert_eq(content, "This is encrypted content")
+
+    @fs.remove_file(test_file)
+    @fs.remove_file(zip_file)
+    @fs.remove_file(extracted_file)
+    @fs.remove_dir(extract_dir)
+  } catch {
+    e => raise e
+  }
+  @fs.remove_dir(temp_dir)
 }

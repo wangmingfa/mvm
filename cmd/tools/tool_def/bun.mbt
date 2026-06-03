@@ -47,14 +47,11 @@ pub async fn Bun::get_target_version(
   )
   guard res.code is (200..<300) else {
     raise fail(
-      @i18n.t(
-        "bun.cannot_fetch_version_info",
-        args={
-          "code": res.code.to_string(),
-          "reason": res.reason,
-          "url": BUN_VERSION_URL,
-        },
-      ),
+      @i18n.t("bun.cannot_fetch_version_info", args={
+        "code": res.code.to_string(),
+        "reason": res.reason,
+        "url": BUN_VERSION_URL,
+      }),
     )
   }
   let html = data.text()
@@ -155,7 +152,7 @@ fn Bun::_parse_versions_from_html(html : String) -> Array[String] raise {
   }
 
   guard bun_versions.length() > 0 else {
-    raise fail(@i18n.t("error.version_info_empty", args={"tool": "Bun"}))
+    raise fail(@i18n.t("error.version_info_empty", args={ "tool": "Bun" }))
   }
 
   bun_versions.sort_by((a, b) => {
@@ -166,10 +163,10 @@ fn Bun::_parse_versions_from_html(html : String) -> Array[String] raise {
 
   let all_versions : String = bun_versions.join("、")
   @log.debug(
-    @i18n.t(
-      "bun.debug_all_versions",
-      args={"count": bun_versions.length().to_string(), "versions": all_versions},
-    ),
+    @i18n.t("bun.debug_all_versions", args={
+      "count": bun_versions.length().to_string(),
+      "versions": all_versions,
+    }),
   )
 
   bun_versions
@@ -210,7 +207,7 @@ fn Bun::_find_version(
   versions : Array[String],
 ) -> String raise {
   guard versions.length() > 0 else {
-    raise fail(@i18n.t("error.version_info_empty", args={"tool": "Bun"}))
+    raise fail(@i18n.t("error.version_info_empty", args={ "tool": "Bun" }))
   }
   match version {
     "" | "latest" => versions[0]
@@ -230,11 +227,18 @@ fn Bun::_find_version(
               }
             })
             is Some(idx) else {
-          raise fail(@i18n.t("error.version_not_found_detail", args={"version": version}))
+            raise fail(
+              @i18n.t("error.version_not_found_detail", args={
+                "version": version,
+              }),
+            )
           }
           versions[idx]
         }
-        _ => raise fail(@i18n.t("error.invalid_version_detail", args={"version": version}))
+        _ =>
+          raise fail(
+            @i18n.t("error.invalid_version_detail", args={ "version": version }),
+          )
       }
   }
 }
@@ -246,13 +250,19 @@ fn Bun::_get_platform_asset_name() -> String raise {
     MacOS => "darwin"
     Linux => "linux"
     Windows => "windows"
-    name => raise fail(@i18n.t("error.unsupported_os_detail", args={"name": name.to_string()}))
+    name =>
+      raise fail(
+        @i18n.t("error.unsupported_os_detail", args={ "name": name.to_string() }),
+      )
   }
   let arch_str = match os.arch {
     Aarch64 => "aarch64"
     X86_64 => "x64"
     X86 => "x64"
-    arch => raise fail(@i18n.t("error.unsupported_arch", args={"arch": arch.to_string()}))
+    arch =>
+      raise fail(
+        @i18n.t("error.unsupported_arch", args={ "arch": arch.to_string() }),
+      )
   }
   "bun-\{os_str}-\{arch_str}"
 }
@@ -378,5 +388,10 @@ pub async fn Bun::get_program_exe_info(
       exists,
     )
   }
-  raise fail(@i18n.t("error.exe_info_not_found", args={"program": program, "version": version}))
+  raise fail(
+    @i18n.t("error.exe_info_not_found", args={
+      "program": program,
+      "version": version,
+    }),
+  )
 }

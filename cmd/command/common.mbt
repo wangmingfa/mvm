@@ -12,7 +12,10 @@ fn get_installed_file_path() -> String raise {
 async fn recover_installed_file(installed_file_path : String) -> Json {
   let backup_path = installed_file_path + ".bak"
   @log.warn(
-    @i18n.t("common.file_format_abnormal_backup", args={"path": @utils.yellow(installed_file_path), "backup": @utils.yellow(backup_path)}),
+    @i18n.t("common.file_format_abnormal_backup", args={
+      "path": @utils.yellow(installed_file_path),
+      "backup": @utils.yellow(backup_path),
+    }),
   )
   // 将损坏文件备份（如果备份文件已存在则覆盖）
   @fs_ext.remove_if_exists(backup_path)
@@ -43,7 +46,9 @@ async fn add_installed(tool : Tool, version : String) -> Unit {
     let recovered = recover_installed_file(installed_file_path)
     guard recovered is Object(map) else {
       raise fail(
-        @i18n.t("common.file_still_wrong_after_recovery", args={"path": @utils.yellow(installed_file_path)}),
+        @i18n.t("common.file_still_wrong_after_recovery", args={
+          "path": @utils.yellow(installed_file_path),
+        }),
       )
     }
     // 恢复成功，使用恢复后的 map 继续写入

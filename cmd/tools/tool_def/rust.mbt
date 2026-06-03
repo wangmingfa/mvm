@@ -39,21 +39,33 @@ fn _build_rust_target(os_info : @os.OsInfo) -> String raise {
       match os_info.arch {
         Aarch64 => "aarch64-apple-darwin"
         X86_64 => "x86_64-apple-darwin"
-        arch => raise fail(@i18n.t("error.unsupported_arch", args={"arch": arch.to_string()}))
+        arch =>
+          raise fail(
+            @i18n.t("error.unsupported_arch", args={ "arch": arch.to_string() }),
+          )
       }
     Linux =>
       match os_info.arch {
         X86_64 => "x86_64-unknown-linux-gnu"
         Aarch64 => "aarch64-unknown-linux-gnu"
-        arch => raise fail(@i18n.t("error.unsupported_arch", args={"arch": arch.to_string()}))
+        arch =>
+          raise fail(
+            @i18n.t("error.unsupported_arch", args={ "arch": arch.to_string() }),
+          )
       }
     Windows =>
       match os_info.arch {
         X86_64 => "x86_64-pc-windows-msvc"
         Aarch64 => "aarch64-pc-windows-msvc"
-        arch => raise fail(@i18n.t("error.unsupported_arch", args={"arch": arch.to_string()}))
+        arch =>
+          raise fail(
+            @i18n.t("error.unsupported_arch", args={ "arch": arch.to_string() }),
+          )
       }
-    name => raise fail(@i18n.t("error.unsupported_os_detail", args={"name": name.to_string()}))
+    name =>
+      raise fail(
+        @i18n.t("error.unsupported_os_detail", args={ "name": name.to_string() }),
+      )
   }
 }
 
@@ -122,7 +134,14 @@ async fn Rust::_get_channel_version(
         headers=@request.merge_detault_headers(),
       )
       if !(res.code is (200..<300)) {
-        raise fail(@i18n.t("rust.cannot_fetch_manifest", args={"channel": channel, "code": res.code.to_string(), "reason": res.reason, "url": manifest_url}))
+        raise fail(
+          @i18n.t("rust.cannot_fetch_manifest", args={
+            "channel": channel,
+            "code": res.code.to_string(),
+            "reason": res.reason,
+            "url": manifest_url,
+          }),
+        )
       }
       let content = data.text()
       write_cache_file_content(cache_file, content)
@@ -295,12 +314,12 @@ pub fn Rust::get_rust_builtin_tool_path_and_version(
 
   let rust_bin_dir : String? = @fs_ext.get_parent_dir(rust_exe_path) catch {
     _ => {
-      @log.error(@i18n.t("error.cannot_get_bin_dir", args={"tool": "rust"}))
+      @log.error(@i18n.t("error.cannot_get_bin_dir", args={ "tool": "rust" }))
       return None
     }
   }
   guard rust_bin_dir is Some(dir) else {
-    @log.error(@i18n.t("error.cannot_get_bin_dir", args={"tool": "rust"}))
+    @log.error(@i18n.t("error.cannot_get_bin_dir", args={ "tool": "rust" }))
     return None
   }
   let rust_bin_dir = dir
@@ -370,5 +389,10 @@ pub async fn Rust::get_program_exe_info(
       _ => ()
     }
   }
-  raise fail(@i18n.t("error.exe_info_not_found", args={"program": program, "version": version}))
+  raise fail(
+    @i18n.t("error.exe_info_not_found", args={
+      "program": program,
+      "version": version,
+    }),
+  )
 }

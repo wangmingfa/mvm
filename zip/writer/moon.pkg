@@ -1,0 +1,7 @@
+import {
+  "username/mvm/zip/checksum",
+  "username/mvm/zip/deflate",
+  "username/mvm/zip/reader",
+  "username/mvm/zip/crypto",
+  "moonbitlang/core/encoding/utf8",
+}

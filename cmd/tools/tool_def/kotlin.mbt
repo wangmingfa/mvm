@@ -73,7 +73,12 @@ fn Kotlin::_get_proper_version(
 ) -> String raise {
   // 解析 Maven Central 搜索 API 响应
   let maven_response : MavenCentralResponse = @json.from_json(json) catch {
-    e => raise fail(@i18n.t("kotlin.parse_version_info_failed", args={"reason": e.to_string()}))
+    e =>
+      raise fail(
+        @i18n.t("kotlin.parse_version_info_failed", args={
+          "reason": e.to_string(),
+        }),
+      )
   }
   // 过滤出稳定版本（排除 RC、EAP、M 等预发布版本）
   let stable_versions = maven_response.response.docs
@@ -98,7 +103,11 @@ fn Kotlin::_get_proper_version(
           let prefix = "\{version}."
           guard stable_versions.search_by(fn(v) { v.has_prefix(prefix) })
             is Some(idx) else {
-            raise fail(@i18n.t("error.version_not_found_detail", args={"version": version}))
+            raise fail(
+              @i18n.t("error.version_not_found_detail", args={
+                "version": version,
+              }),
+            )
           }
           stable_versions[idx]
         }
@@ -107,18 +116,29 @@ fn Kotlin::_get_proper_version(
           let prefix = "\{version}."
           guard stable_versions.search_by(fn(v) { v.has_prefix(prefix) })
             is Some(idx) else {
-            raise fail(@i18n.t("error.version_not_found_detail", args={"version": version}))
+            raise fail(
+              @i18n.t("error.version_not_found_detail", args={
+                "version": version,
+              }),
+            )
           }
           stable_versions[idx]
         }
         // 精确版本号，如 "2.1.20" → 精确匹配
         3 => {
           guard stable_versions.search_by(fn(v) { v == version }) is Some(idx) else {
-            raise fail(@i18n.t("error.version_not_found_detail", args={"version": version}))
+            raise fail(
+              @i18n.t("error.version_not_found_detail", args={
+                "version": version,
+              }),
+            )
           }
           stable_versions[idx]
         }
-        _ => raise fail(@i18n.t("error.invalid_version_detail", args={"version": version}))
+        _ =>
+          raise fail(
+            @i18n.t("error.invalid_version_detail", args={ "version": version }),
+          )
       }
   }
 }
@@ -164,12 +184,12 @@ pub fn Kotlin::get_kotlin_builtin_tool_path_and_version(
 
   let kotlin_bin_dir : String? = @fs_ext.get_parent_dir(kotlin_exe_path) catch {
     _ => {
-      @log.error(@i18n.t("error.cannot_get_bin_dir", args={"tool": "kotlin"}))
+      @log.error(@i18n.t("error.cannot_get_bin_dir", args={ "tool": "kotlin" }))
       return None
     }
   }
   guard kotlin_bin_dir is Some(dir) else {
-    @log.error(@i18n.t("error.cannot_get_bin_dir", args={"tool": "kotlin"}))
+    @log.error(@i18n.t("error.cannot_get_bin_dir", args={ "tool": "kotlin" }))
     return None
   }
   let kotlin_bin_dir = dir
@@ -239,5 +259,10 @@ pub async fn Kotlin::get_program_exe_info(
       _ => ()
     }
   }
-  raise fail(@i18n.t("error.exe_info_not_found", args={"program": program, "version": version}))
+  raise fail(
+    @i18n.t("error.exe_info_not_found", args={
+      "program": program,
+      "version": version,
+    }),
+  )
 }

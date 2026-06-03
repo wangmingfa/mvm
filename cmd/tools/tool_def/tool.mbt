@@ -14,11 +14,7 @@ pub fn mvm_home() -> String raise {
   } else {
     @env.get_env_var("HOME")
   }
-  guard home is Some(home) else {
-    raise fail(
-      @i18n.t("error.no_home_dir"),
-    )
-  }
+  guard home is Some(home) else { raise fail(@i18n.t("error.no_home_dir")) }
   @fs_ext.join_path(home, ".mvm")
 }
 
@@ -139,7 +135,7 @@ pub fn Tool::from_string(tool : String) -> Tool raise {
     "deno" => Deno
     "java" | "jdk" => Java
     "kotlin" => Kotlin
-    _ => raise fail(@i18n.t("error.unsupported_tool", args={"tool": tool}))
+    _ => raise fail(@i18n.t("error.unsupported_tool", args={ "tool": tool }))
   }
 }
 
@@ -223,7 +219,7 @@ pub fn Tool::get_belonging_tool(cmd : String) -> Tool raise {
   } else if kotlin_executable_programs.contains(lower_name) {
     Kotlin
   } else {
-    raise fail(@i18n.t("error.unrecognized_command", args={"cmd": cmd}))
+    raise fail(@i18n.t("error.unrecognized_command", args={ "cmd": cmd }))
   }
 }
 
@@ -358,7 +354,9 @@ pub async fn create_tool_cmd_unix(
   @fs.write_file(shell_file_path, shell_content, create_mode=CreateOrTruncate)
   // 添加可执行权限
   @mvm_cmd.chmod_x([shell_file_path])
-  @log.debug(@i18n.t("tool.debug_create_shell", args={"path": shell_file_path}))
+  @log.debug(
+    @i18n.t("tool.debug_create_shell", args={ "path": shell_file_path }),
+  )
 }
 
 ///|
@@ -377,6 +375,6 @@ pub async fn create_tool_cmd_windows(
   let cmd_content = "@mvm run \{tool_name} \{cmd_name} %*"
   @fs.write_file(ps1_file_path, ps1_content, create_mode=CreateOrTruncate)
   @fs.write_file(cmd_file_path, cmd_content, create_mode=CreateOrTruncate)
-  @log.debug(@i18n.t("tool.debug_create_ps1", args={"path": ps1_file_path}))
-  @log.debug(@i18n.t("tool.debug_create_cmd", args={"path": cmd_file_path}))
+  @log.debug(@i18n.t("tool.debug_create_ps1", args={ "path": ps1_file_path }))
+  @log.debug(@i18n.t("tool.debug_create_cmd", args={ "path": cmd_file_path }))
 }

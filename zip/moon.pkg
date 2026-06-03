@@ -1,13 +1,19 @@
 import {
-  "username/mvm/ffi",
-  "username/mvm/test",
-  "username/mvm/fs_ext",
-  "username/mvm/command" @mvm_cmd,
   "moonbitlang/core/env",
-  "moonbitlang/async",
-  "moonbitlang/async/fs",
+  "moonbitlang/x/fs",
+  "username/mvm/fs_ext",
+  "username/mvm/test",
+  "username/mvm/zip/reader",
+  "username/mvm/zip/writer",
+  "moonbitlang/core/encoding/utf8",
 }
-
-options(
-  "native-stub": [ "zip.c", "miniz.c" ],
-)
+import {
+  "moonbitlang/x/fs",
+  "username/mvm/fs_ext",
+  "username/mvm/test",
+  "username/mvm/zip",
+  "username/mvm/zip/checksum",
+  "username/mvm/zip/deflate",
+  "username/mvm/zip/zlib",
+  "moonbitlang/core/encoding/utf8",
+} for "wbtest"

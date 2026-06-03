@@ -67,7 +67,9 @@ pub async fn Java::get_target_version(
     // 默认/lts：安装最新 LTS 版本
     "" | "lts" => {
       let major = Java::_get_lts_major_version()
-      @log.info(@i18n.t("java.debug_latest_lts", args={"major": major.to_string()}))
+      @log.info(
+        @i18n.t("java.debug_latest_lts", args={ "major": major.to_string() }),
+      )
       Java::_resolve_latest_patch_version(major.to_string())
     }
     // latest：安装最新版本（包括非 LTS）
@@ -80,7 +82,12 @@ pub async fn Java::get_target_version(
         // 仅主版本号，如 "21"
         1 => {
           let major = @string.parse_int(version) catch {
-            _ => raise fail(@i18n.t("error.invalid_version_detail", args={"version": version}))
+            _ =>
+              raise fail(
+                @i18n.t("error.invalid_version_detail", args={
+                  "version": version,
+                }),
+              )
           }
           Java::_verify_major_version_available(major)
           Java::_resolve_latest_patch_version(version)
@@ -91,12 +98,20 @@ pub async fn Java::get_target_version(
           let parts = version.split(".").collect()
           let major = parts[0].to_owned()
           let major_int = @string.parse_int(major) catch {
-            _ => raise fail(@i18n.t("error.invalid_version_detail", args={"version": version}))
+            _ =>
+              raise fail(
+                @i18n.t("error.invalid_version_detail", args={
+                  "version": version,
+                }),
+              )
           }
           Java::_verify_major_version_available(major_int)
           Java::_resolve_latest_patch_version(major)
         }
-        _ => raise fail(@i18n.t("error.invalid_version_detail", args={"version": version}))
+        _ =>
+          raise fail(
+            @i18n.t("error.invalid_version_detail", args={ "version": version }),
+          )
       }
   }
 }
@@ -146,7 +161,13 @@ async fn Java::_fetch_available_releases() -> JavaAvailableReleases {
 
       let (res, data) = @http.get(url, headers=@request.merge_detault_headers())
       if !(res.code is (200..<300)) {
-        raise fail(@i18n.t("java.cannot_fetch_versions", args={"code": res.code.to_string(), "reason": res.reason, "url": url}))
+        raise fail(
+          @i18n.t("java.cannot_fetch_versions", args={
+            "code": res.code.to_string(),
+            "reason": res.reason,
+            "url": url,
+          }),
+        )
       }
       let content = data.text()
       write_cache_file_content(JAVA_INDEX_CACHE_FILE, content)
@@ -154,10 +175,20 @@ async fn Java::_fetch_available_releases() -> JavaAvailableReleases {
     }
   }
   let json = @json.parse(content) catch {
-    e => raise fail(@i18n.t("java.parse_version_info_failed", args={"reason": e.to_string()}))
+    e =>
+      raise fail(
+        @i18n.t("java.parse_version_info_failed", args={
+          "reason": e.to_string(),
+        }),
+      )
   }
   @json.from_json(json) catch {
-    e => raise fail(@i18n.t("java.parse_version_info_failed", args={"reason": e.to_string()}))
+    e =>
+      raise fail(
+        @i18n.t("java.parse_version_info_failed", args={
+          "reason": e.to_string(),
+        }),
+      )
   }
 }
 
@@ -167,7 +198,11 @@ async fn Java::_verify_major_version_available(major : Int) -> Unit {
   let releases = Java::_fetch_available_releases()
   if !releases.available_releases.contains(major) &&
     !releases.available_lts_releases.contains(major) {
-    raise fail(@i18n.t("error.version_not_found_detail", args={"version": major.to_string()}))
+    raise fail(
+      @i18n.t("error.version_not_found_detail", args={
+        "version": major.to_string(),
+      }),
+    )
   }
 }
 
@@ -185,15 +220,25 @@ async fn Java::_resolve_latest_patch_version(major_version : String) -> String {
       // 从缓存中解析版本号（兼容旧缓存格式：{"tag_name":"jdk-22.0.2+9"}）
       let json = @json.parse(content) catch {
         e =>
-          raise fail(@i18n.t("java.parse_cache_failed", args={"version": major_version, "reason": e.to_string()}))
+          raise fail(
+            @i18n.t("java.parse_cache_failed", args={
+              "version": major_version,
+              "reason": e.to_string(),
+            }),
+          )
       }
       let release : GithubReleaseInfo = @json.from_json(json) catch {
         e =>
-          raise fail(@i18n.t("java.parse_cache_failed", args={"version": major_version, "reason": e.to_string()}))
+          raise fail(
+            @i18n.t("java.parse_cache_failed", args={
+              "version": major_version,
+              "reason": e.to_string(),
+            }),
+          )
       }
       let tag = release.tag_name
       guard tag.has_prefix("jdk-") else {
-        raise fail(@i18n.t("java.cannot_parse_from_tag", args={"tag": tag}))
+        raise fail(@i18n.t("java.cannot_parse_from_tag", args={ "tag": tag }))
       }
       tag["jdk-".length():].to_owned()
     }
@@ -207,24 +252,42 @@ async fn Java::_resolve_latest_patch_version(major_version : String) -> String {
       )
       let url = apply_global_config(adoptium_url, global_config, ctx)
 
-      @log.info(@i18n.t("java.debug_fetch_url", args={"url": url}))
+      @log.info(@i18n.t("java.debug_fetch_url", args={ "url": url }))
       let (res, data) = @http.get(url, headers=@request.merge_detault_headers())
       if !(res.code is (200..<300)) {
-        raise fail(@i18n.t("java.cannot_fetch_version_info", args={"version": major_version, "code": res.code.to_string(), "url": url}))
+        raise fail(
+          @i18n.t("java.cannot_fetch_version_info", args={
+            "version": major_version,
+            "code": res.code.to_string(),
+            "url": url,
+          }),
+        )
       }
       let content = data.text()
 
       // 解析 Adoptium API 返回的资产列表
       let json = @json.parse(content) catch {
         e =>
-          raise fail(@i18n.t("java.parse_version_info_failed", args={"version": major_version, "reason": e.to_string()}))
+          raise fail(
+            @i18n.t("java.parse_version_info_failed", args={
+              "version": major_version,
+              "reason": e.to_string(),
+            }),
+          )
       }
       let assets : Array[AdoptiumAsset] = @json.from_json(json) catch {
         e =>
-          raise fail(@i18n.t("java.parse_version_info_failed", args={"version": major_version, "reason": e.to_string()}))
+          raise fail(
+            @i18n.t("java.parse_version_info_failed", args={
+              "version": major_version,
+              "reason": e.to_string(),
+            }),
+          )
       }
       guard assets.length() > 0 else {
-        raise fail(@i18n.t("java.api_returned_empty", args={"version": major_version}))
+        raise fail(
+          @i18n.t("java.api_returned_empty", args={ "version": major_version }),
+        )
       }
       // 从结构化字段构造干净版本号（避免 LTS 版本 semver 中的 ".0.LTS" 后缀）
       // 例如：major=25, minor=0, security=3, build=9 → "25.0.3+9"
@@ -271,7 +334,9 @@ pub fn Java::get_download_info(
 ) -> DownloadInfo raise {
   // 版本号必须包含 build 号（格式如 "25.0.3+9"）
   guard version.contains("+") else {
-    raise fail(@i18n.t("java.version_missing_build", args={"version": version}))
+    raise fail(
+      @i18n.t("java.version_missing_build", args={ "version": version }),
+    )
   }
   // 解析版本号：25.0.3+9 → version_without_build=25.0.3, build=9, major=25
   let plus_parts = version.split("+").collect()
@@ -329,12 +394,12 @@ pub fn Java::get_java_builtin_tool_path_and_version(
   let { path: java_exe_path, .. } = java_tool_exe
   let java_bin_dir : String? = @fs_ext.get_parent_dir(java_exe_path) catch {
     _ => {
-      @log.error(@i18n.t("error.cannot_get_bin_dir", args={"tool": "java"}))
+      @log.error(@i18n.t("error.cannot_get_bin_dir", args={ "tool": "java" }))
       return None
     }
   }
   guard java_bin_dir is Some(dir) else {
-    @log.error(@i18n.t("error.cannot_get_bin_dir", args={"tool": "java"}))
+    @log.error(@i18n.t("error.cannot_get_bin_dir", args={ "tool": "java" }))
     return None
   }
   let java_bin_dir = dir
@@ -404,5 +469,10 @@ pub async fn Java::get_program_exe_info(
       _ => ()
     }
   }
-  raise fail(@i18n.t("error.exe_info_not_found", args={"program": program, "version": version}))
+  raise fail(
+    @i18n.t("error.exe_info_not_found", args={
+      "program": program,
+      "version": version,
+    }),
+  )
 }

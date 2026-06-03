@@ -15,6 +15,10 @@ pub fn apply_global_config(String, GlobalConfig, UrlReplaceContext) -> String
 
 pub fn cache_dir() -> String raise
 
+pub async fn create_tool_cmd_unix(Tool, String, file_name? : String, cmd_dir? : String) -> Unit
+
+pub async fn create_tool_cmd_windows(Tool, String, file_name? : String, cmd_dir? : String) -> Unit
+
 pub async fn get_config(tool? : Tool, dir? : String, search_upwards? : Bool, fallback_to_global_config? : Bool) -> (String, Config)?
 
 pub async fn get_global_config() -> (String, GlobalConfig)
@@ -149,6 +153,8 @@ type MavenCentralResponseData derive(@json.FromJson)
 type MavenCentralVersionDoc derive(@json.FromJson)
 
 type Node
+pub async fn Node::after_command(Map[String, String]?, ProgramExeInfo, ArrayView[String]) -> Unit
+pub async fn Node::before_command(ProgramExeInfo, ArrayView[String]) -> Map[String, String]?
 pub fn Node::get_download_info(@os.OsInfo, String) -> DownloadInfo raise
 pub async fn Node::get_expected_checksum(@os.OsInfo, String) -> String?
 pub fn Node::get_node_path_by_node_inner_path(String) -> NodePath raise
@@ -166,6 +172,10 @@ pub struct NodePath {
 pub fn NodePath::get_bin_file_path(Self, String) -> String
 pub fn NodePath::get_pkg_root_dir(Self, String) -> String
 pub fn NodePath::join_with_bin(Self, ArrayView[String]) -> String
+
+type Npm
+pub async fn Npm::after_npm_command(Map[String, String]?, String, ArrayView[String]) -> Unit
+pub async fn Npm::before_npm_command(String, ArrayView[String]) -> Map[String, String]?
 
 pub struct ProgramExeInfo {
   name : String

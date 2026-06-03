@@ -61,7 +61,9 @@ fn Go::_get_proper_version(
   json : Json,
 ) -> String raise {
   guard json is Array(versions) else {
-    raise fail(@i18n.t("error.version_info_format_wrong", args={"tool": "Go"}))
+    raise fail(
+      @i18n.t("error.version_info_format_wrong", args={ "tool": "Go" }),
+    )
   }
 
   // 收集所有稳定版本
@@ -82,7 +84,9 @@ fn Go::_get_proper_version(
       _ => 0
     }
   })
-  guard stable_versions.length() > 0 else { raise fail(@i18n.t("error.version_info_empty", args={"tool": "Go"})) }
+  guard stable_versions.length() > 0 else {
+    raise fail(@i18n.t("error.version_info_empty", args={ "tool": "Go" }))
+  }
 
   match version {
     "" | "latest" =>
@@ -103,7 +107,11 @@ fn Go::_get_proper_version(
               }
             })
             is Some(idx) else {
-            raise fail(@i18n.t("error.version_not_found_detail", args={"version": version}))
+            raise fail(
+              @i18n.t("error.version_not_found_detail", args={
+                "version": version,
+              }),
+            )
           }
           Go::_check_os_compatiable(
             os,
@@ -112,7 +120,10 @@ fn Go::_get_proper_version(
             error_msg_tpl=@i18n.t("error.version_os_arch_unsupported"),
           )
         }
-        _ => raise fail(@i18n.t("error.invalid_version_detail", args={"version": version}))
+        _ =>
+          raise fail(
+            @i18n.t("error.invalid_version_detail", args={ "version": version }),
+          )
       }
   }
 }
@@ -125,13 +136,21 @@ fn Go::_get_version_release_key() -> String raise {
       Windows => "windows"
       MacOS => "darwin"
       Linux => "linux"
-      name => raise fail(@i18n.t("error.unsupported_os_detail", args={"name": name.to_string()}))
+      name =>
+        raise fail(
+          @i18n.t("error.unsupported_os_detail", args={
+            "name": name.to_string(),
+          }),
+        )
     },
     match os.arch {
       Aarch64 => "arm64"
       X86_64 => "amd64"
       X86 => "386"
-      arch => raise fail(@i18n.t("error.unsupported_arch", args={"arch": arch.to_string()}))
+      arch =>
+        raise fail(
+          @i18n.t("error.unsupported_arch", args={ "arch": arch.to_string() }),
+        )
     },
   ].join("-")
 }
@@ -144,10 +163,14 @@ fn Go::_check_os_compatiable(
   error_msg_tpl? : String = @i18n.t("error.version_os_arch_unsupported"),
 ) -> String raise {
   guard version_json is Object(map) else {
-    raise fail(@i18n.t("error.version_info_format_wrong", args={"tool": "Go"}))
+    raise fail(
+      @i18n.t("error.version_info_format_wrong", args={ "tool": "Go" }),
+    )
   }
   guard map.get("files") is Some(Array(files)) else {
-    raise fail(@i18n.t("error.version_info_format_wrong", args={"tool": "Go"}))
+    raise fail(
+      @i18n.t("error.version_info_format_wrong", args={ "tool": "Go" }),
+    )
   }
 
   // 在 files 数组中查找匹配当前 OS 和架构的 archive 文件
@@ -198,7 +221,10 @@ pub fn Go::get_download_info(
     Windows => "zip"
     MacOS => "tar.gz"
     Linux => "tar.gz"
-    name => raise fail(@i18n.t("error.unsupported_os_detail", args={"name": name.to_string()}))
+    name =>
+      raise fail(
+        @i18n.t("error.unsupported_os_detail", args={ "name": name.to_string() }),
+      )
   }
   let url = "\{GO_RELEASE_URL}/go\{version}.\{version_release_key}.\{ext}"
   { url, headers: {}, root_path_depth: 1 }
@@ -248,7 +274,9 @@ pub async fn Go::get_expected_checksum(
       break item
     }
   } nobreak {
-    @log.warn(@i18n.t("go.version_not_in_index", args={"version": go_version}))
+    @log.warn(
+      @i18n.t("go.version_not_in_index", args={ "version": go_version }),
+    )
     return None
   }
 
@@ -271,13 +299,23 @@ pub async fn Go::get_expected_checksum(
     match file_map.get("sha256") {
       Some(String(hash)) => return Some(hash)
       _ => {
-        @log.warn(@i18n.t("go.missing_sha256", args={"version": go_version, "platform": expected_os + "-" + expected_arch}))
+        @log.warn(
+          @i18n.t("go.missing_sha256", args={
+            "version": go_version,
+            "platform": expected_os + "-" + expected_arch,
+          }),
+        )
         return None
       }
     }
   }
 
-  @log.warn(@i18n.t("go.archive_not_found", args={"version": go_version, "platform": expected_os + "-" + expected_arch}))
+  @log.warn(
+    @i18n.t("go.archive_not_found", args={
+      "version": go_version,
+      "platform": expected_os + "-" + expected_arch,
+    }),
+  )
   None
 }
 
@@ -331,5 +369,10 @@ pub async fn Go::get_program_exe_info(
       exists,
     )
   }
-  raise fail(@i18n.t("error.exe_info_not_found", args={"program": program, "version": version}))
+  raise fail(
+    @i18n.t("error.exe_info_not_found", args={
+      "program": program,
+      "version": version,
+    }),
+  )
 }

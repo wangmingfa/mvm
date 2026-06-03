@@ -9,7 +9,11 @@ import {
 // Values
 pub const NPM_PKG : String = "npm-pkg"
 
+pub async fn after_command(Map[String, String]?, @tool_def.ProgramExeInfo, ArrayView[String]) -> Unit
+
 pub fn apply_global_config(String, @tool_def.GlobalConfig, @tool_def.UrlReplaceContext) -> String
+
+pub async fn before_command(@tool_def.ProgramExeInfo, ArrayView[String]) -> Map[String, String]?
 
 pub fn cache_dir() -> String raise
 

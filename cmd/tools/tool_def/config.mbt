@@ -143,11 +143,16 @@ pub async fn get_global_config() -> (String, GlobalConfig) {
     let json = @fs.read_file(config_path).json() catch {
       _ =>
         raise fail(
-          @i18n.t("error.invalid_json", args={"path": @utils.red(config_path)}),
+          @i18n.t("error.invalid_json", args={ "path": @utils.red(config_path) }),
         )
     }
     let config : GlobalConfig = @json.from_json(json) catch {
-      _ => raise fail(@i18n.t("error.invalid_format", args={"path": @utils.red(config_path)}))
+      _ =>
+        raise fail(
+          @i18n.t("error.invalid_format", args={
+            "path": @utils.red(config_path),
+          }),
+        )
     }
     (config_path, config)
   } else {
@@ -199,7 +204,10 @@ pub fn get_managed_tools(global_config : GlobalConfig) -> Array[Tool] {
             Some(tool) => Some(tool)
             None => {
               @log.warn(
-                @i18n.t("error.managed_tools_unsupported", args={"names": trimmed, "tools": Tool::all_tools().map(t => t.to_string()).join(", ")}),
+                @i18n.t("error.managed_tools_unsupported", args={
+                  "names": trimmed,
+                  "tools": Tool::all_tools().map(t => t.to_string()).join(", "),
+                }),
               )
               None
             }
@@ -234,7 +242,10 @@ pub fn validate_managed_tools_value(value : String) -> Array[Tool] raise {
   }
   guard invalid_names.length() == 0 else {
     raise fail(
-      @i18n.t("error.managed_tools_unsupported", args={"names": invalid_names.join(", "), "tools": Tool::all_tools().map(t => t.to_string()).join(", ")}),
+      @i18n.t("error.managed_tools_unsupported", args={
+        "names": invalid_names.join(", "),
+        "tools": Tool::all_tools().map(t => t.to_string()).join(", "),
+      }),
     )
   }
   tools
@@ -310,20 +321,36 @@ async fn get_config_inner(
   fallback_to_global_config : Bool,
 ) -> (String, Config)? {
   let mvm_path = @fs_ext.join_path(dir, CONFIG_FILE)
-  @log.debug(@i18n.t("tool.debug_find_version", args={"dir": dir, "tool": @utils.option_to_string(tool)}))
+  @log.debug(
+    @i18n.t("tool.debug_find_version", args={
+      "dir": dir,
+      "tool": @utils.option_to_string(tool),
+    }),
+  )
 
   // 优先从 mvm.json 获取
   if @fs.exists(mvm_path) {
     let json = @fs.read_file(mvm_path).json() catch {
       _ =>
-        raise fail(@i18n.t("error.invalid_json", args={"path": @utils.red(mvm_path)}))
+        raise fail(
+          @i18n.t("error.invalid_json", args={ "path": @utils.red(mvm_path) }),
+        )
     }
     let config : Config = @json.from_json(json) catch {
-      _ => raise fail(@i18n.t("error.invalid_format", args={"path": @utils.red(mvm_path)}))
+      _ =>
+        raise fail(
+          @i18n.t("error.invalid_format", args={ "path": @utils.red(mvm_path) }),
+        )
     }
     if tool is Some(t) {
       if json is Object(map) && map.get(t.to_string()) is Some(String(version)) {
-        @log.debug(@i18n.t("tool.debug_found_version", args={"path": mvm_path, "tool": t.to_string(), "version": version}))
+        @log.debug(
+          @i18n.t("tool.debug_found_version", args={
+            "path": mvm_path,
+            "tool": t.to_string(),
+            "version": version,
+          }),
+        )
         return Some((mvm_path, config))
       }
     } else {
@@ -348,7 +375,9 @@ async fn get_config_inner(
         }
         let volta_path = @fs_ext.join_path(dir, VOLTA_CONFIG_FILE)
         @log.debug(
-          @i18n.t("tool.debug_volta_node_version", args={"version": volta_version}),
+          @i18n.t("tool.debug_volta_node_version", args={
+            "version": volta_version,
+          }),
         )
         return Some((volta_path, volta_config))
       }
@@ -402,7 +431,9 @@ async fn get_node_version_from_volta_package_json(dir : String) -> String? {
           } else {
             "v\{version}"
           }
-          @log.debug(@i18n.t("tool.debug_volta_node_version", args={"version": version}))
+          @log.debug(
+            @i18n.t("tool.debug_volta_node_version", args={ "version": version }),
+          )
           return Some(version)
         }
         _ => return None
@@ -434,7 +465,7 @@ async fn write_config(
     {}
   }
   guard json is Object(map) else {
-    raise fail(@i18n.t("error.invalid_json", args={"path": config_file_path}))
+    raise fail(@i18n.t("error.invalid_json", args={ "path": config_file_path }))
   }
   let key = tool.to_string()
   let value = version
@@ -462,17 +493,28 @@ pub async fn write_global_config(tool : Tool, version : String) -> String {
 pub async fn remove_global_config(tool : Tool) -> String {
   let config_file_path = get_global_config_path()
   if !@fs.exists(config_file_path) {
-    raise fail(@i18n.t("error.no_global_version", args={"tool": tool.to_string()}))
+    raise fail(
+      @i18n.t("error.no_global_version", args={ "tool": tool.to_string() }),
+    )
   }
   let json = @fs.read_file(config_file_path).json() catch {
-    _ => raise fail(@i18n.t("error.invalid_json", args={"path": config_file_path}))
+    _ =>
+      raise fail(
+        @i18n.t("error.invalid_json", args={ "path": config_file_path }),
+      )
   }
   guard json is Object(map) else {
-    raise fail(@i18n.t("error.global_version_remove_failed", args={"path": config_file_path}))
+    raise fail(
+      @i18n.t("error.global_version_remove_failed", args={
+        "path": config_file_path,
+      }),
+    )
   }
   let key = tool.to_string()
   if !map.contains(key) {
-    raise fail(@i18n.t("error.no_global_version", args={"tool": tool.to_string()}))
+    raise fail(
+      @i18n.t("error.no_global_version", args={ "tool": tool.to_string() }),
+    )
   }
   map.remove(key)
   let content = Json::object(map).stringify(indent=2)

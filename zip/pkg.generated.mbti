@@ -2,9 +2,9 @@
 package "username/mvm/zip"
 
 // Values
-pub fn unzip(String, String, on_progress? : (Float) -> Unit) -> Bool
+pub fn unzip(String, String, on_progress? : (Float) -> Unit, password? : String) -> Bool
 
-pub async fn zip(String, String, cwd? : StringView) -> Bool
+pub fn zip(String, String, password? : String) -> Bool
 
 // Errors
 

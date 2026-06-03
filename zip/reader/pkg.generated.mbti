@@ -1,0 +1,65 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "username/mvm/zip/reader"
+
+import {
+  "moonbitlang/core/buffer",
+}
+
+// Values
+pub let central_dir_signature : UInt
+
+pub let compression_deflated : UInt
+
+pub let compression_stored : UInt
+
+pub let end_of_central_dir_signature : UInt
+
+pub fn extract_all(ZipArchive, Bytes, password? : String) -> Result[Map[String, Bytes], String]
+
+pub fn extract_file(ZipArchive, ZipFileEntry, Bytes, password? : String) -> Result[Bytes, String]
+
+pub let local_file_header_signature : UInt
+
+pub fn read_le16(Bytes, Int) -> UInt
+
+pub fn read_le32(Bytes, Int) -> UInt
+
+pub fn read_le64(Bytes, Int) -> UInt64
+
+pub fn read_zip(Bytes) -> Result[ZipArchive, String]
+
+pub fn write_le16(@buffer.Buffer, UInt) -> Unit
+
+pub fn write_le32(@buffer.Buffer, UInt) -> Unit
+
+pub fn write_le64(@buffer.Buffer, UInt64) -> Unit
+
+pub let zip64_end_of_central_dir_locator_signature : UInt
+
+pub let zip64_end_of_central_dir_signature : UInt
+
+pub let zip64_extended_information_header : UInt
+
+// Errors
+
+// Types and methods
+pub struct ZipArchive {
+  entries : Array[ZipFileEntry]
+  comment : String
+}
+pub fn ZipArchive::new() -> Self
+
+pub struct ZipFileEntry {
+  filename : String
+  compressed_size : UInt64
+  uncompressed_size : UInt64
+  crc32 : UInt
+  compression_method : UInt
+  local_header_offset : UInt64
+  encrypted : Bool
+}
+
+// Type aliases
+
+// Traits
+

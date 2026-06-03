@@ -1,0 +1,26 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "username/mvm/zip/crypto"
+
+// Values
+pub fn make_encryption_header(Bytes, UInt) -> Bytes
+
+pub fn verify_encryption_header(Bytes, Bytes, UInt) -> Bool
+
+pub fn zip_crypto_decrypt(Bytes, Bytes) -> Bytes
+
+pub fn zip_crypto_encrypt(Bytes, Bytes) -> Bytes
+
+// Errors
+
+// Types and methods
+pub struct ZipCrypto {
+  mut key0 : UInt
+  mut key1 : UInt
+  mut key2 : UInt
+}
+pub fn ZipCrypto::new() -> Self
+
+// Type aliases
+
+// Traits
+

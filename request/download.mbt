@@ -128,7 +128,9 @@ pub async fn download(
 
       let dest_dir = if dest_is_file {
         guard get_parent_dir(dest) is Some(dir) else {
-          raise fail(@i18n.t("download.cannot_get_parent_dir", args={"dest": dest}))
+          raise fail(
+            @i18n.t("download.cannot_get_parent_dir", args={ "dest": dest }),
+          )
         }
         dir
       } else {
@@ -136,10 +138,17 @@ pub async fn download(
       }
       ensure_dir(dest_dir)
       let is_append = start > 0
-      @log.debug(@i18n.t("download.debug_file_size", args={"size": @utils.get_readable_file_size(size)}))
+      @log.debug(
+        @i18n.t("download.debug_file_size", args={
+          "size": @utils.get_readable_file_size(size),
+        }),
+      )
       if is_append {
         @log.debug(
-          @i18n.t("download.debug_resume_info", args={"path": dest, "size": @utils.get_readable_file_size(start)}),
+          @i18n.t("download.debug_resume_info", args={
+            "path": dest,
+            "size": @utils.get_readable_file_size(start),
+          }),
         )
       }
       let file_path = if dest_is_file { dest } else { "\{dest_dir}/\{name}" }
@@ -167,11 +176,14 @@ pub async fn download(
         progress_bar.clear()
         println("")
         @log.info(
-          @i18n.t("download.file_saved_with_time", args={"path": file_path, "time": @utils.get_readable_time(progress_bar.duration())}),
+          @i18n.t("download.file_saved_with_time", args={
+            "path": file_path,
+            "time": @utils.get_readable_time(progress_bar.duration()),
+          }),
         )
       } else {
         file.write_reader(client)
-        @log.info(@i18n.t("download.file_saved", args={"path": file_path}))
+        @log.info(@i18n.t("download.file_saved", args={ "path": file_path }))
       }
       return // 下载成功，退出重试循环
     } catch {
@@ -183,7 +195,11 @@ pub async fn download(
           raise e // 用户手动取消
         }
         if attempt < max_retries {
-          @log.warn(@i18n.t("download.retry_attempt", args={"attempt": (attempt + 1).to_string()}))
+          @log.warn(
+            @i18n.t("download.retry_attempt", args={
+              "attempt": (attempt + 1).to_string(),
+            }),
+          )
           @async.sleep(retry_intervals[attempt])
         } else {
           raise e // 重试次数已耗尽，抛出错误
@@ -214,7 +230,9 @@ async fn get_client(
       guard location is Some(location) else {
         raise fail(@i18n.t("download.redirect_failed"))
       }
-      @log.debug(@i18n.t("download.debug_redirect_to", args={"location": location}))
+      @log.debug(
+        @i18n.t("download.debug_redirect_to", args={ "location": location }),
+      )
       get_client(location, range_start~, dest~, dest_is_file~, headers~)
     }
     416 => {
@@ -262,7 +280,14 @@ async fn get_client(
         },
       )
     }
-    _ => raise fail(@i18n.t("download.http_error", args={"code": res.code.to_string(), "reason": res.reason, "url": url}))
+    _ =>
+      raise fail(
+        @i18n.t("download.http_error", args={
+          "code": res.code.to_string(),
+          "reason": res.reason,
+          "url": url,
+        }),
+      )
   }
 }
 
@@ -397,7 +422,7 @@ pub async fn download_by_native_command(
   }
   let args_str = args.join(" ")
   let cmd = "\{downloader} \{args_str}"
-  @log.debug(@i18n.t("download.debug_download_cmd", args={"cmd": cmd}))
+  @log.debug(@i18n.t("download.debug_download_cmd", args={ "cmd": cmd }))
 
   let os = @os.get_os_name()
   let (downloader, args) = match os {
@@ -410,7 +435,9 @@ pub async fn download_by_native_command(
   match @process.run(downloader, args) {
     0 => ()
     _ => {
-      @log.warn(@i18n.t("download.downloader_failed", args={"downloader": downloader}))
+      @log.warn(
+        @i18n.t("download.downloader_failed", args={ "downloader": downloader }),
+      )
       raise fail(@i18n.t("download.failed"))
     }
   }

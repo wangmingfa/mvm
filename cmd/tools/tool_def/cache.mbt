@@ -32,7 +32,9 @@ pub fn is_no_cache_mode() -> Bool {
 /// 当 no_cache 模式开启时，返回 None（强制重新下载）
 pub async fn read_cache_file_content(cache_file_path : String) -> String? {
   if is_no_cache_mode() {
-    @log.debug(@i18n.t("cache.debug_skip_no_cache", args={"path": cache_file_path}))
+    @log.debug(
+      @i18n.t("cache.debug_skip_no_cache", args={ "path": cache_file_path }),
+    )
     return None
   }
   let file_path = @fs_ext.join_path(cache_dir(), cache_file_path)
@@ -88,7 +90,12 @@ pub async fn get_target_version_with_cache(
   )
   guard res.code is (200..<300) else {
     raise fail(
-      @i18n.t("cache.cannot_fetch_version_info", args={"tool": tool_name, "code": res.code.to_string(), "reason": res.reason, "url": url}),
+      @i18n.t("cache.cannot_fetch_version_info", args={
+        "tool": tool_name,
+        "code": res.code.to_string(),
+        "reason": res.reason,
+        "url": url,
+      }),
     )
   }
   let json = data.json()

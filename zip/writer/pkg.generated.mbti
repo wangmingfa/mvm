@@ -1,0 +1,35 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "username/mvm/zip/writer"
+
+import {
+  "moonbitlang/core/buffer",
+}
+
+// Values
+
+// Errors
+
+// Types and methods
+pub struct ZipWriter {
+  buffer : @buffer.Buffer
+  entries : Array[ZipWriterEntry]
+  mut offset : UInt64
+}
+pub fn ZipWriter::add_file(Self, String, Bytes, Int, password? : String) -> Unit
+pub fn ZipWriter::finalize(Self) -> Bytes
+pub fn ZipWriter::new() -> Self
+
+pub struct ZipWriterEntry {
+  filename : String
+  crc32 : UInt
+  compressed_size : UInt64
+  uncompressed_size : UInt64
+  local_header_offset : UInt64
+  compression_method : UInt
+  encrypted : Bool
+}
+
+// Type aliases
+
+// Traits
+

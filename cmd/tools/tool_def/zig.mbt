@@ -40,7 +40,11 @@ fn Zig::_get_proper_version(
   version_count : Int,
   json : Json,
 ) -> String raise {
-  guard json is Object(map) else { raise fail(@i18n.t("error.version_info_format_wrong", args={"tool": "Zig"})) }
+  guard json is Object(map) else {
+    raise fail(
+      @i18n.t("error.version_info_format_wrong", args={ "tool": "Zig" }),
+    )
+  }
   // 收集所有稳定版本及其 JSON 值（跳过 master 和 dev 版本）
   let versions : Array[(String, Json)] = []
   for key, value in map {
@@ -50,7 +54,9 @@ fn Zig::_get_proper_version(
   }
   // 按版本号倒序排序
   versions.sort_by((a, b) => @utils.compare_version(b.0, a.0) catch { _ => 0 })
-  guard versions.length() > 0 else { raise fail(@i18n.t("error.version_info_empty", args={"tool": "Zig"})) }
+  guard versions.length() > 0 else {
+    raise fail(@i18n.t("error.version_info_empty", args={ "tool": "Zig" }))
+  }
   match version {
     "" | "latest" =>
       Zig::_check_os_compatiable(
@@ -70,7 +76,11 @@ fn Zig::_get_proper_version(
               }
             })
             is Some(idx) else {
-            raise fail(@i18n.t("error.version_not_found_detail", args={"version": version}))
+            raise fail(
+              @i18n.t("error.version_not_found_detail", args={
+                "version": version,
+              }),
+            )
           }
           Zig::_check_os_compatiable(
             os,
@@ -79,7 +89,10 @@ fn Zig::_get_proper_version(
             error_msg_tpl=@i18n.t("error.version_os_arch_unsupported"),
           )
         }
-        _ => raise fail(@i18n.t("error.invalid_version_detail", args={"version": version}))
+        _ =>
+          raise fail(
+            @i18n.t("error.invalid_version_detail", args={ "version": version }),
+          )
       }
   }
 }
@@ -92,13 +105,21 @@ fn Zig::_get_version_release_key() -> String raise {
       Aarch64 => "aarch64"
       X86_64 => "x86_64"
       X86 => "x86"
-      arch => raise fail(@i18n.t("error.unsupported_arch", args={"arch": arch.to_string()}))
+      arch =>
+        raise fail(
+          @i18n.t("error.unsupported_arch", args={ "arch": arch.to_string() }),
+        )
     },
     match os.name {
       Windows => "windows"
       MacOS => "macos"
       Linux => "linux"
-      name => raise fail(@i18n.t("error.unsupported_os_detail", args={"name": name.to_string()}))
+      name =>
+        raise fail(
+          @i18n.t("error.unsupported_os_detail", args={
+            "name": name.to_string(),
+          }),
+        )
     },
   ].join("-")
 }
@@ -112,9 +133,13 @@ fn Zig::_check_os_compatiable(
 ) -> String raise {
   let version_release_key = Zig::_get_version_release_key()
   guard version_json is Object(map) else {
-    raise fail(@i18n.t("error.version_info_format_wrong", args={"tool": "Zig"}))
+    raise fail(
+      @i18n.t("error.version_info_format_wrong", args={ "tool": "Zig" }),
+    )
   }
-  @log.debug(@i18n.t("zig.debug_check_compat", args={"key": version_release_key}))
+  @log.debug(
+    @i18n.t("zig.debug_check_compat", args={ "key": version_release_key }),
+  )
   if !map.contains(version_release_key) {
     raise fail(format_os_compat_error(error_msg_tpl, version, os))
   }
@@ -134,7 +159,10 @@ pub fn Zig::get_download_info(
     Windows => "zip"
     Linux => "tar.xz"
     MacOS => "tar.xz"
-    name => raise fail(@i18n.t("error.unsupported_os_detail", args={"name": name.to_string()}))
+    name =>
+      raise fail(
+        @i18n.t("error.unsupported_os_detail", args={ "name": name.to_string() }),
+      )
   }
   let url = "\{ZIG_RELEASE_URL}/\{version}/zig-\{version_release_key}-\{version}.\{ext}"
   { url, headers: {}, root_path_depth: 1 }
@@ -179,14 +207,19 @@ pub async fn Zig::get_expected_checksum(
 
   // 查找版本对应的 JSON 值
   guard map.get(version) is Some(version_json) else {
-    @log.warn(@i18n.t("zig.version_not_in_index", args={"version": version}))
+    @log.warn(@i18n.t("zig.version_not_in_index", args={ "version": version }))
     return None
   }
   guard version_json is Object(version_map) else { return None }
 
   // 查找平台键对应的 shasum
   guard version_map.get(version_release_key) is Some(platform_json) else {
-    @log.warn(@i18n.t("zig.platform_info_missing", args={"version": version, "platform": version_release_key}))
+    @log.warn(
+      @i18n.t("zig.platform_info_missing", args={
+        "version": version,
+        "platform": version_release_key,
+      }),
+    )
     return None
   }
   guard platform_json is Object(platform_map) else { return None }
@@ -194,7 +227,12 @@ pub async fn Zig::get_expected_checksum(
   match platform_map.get("shasum") {
     Some(String(hash)) => Some(hash)
     _ => {
-      @log.warn(@i18n.t("zig.missing_shasum", args={"version": version, "platform": version_release_key}))
+      @log.warn(
+        @i18n.t("zig.missing_shasum", args={
+          "version": version,
+          "platform": version_release_key,
+        }),
+      )
       None
     }
   }
@@ -229,5 +267,10 @@ pub async fn Zig::get_program_exe_info(
       exists,
     )
   }
-  raise fail(@i18n.t("error.exe_info_not_found", args={"program": program, "version": version}))
+  raise fail(
+    @i18n.t("error.exe_info_not_found", args={
+      "program": program,
+      "version": version,
+    }),
+  )
 }

@@ -52,7 +52,9 @@ fn Node::_get_proper_version(
   json : Json,
 ) -> String raise {
   guard json is Array(arr) else {
-    raise fail(@i18n.t("error.version_info_format_wrong", args={"tool": "Node.js"}))
+    raise fail(
+      @i18n.t("error.version_info_format_wrong", args={ "tool": "Node.js" }),
+    )
   }
   // for index, item in arr {
   //   println("\{index}: \{item}")
@@ -60,11 +62,17 @@ fn Node::_get_proper_version(
   // }
   let nodeJsInfos : Array[NodeJsInfo] = arr.map(v => {
     @json.from_json(v) catch {
-      e => raise fail(@i18n.t("error.parse_version_info_failed", args={"tool": "Node.js", "reason": e.to_string()}))
+      e =>
+        raise fail(
+          @i18n.t("error.parse_version_info_failed", args={
+            "tool": "Node.js",
+            "reason": e.to_string(),
+          }),
+        )
     }
   })
   guard nodeJsInfos.length() > 0 else {
-    raise fail(@i18n.t("error.version_info_empty", args={"tool": "Node.js"}))
+    raise fail(@i18n.t("error.version_info_empty", args={ "tool": "Node.js" }))
   }
   // 按date倒序排序
   nodeJsInfos.sort_by((a, b) => {
@@ -84,7 +92,9 @@ fn Node::_get_proper_version(
           false
         })
         is Some(idx) else {
-        raise fail(@i18n.t("error.version_not_found_detail", args={"version": "lts"}))
+        raise fail(
+          @i18n.t("error.version_not_found_detail", args={ "version": "lts" }),
+        )
       }
       Node::_check_os_compatiable(
         os,
@@ -111,11 +121,18 @@ fn Node::_get_proper_version(
               }
             })
             is Some(idx) else {
-            raise fail(@i18n.t("error.version_not_found_detail", args={"version": version}))
+            raise fail(
+              @i18n.t("error.version_not_found_detail", args={
+                "version": version,
+              }),
+            )
           }
           Node::_check_os_compatiable(os, nodeJsInfos[idx])
         }
-        _ => raise fail(@i18n.t("error.invalid_version_detail", args={"version": version}))
+        _ =>
+          raise fail(
+            @i18n.t("error.invalid_version_detail", args={ "version": version }),
+          )
       }
   }
 }
@@ -132,13 +149,21 @@ fn Node::_check_os_compatiable(
       Windows => "win"
       MacOS => "osx"
       Linux => "linux"
-      name => raise fail(@i18n.t("error.unsupported_os_detail", args={"name": name.to_string()}))
+      name =>
+        raise fail(
+          @i18n.t("error.unsupported_os_detail", args={
+            "name": name.to_string(),
+          }),
+        )
     },
     match os.arch {
       Aarch64 => "arm64"
       X86 => "x86"
       X86_64 => "x64"
-      arch => raise fail(@i18n.t("error.unsupported_arch", args={"arch": arch.to_string()}))
+      arch =>
+        raise fail(
+          @i18n.t("error.unsupported_arch", args={ "arch": arch.to_string() }),
+        )
     },
   ].join("-")
   let { version, files, .. } = nodeJsInfo
@@ -159,7 +184,10 @@ pub fn Node::get_download_info(
     Windows => ("win", "zip")
     Linux => ("linux", "tar.gz")
     MacOS => ("darwin", "tar.gz")
-    name => raise fail(@i18n.t("error.unsupported_os_detail", args={"name": name.to_string()}))
+    name =>
+      raise fail(
+        @i18n.t("error.unsupported_os_detail", args={ "name": name.to_string() }),
+      )
   }
   let url = "\{NODE_RELEASE_URL}/\{version}/node-\{version}-\{os}-\{arch}.\{ext}"
   { url, headers: {}, root_path_depth: 1 }
@@ -561,7 +589,7 @@ pub fn Node::get_node_path_by_node_inner_path(
   let node_tool_root_path = tool_dir(Node)
   // 先判断前缀
   guard node_inner_path.has_prefix(node_tool_root_path) is true else {
-    raise fail(@i18n.t("error.invalid_path", args={"path": node_inner_path}))
+    raise fail(@i18n.t("error.invalid_path", args={ "path": node_inner_path }))
   }
   // 一直往上级目录找
   let node_root_dir = for dir = node_inner_path
@@ -572,7 +600,7 @@ pub fn Node::get_node_path_by_node_inner_path(
       break dir
     }
   } nobreak {
-    raise fail(@i18n.t("error.invalid_path", args={"path": node_inner_path}))
+    raise fail(@i18n.t("error.invalid_path", args={ "path": node_inner_path }))
   }
 
   // 从node_dir中提取版本号（目录名）
