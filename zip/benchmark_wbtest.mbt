@@ -1,3 +1,4 @@
+///|
 test "benchmark compression speed" {
   let data_size = 100000
   let test_data = Buffer::Buffer(size_hint=data_size)
@@ -11,17 +12,22 @@ test "benchmark compression speed" {
   let end = @env.now()
 
   let duration = end - start
-  let speed = Float::from_int(data.length()) / Float::from_uint64(duration) / 1024.0
+  let speed = Float::from_int(data.length()) /
+    Float::from_uint64(duration) /
+    1024.0
 
   println("Data size: \{data.length()} bytes")
   println("Compressed size: \{compressed.length()} bytes")
-  println("Ratio: \{Float::from_int(compressed.length()) / Float::from_int(data.length()) * 100.0}%")
+  println(
+    "Ratio: \{Float::from_int(compressed.length()) / Float::from_int(data.length()) * 100.0}%",
+  )
   println("Time: \{duration} ms")
   println("Speed: \{speed} KB/s")
 
   assert_true(compressed.length() < data.length())
 }
 
+///|
 test "benchmark decompression speed" {
   let data_size = 100000
   let test_data = Buffer::Buffer(size_hint=data_size)
@@ -39,7 +45,9 @@ test "benchmark decompression speed" {
   match decompressed {
     Ok(result) => {
       let duration = end - start
-      let speed = Float::from_int(result.length()) / Float::from_uint64(duration) / 1024.0
+      let speed = Float::from_int(result.length()) /
+        Float::from_uint64(duration) /
+        1024.0
 
       println("Compressed size: \{compressed.length()} bytes")
       println("Decompressed size: \{result.length()} bytes")
@@ -52,6 +60,7 @@ test "benchmark decompression speed" {
   }
 }
 
+///|
 test "benchmark different compression levels" {
   let data_size = 50000
   let test_data = Buffer::Buffer(size_hint=data_size)
@@ -70,13 +79,20 @@ test "benchmark different compression levels" {
     let end = @env.now()
 
     let duration = end - start
-    let ratio = Float::from_int(compressed.length()) / Float::from_int(data.length()) * 100.0
-    let speed = Float::from_int(data.length()) / Float::from_uint64(duration) / 1024.0
+    let ratio = Float::from_int(compressed.length()) /
+      Float::from_int(data.length()) *
+      100.0
+    let speed = Float::from_int(data.length()) /
+      Float::from_uint64(duration) /
+      1024.0
 
-    println("\{level}     | \{compressed.length()} | \{ratio}% | \{duration} | \{speed}")
+    println(
+      "\{level}     | \{compressed.length()} | \{ratio}% | \{duration} | \{speed}",
+    )
   }
 }
 
+///|
 test "benchmark zip operations" {
   let temp_dir = @test.get_temp_dir(sub_dir="benchmark_zip")
   try {
@@ -107,7 +123,9 @@ test "benchmark zip operations" {
     }
 
     let create_duration = end - start
-    let create_speed = Float::from_int(data.length()) / Float::from_uint64(create_duration) / 1024.0
+    let create_speed = Float::from_int(data.length()) /
+      Float::from_uint64(create_duration) /
+      1024.0
 
     let zip_data = @fs.read_file_to_bytes(zip_file)
     let zip_size = zip_data.length()
@@ -115,7 +133,9 @@ test "benchmark zip operations" {
     println("\nZIP creation:")
     println("Original size: \{data.length()} bytes")
     println("ZIP size: \{zip_size} bytes")
-    println("Ratio: \{Float::from_int(zip_size) / Float::from_int(data.length()) * 100.0}%")
+    println(
+      "Ratio: \{Float::from_int(zip_size) / Float::from_int(data.length()) * 100.0}%",
+    )
     println("Time: \{create_duration} ms")
     println("Speed: \{create_speed} KB/s")
 
@@ -137,11 +157,13 @@ test "benchmark zip operations" {
     }
 
     let extract_duration = end_extract - start_extract
-    let extract_speed = Float::from_int(data.length()) / Float::from_uint64(extract_duration) / 1024.0
+    let extract_speed = Float::from_int(data.length()) /
+      Float::from_uint64(extract_duration) /
+      1024.0
 
-    println("\\nZIP extraction:")
-    println("Time: \\{extract_duration} ms")
-    println("Speed: \\{extract_speed} KB/s")
+    println("\nZIP extraction:")
+    println("Time: \{extract_duration} ms")
+    println("Speed: \{extract_speed} KB/s")
 
     assert_true(success)
     assert_true(extract_success)

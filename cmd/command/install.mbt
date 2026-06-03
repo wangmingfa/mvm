@@ -230,7 +230,9 @@ async fn run_install(
   // 仅全新下载且非 no_cache 模式时才缓存压缩包
   // no_cache 模式下不缓存压缩包，复用缓存的情况下原文件已保留无需再缓存
   if !skip_download && !no_cache {
-    let cached_archive_path = @fs_ext.join_path(temp_dir_root, archive_file_name)
+    let cached_archive_path = @fs_ext.join_path(
+      temp_dir_root, archive_file_name,
+    )
     if @fs.exists(archive_file) {
       // 缓存压缩包
       @log.debug(

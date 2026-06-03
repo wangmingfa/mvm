@@ -12,4 +12,5 @@ import {
   "username/mvm/ffi",
   "username/mvm/i18n",
   "moonbitlang/core/env",
+  "moonbitlang/core/debug",
 }

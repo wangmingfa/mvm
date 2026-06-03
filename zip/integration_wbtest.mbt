@@ -1,3 +1,4 @@
+///|
 test "zip roundtrip - single file" {
   let writer = @writer.ZipWriter::new()
   let original = b"Hello, MoonBit!"
@@ -26,6 +27,7 @@ test "zip roundtrip - single file" {
   }
 }
 
+///|
 test "zip roundtrip - multiple files" {
   let writer = @writer.ZipWriter::new()
   writer.add_file("file1.txt", b"First file", 6)
@@ -59,6 +61,7 @@ test "zip roundtrip - multiple files" {
   }
 }
 
+///|
 test "zip roundtrip - stored compression" {
   let writer = @writer.ZipWriter::new()
   writer.add_file("stored.txt", b"No compression", 0)
@@ -80,6 +83,7 @@ test "zip roundtrip - stored compression" {
   }
 }
 
+///|
 test "zip roundtrip - empty file" {
   let writer = @writer.ZipWriter::new()
   writer.add_file("empty.txt", b"", 6)
@@ -101,6 +105,7 @@ test "zip roundtrip - empty file" {
   }
 }
 
+///|
 test "zip roundtrip - large file" {
   let large_data = Buffer::Buffer()
   for i in 0..<10000 {
@@ -127,6 +132,7 @@ test "zip roundtrip - large file" {
   }
 }
 
+///|
 test "deflate decompression" {
   let original = b"Hello, MoonBit!"
   let compressed = @deflate.deflate_compress(original, 6)
@@ -143,6 +149,7 @@ test "deflate decompression" {
   }
 }
 
+///|
 test "zlib roundtrip" {
   let original = b"Test zlib compression"
   let compressed = @zlib.zlib_compress(original, 6)
@@ -153,49 +160,56 @@ test "zlib roundtrip" {
   }
 }
 
+///|
 test "checksum - adler32" {
   let data = b"Hello"
   let checksum = @checksum.adler32(data)
   assert_true(checksum > 0U)
 }
 
+///|
 test "checksum - crc32" {
   let data = b"Hello"
   let checksum = @checksum.crc32(data)
   assert_true(checksum > 0U)
 }
 
+///|
 test "encrypted zip" {
   let temp_dir = @test.get_temp_dir(sub_dir="encrypted_zip_test")
   try {
     if !@fs.path_exists(temp_dir) {
       @fs.create_dir(temp_dir)
     }
-    
+
     let test_file = @fs_ext.join_paths([temp_dir, "secret.txt"])
     @fs.write_string_to_file(test_file, "This is encrypted content")
-    
+
     let zip_file = @fs_ext.join_paths([temp_dir, "encrypted.zip"])
     let writer = @writer.ZipWriter::new()
     let data = @fs.read_file_to_bytes(test_file)
     writer.add_file("secret.txt", data, 0, password="mypassword")
     let zip_data = writer.finalize()
     @fs.write_bytes_to_file(zip_file, zip_data)
-    
+
     let extract_dir = @fs_ext.join_paths([temp_dir, "extracted"])
     if !@fs.path_exists(extract_dir) {
       @fs.create_dir(extract_dir)
     }
-    
-    let extract_success = @zip.unzip(zip_file, extract_dir, password="mypassword")
+
+    let extract_success = @zip.unzip(
+      zip_file,
+      extract_dir,
+      password="mypassword",
+    )
     assert_true(extract_success)
-    
+
     let extracted_file = @fs_ext.join_paths([extract_dir, "secret.txt"])
     assert_true(@fs.path_exists(extracted_file))
-    
+
     let content = @fs.read_file_to_string(extracted_file)
     assert_eq(content, "This is encrypted content")
-    
+
     @fs.remove_file(test_file)
     @fs.remove_file(zip_file)
     @fs.remove_file(extracted_file)

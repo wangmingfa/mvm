@@ -481,9 +481,14 @@ pub async fn Node::get_program_exe_info(
               )
               continue
             }
+            // 在windows下，无需使用node_modules里面的文件，而是直接使用node根目录的cmd文件进行运行
+            let program_path = match @os.get_os_name() {
+              Windows => @fs_ext.join_path(bin_dir, program + ".cmd")
+              _ => actual_bin_path
+            }
             return ProgramExeInfo(
               program,
-              actual_bin_path,
+              program_path,
               pkg_version,
               version,
               envs={},

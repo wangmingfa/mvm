@@ -115,7 +115,7 @@ fn get_cmd_and_args(
   // 在windows下，需要使用powershell -Command
   let os = @os.get_os_name()
   match os {
-    Windows => ("powershell", ["-Command", "\{cmd} " + join_args(args)])
+    Windows => ("powershell", ["-Command", join_args([cmd.to_owned(), ..args])])
     _ => (cmd, args)
   }
 }
@@ -184,7 +184,9 @@ pub async fn run_with_output(
   cwd? : StringView,
 ) -> (Int, &@io.Data) {
   let cmd_str = join_args([cmd.to_owned(), ..args])
-  @log.debug(@i18n.t("cmd.debug_running_cmd", args={ "cmd": cmd_str }))
+  @log.debug(
+    @i18n.t("cmd.debug_running_cmd", args={ "cmd": @debug.to_string(cmd_str) }),
+  )
   let (r, w) = @process.read_from_process()
   let (exit_code, output) = @async.with_task_group(group => {
     defer r.close()
