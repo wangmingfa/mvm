@@ -34,19 +34,19 @@ pub fn mvm_npm_pkg_home() -> String raise {
 ///|
 /// 工具安装目录
 fn tools_dir() -> String raise {
-  "\{mvm_home()}/tools"
+  @fs_ext.join_path(mvm_home(), "tools")
 }
 
 ///|
 /// 获取特定工具的安装目录
 pub fn tool_dir(tool : Tool) -> String raise {
-  "\{tools_dir()}/\{tool.to_string().to_lower()}"
+  @fs_ext.join_path(tools_dir(), tool.to_string().to_lower())
 }
 
 ///|
 /// 获取特定版本的安装路径
 pub fn version_dir(tool : Tool, version : String) -> String raise {
-  "\{tool_dir(tool)}/\{version}"
+  @fs_ext.join_path(tool_dir(tool), version)
 }
 
 ///|

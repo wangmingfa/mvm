@@ -75,7 +75,7 @@ async fn run_install(
   // 临时文件夹根目录
   let temp_dir_root = @tools.temp_dir()
   // 下载文件临时存放目录
-  let tmp_dir = "\{@tools.temp_dir()}/tmp-\{tool}-\{version}"
+  let tmp_dir = @fs_ext.join_path(@tools.temp_dir(), "tmp-\{tool}-\{version}")
   ensure_dir(tmp_dir)
   let ext = if url.has_suffix(".tar.gz") || url.has_suffix(".tgz") {
     "tar.gz"
@@ -88,8 +88,8 @@ async fn run_install(
   let archive_file_name = "\{tool}-\{version}.\{ext}"
   // 检查缓存目录是否已有该压缩包，如有则直接复用，无需重新下载
   // no_cache 模式下跳过压缩包缓存读取，强制重新下载
-  let cached_archive_file = "\{temp_dir_root}/\{archive_file_name}"
-  let archive_file = "\{tmp_dir}/\{archive_file_name}"
+  let cached_archive_file = @fs_ext.join_path(temp_dir_root, archive_file_name)
+  let archive_file = @fs_ext.join_path(tmp_dir, archive_file_name)
   let mut skip_download = false
   if !no_cache && @fs.exists(cached_archive_file) {
     // 必须是文件
@@ -164,7 +164,7 @@ async fn run_install(
   }
 
   // 解压到临时目录
-  let extract_dir = "\{tmp_dir}/extract-\{tool}-\{version}"
+  let extract_dir = @fs_ext.join_path(tmp_dir, "extract-\{tool}-\{version}")
   ensure_dir(extract_dir)
 
   extract_file(archive_file, extract_dir)
@@ -230,7 +230,7 @@ async fn run_install(
   // 仅全新下载且非 no_cache 模式时才缓存压缩包
   // no_cache 模式下不缓存压缩包，复用缓存的情况下原文件已保留无需再缓存
   if !skip_download && !no_cache {
-    let cached_archive_path = "\{temp_dir_root}/\{archive_file_name}"
+    let cached_archive_path = @fs_ext.join_path(temp_dir_root, archive_file_name)
     if @fs.exists(archive_file) {
       // 缓存压缩包
       @log.debug(

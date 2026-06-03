@@ -8,6 +8,7 @@ import {
   "username/mvm/array_ext",
   "username/mvm/ffi",
   "username/mvm/log",
+  "username/mvm/os",
 }
 
 options(

@@ -145,10 +145,7 @@ async fn walk_global_pkgs(
   )
   // 在mvm_bin目录下的npm-pkg目录添加所安装的npm包的所有全局命令的软连接
   for pkg in pkgs {
-    let pkg_json_path = @fs_ext.join_path(
-      lib_dir,
-      "node_modules/\{pkg}/package.json",
-    )
+    let pkg_json_path = @fs_ext.join_paths([lib_dir, "node_modules", pkg, "package.json"])
     walk_pkg_bins(pkg_json_path, pkg, handle_pkg_cmd)
   }
 }

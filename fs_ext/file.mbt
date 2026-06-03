@@ -6,7 +6,7 @@ pub async fn mv(src : String, dest : String) -> Unit {
   // 使用 try? @fs.kind 一次性判断，避免 exists 和 kind 之间的竞争条件
   if @fs.exists(dest) && (try? @fs.kind(dest)) is Ok(Directory) {
     let name = get_path_name(src)
-    let final_dest = "\{dest}/\{name}"
+    let final_dest = join_path(dest, name)
     @log.debug("目标为 \{final_dest}")
     @fs.rename(src, final_dest)
     return

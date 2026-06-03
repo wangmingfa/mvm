@@ -39,7 +39,8 @@ pub fn[T1 : Show, T2 : Show] join_path(
 }
 
 ///|
-test "join_path" {
+#cfg(not(platform="windows"))
+test "join_path unix" {
   inspect(
     join_path("/home/wmf/code/data.txt", "../"),
     content=(
@@ -50,6 +51,23 @@ test "join_path" {
     join_path("/home/wmf/code/data.txt", "../../"),
     content=(
       #|/home/wmf
+    ),
+  )
+}
+
+///|
+#cfg(platform="windows")
+test "join_path windows" {
+  inspect(
+    join_path("C:\\Users\\wmf\\code\\data.txt", "../"),
+    content=(
+      #|C:\Users\wmf\code
+    ),
+  )
+  inspect(
+    join_path("C:\\Users\\wmf\\code\\data.txt", "../../"),
+    content=(
+      #|C:\Users\wmf
     ),
   )
 }
@@ -69,7 +87,8 @@ pub fn[T : Show] join_paths(paths : ArrayView[T]) -> String {
 }
 
 ///|
-test "join_paths" {
+#cfg(not(platform="windows"))
+test "join_paths unix" {
   inspect(
     join_paths(["/home/wmf/code/data.txt", "../", "hello"]),
     content=(
@@ -80,6 +99,23 @@ test "join_paths" {
     join_paths(["/home/wmf/code/data.txt", "../", "", "world", "", ""]),
     content=(
       #|/home/wmf/code/world
+    ),
+  )
+}
+
+///|
+#cfg(platform="windows")
+test "join_paths windows" {
+  inspect(
+    join_paths(["C:\\Users\\wmf\\code\\data.txt", "../", "hello"]),
+    content=(
+      #|C:\Users\wmf\code\hello
+    ),
+  )
+  inspect(
+    join_paths(["C:\\Users\\wmf\\code\\data.txt", "../", "", "world", "", ""]),
+    content=(
+      #|C:\Users\wmf\code\world
     ),
   )
 }
@@ -124,19 +160,21 @@ pub fn canonicalize_path(path : String) -> String {
     }
   }
   let result = if is_absolute { "/\{result}" } else { result }
-  if result.has_suffix("/") {
+  let result = if result.has_suffix("/") {
     result[0:-1].to_owned()
   } else {
     result
   }
-  // match @os.get_os_name() {
-  //   Windows => result.replace_all(old="/", new="\\")
-  //   _ => result
-  // }
+  // Windows 使用 \\ 作为路径分隔符，其它系统使用 /
+  match @os.get_os_name() {
+    Windows => result.replace_all(old="/", new="\\")
+    _ => result
+  }
 }
 
 ///|
-test "canonicalize_path" {
+#cfg(not(platform="windows"))
+test "canonicalize_path unix" {
   inspect(
     canonicalize_path("/home/peter/sticky/../vscode/./code/abc/"),
     content=(
@@ -155,6 +193,12 @@ test "canonicalize_path" {
       #|/home/peter/abc
     ),
   )
+}
+
+///|
+#cfg(platform="windows")
+test "canonicalize_path windows" {
+  inspect(canonicalize_path("./path/to/text.txt"), content="path\\to\\text.txt")
 }
 
 ///|
@@ -206,6 +250,7 @@ test "get_path_name file windows" {
 }
 
 ///|
+#cfg(not(platform="windows"))
 test "canonicalize_path with dot" {
   inspect(
     canonicalize_path("/home/./lily/./spaces"),
@@ -216,6 +261,18 @@ test "canonicalize_path with dot" {
 }
 
 ///|
+#cfg(platform="windows")
+test "canonicalize_path with dot windows" {
+  inspect(
+    canonicalize_path("C:\\Users\\.\\lily\\.\\spaces"),
+    content=(
+      #|C:\Users\lily\spaces
+    ),
+  )
+}
+
+///|
+#cfg(not(platform="windows"))
 test "canonicalize_path with dotdot" {
   inspect(
     canonicalize_path("/home/lily/../bob/spaces"),
@@ -226,6 +283,18 @@ test "canonicalize_path with dotdot" {
 }
 
 ///|
+#cfg(platform="windows")
+test "canonicalize_path with dotdot windows" {
+  inspect(
+    canonicalize_path("C:\\Users\\lily\\..\\bob\\spaces"),
+    content=(
+      #|C:\Users\bob\spaces
+    ),
+  )
+}
+
+///|
+#cfg(not(platform="windows"))
 test "canonicalize_path with multiple dotdot" {
   inspect(
     canonicalize_path("/home/lily/spaces/../../bob"),
@@ -236,6 +305,18 @@ test "canonicalize_path with multiple dotdot" {
 }
 
 ///|
+#cfg(platform="windows")
+test "canonicalize_path with multiple dotdot windows" {
+  inspect(
+    canonicalize_path("C:\\Users\\lily\\spaces\\..\\..\\bob"),
+    content=(
+      #|C:\Users\bob
+    ),
+  )
+}
+
+///|
+#cfg(not(platform="windows"))
 test "canonicalize_path relative" {
   inspect(
     canonicalize_path("a/b/../c/./d"),
@@ -246,11 +327,12 @@ test "canonicalize_path relative" {
 }
 
 ///|
-test "canonicalize_path windows" {
+#cfg(platform="windows")
+test "canonicalize_path relative windows" {
   inspect(
-    canonicalize_path("C:\\home\\lily\\..\\bob"),
+    canonicalize_path("a\\b\\..\\c\\.\\d"),
     content=(
-      #|C:/home/bob
+      #|a\c\d
     ),
   )
 }
@@ -261,8 +343,13 @@ pub fn get_parent_dir(path : String, levels? : Int = 1) -> String? raise {
     raise fail("levels 必须大于 0，当前值：\{levels}")
   }
   let path = path.canonicalize_path()
-  guard path.contains("/") else { return None }
-  let arr = path.split("/").to_array()
+  // 根据操作系统选择路径分隔符
+  let sep = match @os.get_os_name() {
+    Windows => "\\"
+    _ => "/"
+  }
+  guard path.contains(sep) else { return None }
+  let arr = path.split(sep).to_array()
   for _ in 0..<levels {
     guard arr.length() > 0 else { return None }
     let _ = arr.pop()
@@ -270,11 +357,12 @@ pub fn get_parent_dir(path : String, levels? : Int = 1) -> String? raise {
   if arr.is_empty() {
     return None
   }
-  Some(arr.join("/"))
+  Some(arr.join(sep))
 }
 
 ///|
-test "get_parent_dir" {
+#cfg(not(platform="windows"))
+test "get_parent_dir unix" {
   debug_inspect(
     get_parent_dir("/home/peter/code"),
     content=(
@@ -327,6 +415,35 @@ test "get_parent_dir" {
     get_parent_dir("/home", levels=2),
     content=(
       #|None
+    ),
+  )
+}
+
+///|
+#cfg(platform="windows")
+test "get_parent_dir windows" {
+  debug_inspect(
+    get_parent_dir("C:\\Users\\peter\\code"),
+    content=(
+      #|Some("C:\\Users\\peter")
+    ),
+  )
+  debug_inspect(
+    get_parent_dir("C:\\Users\\peter\\code\\a.txt"),
+    content=(
+      #|Some("C:\\Users\\peter\\code")
+    ),
+  )
+  debug_inspect(
+    get_parent_dir("C:\\Users\\peter\\code\\a.txt", levels=2),
+    content=(
+      #|Some("C:\\Users\\peter")
+    ),
+  )
+  debug_inspect(
+    get_parent_dir("C:\\Users\\peter\\code\\a.txt", levels=3),
+    content=(
+      #|Some("C:\\Users")
     ),
   )
 }

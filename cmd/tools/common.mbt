@@ -293,19 +293,19 @@ pub async fn post_install(tool : Tool, target_dir : String) -> Unit {
       // Rust 的可执行文件在 bin 子目录下
       Rust =>
         ["rustc", "cargo"].map(name => {
-          @fs_ext.join_path(target_dir, "bin/\{name}")
+          @fs_ext.join_paths([target_dir, "bin", name])
         })
       // Deno 是单一二进制文件，无 bin 子目录
       Deno => [@fs_ext.join_path(target_dir, "deno")]
       // Java (JDK) 的可执行文件在 bin 子目录下
       Java =>
         ["java", "javac", "jar"].map(name => {
-          @fs_ext.join_path(target_dir, "\{java_bin_dir}/\{name}")
+          @fs_ext.join_paths([target_dir, java_bin_dir, name])
         })
       // Kotlin 编译器的可执行文件在 bin 子目录下
       Kotlin =>
         ["kotlinc", "kotlin"].map(name => {
-          @fs_ext.join_path(target_dir, "bin/\{name}")
+          @fs_ext.join_paths([target_dir, "bin", name])
         })
     }
     // exe_files.insert(0, "+x")
