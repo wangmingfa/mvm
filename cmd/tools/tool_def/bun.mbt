@@ -363,7 +363,11 @@ fn _parse_bun_shasums(content : String, filename : String) -> String? {
 
 ///|
 pub fn Bun::get_exe_path(version : String) -> String raise {
-  [version_dir(Tool::Bun, version), "bun"].filter(v => !v.is_blank()).join("/")
+  let ext = match @os.get_os_name() {
+    Windows => ".exe"
+    _ => ""
+  }
+  @fs_ext.join_paths([version_dir(Tool::Bun, version), "bun\{ext}"])
 }
 
 ///|

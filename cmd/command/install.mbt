@@ -225,7 +225,7 @@ async fn run_install(
     }),
   )
 
-  @fs_ext.mv(src_dir, final_dir)
+  @fs_ext.mv(src_dir, final_dir, remove_dest_if_exists=true)
 
   // 仅全新下载且非 no_cache 模式时才缓存压缩包
   // no_cache 模式下不缓存压缩包，复用缓存的情况下原文件已保留无需再缓存
@@ -309,7 +309,7 @@ async fn extract_file(file : String, dest : String) -> Unit {
       @process.collect_output_merged("tar", ["-xzf", f, "-C", dest])
     f if f.has_suffix(".tar.xz") =>
       @process.collect_output_merged("tar", ["-xJf", f, "-C", dest])
-    f if f.has_suffix(".zip") => unzip(file, dest)
+    f if f.has_suffix(".zip") => extract_zip(file, dest)
     // 未知的压缩格式
     _ => raise fail(@i18n.t("install.unknown_format", args={ "file": file }))
   }
@@ -328,19 +328,109 @@ async fn extract_file(file : String, dest : String) -> Unit {
 }
 
 ///|
-fn unzip(zip_file_path : String, output_dir : String) -> (Int, &@io.Data) {
-  // 解压
-  let progres_bar = @progress.ProgressBar(
-    100,
-    prefix=@i18n.t("install.extract_prefix"),
-    mode=Simple,
-    show_speed=false,
-    show_time_info=false,
-    show_unit=false,
-  )
-  let success = @zip.unzip(zip_file_path, output_dir, on_progress=progress => {
-    progres_bar.set_completed_int(progress.to_int())
-  })
-  progres_bar.clear()
-  (if success { 0 } else { 1 }, "")
+/// 解压 zip 文件（根据操作系统选择合适的解压方式）
+async fn extract_zip(
+  zip_file : String,
+  output_dir : String,
+) -> (Int, &@io.Data) {
+  let os_info = @os.get_os_info()
+  // Windows 使用自带的 PowerShell Expand-Archive 命令
+  if os_info.name is Windows {
+    // 使用 PowerShell 的 Expand-Archive 命令
+    let ps_script = "Expand-Archive -Path '\{zip_file}' -DestinationPath '\{output_dir}' -Force"
+    @process.collect_output_merged("powershell", [
+      "-NoProfile", "-Command", ps_script,
+    ])
+  } else {
+    // macOS 和 Linux 使用 unzip 命令
+    if !@mvm_cmd.command_exists("unzip") {
+      // unzip 未安装，提示用户
+      @log.warn(@i18n.t("install.unzip_not_found"))
+      // 根据操作系统确定安装命令
+      let install_cmd = get_unzip_install_cmd(os_info.name)
+      // 询问用户是否自动安装
+      @stdio.print(
+        @i18n.t("install.prompt_install_unzip", args={ "cmd": install_cmd }),
+      )
+      @stdio.print(" (Y/n): ")
+      let answer = @stdio.read_line().trim().to_owned()
+      let should_install = answer == "" ||
+        answer.to_lower() == "y" ||
+        answer.to_lower() == "yes"
+      if should_install {
+        // 尝试自动安装
+        @log.info(@i18n.t("install.installing_unzip"))
+        let install_result = install_unzip(os_info.name)
+        if install_result != 0 {
+          raise fail(
+            @i18n.t("install.install_unzip_failed", args={ "cmd": install_cmd }),
+          )
+        }
+        @log.info(@i18n.t("install.unzip_installed"))
+      } else {
+        // 用户拒绝安装
+        raise fail(@i18n.t("install.unzip_required"))
+      }
+    }
+    // 使用系统 unzip 命令解压
+    @process.collect_output_merged("unzip", ["-o", zip_file, "-d", output_dir])
+  }
+}
+
+///|
+/// 获取 unzip 安装命令（根据操作系统和可用的包管理器）
+async fn get_unzip_install_cmd(os_name : @os.OS) -> String {
+  match os_name {
+    MacOS =>
+      // macOS 检测 brew 是否存在
+      if @mvm_cmd.command_exists("brew") {
+        "brew install unzip"
+      } else {
+        "请先安装 Homebrew (https://brew.sh)，然后运行: brew install unzip"
+      }
+    Linux =>
+      // Linux 检测可用的包管理器（按优先级）
+      if @mvm_cmd.command_exists("apt-get") {
+        "sudo apt-get install -y unzip"
+      } else if @mvm_cmd.command_exists("pacman") {
+        "sudo pacman -S --noconfirm unzip"
+      } else if @mvm_cmd.command_exists("dnf") {
+        "sudo dnf install -y unzip"
+      } else if @mvm_cmd.command_exists("yum") {
+        "sudo yum install -y unzip"
+      } else {
+        "请手动安装 unzip"
+      }
+    _ => "请手动安装 unzip"
+  }
+}
+
+///|
+/// 安装 unzip（根据操作系统和可用的包管理器）
+async fn install_unzip(os_name : @os.OS) -> Int {
+  match os_name {
+    MacOS =>
+      // macOS 检测 brew 是否存在
+      if @mvm_cmd.command_exists("brew") {
+        @process.run("brew", ["install", "unzip"])
+      } else {
+        // brew 不存在，返回失败
+        1
+      }
+    Linux =>
+      // Linux 按优先级尝试不同的包管理器
+      if @mvm_cmd.command_exists("apt-get") {
+        @process.run("sudo", ["apt-get", "install", "-y", "unzip"])
+      } else if @mvm_cmd.command_exists("pacman") {
+        @process.run("sudo", ["pacman", "-S", "--noconfirm", "unzip"])
+      } else if @mvm_cmd.command_exists("dnf") {
+        @process.run("sudo", ["dnf", "install", "-y", "unzip"])
+      } else if @mvm_cmd.command_exists("yum") {
+        @process.run("sudo", ["yum", "install", "-y", "unzip"])
+      } else {
+        // 没有找到可用的包管理器
+        1
+      }
+    _ => 1
+  }
 }

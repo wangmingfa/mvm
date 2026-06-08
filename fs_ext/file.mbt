@@ -1,10 +1,22 @@
 ///|
-pub async fn mv(src : String, dest : String) -> Unit {
+pub async fn mv(
+  src : String,
+  dest : String,
+  remove_dest_if_exists? : Bool = false,
+) -> Unit {
   guard @fs.exists(src) else { raise fail("路径不存在 \{src}") }
+
+  let mut dest_exists = @fs.exists(dest)
+  // dest存在时，删除掉
+  if remove_dest_if_exists && dest_exists {
+    @log.debug("删除目标文件 \{dest}")
+    remove_if_exists(dest)
+    dest_exists = false
+  }
 
   // dest 已存在且是目录时，将 src 移入该目录内（类似 Unix mv 命令行为）
   // 使用 try? @fs.kind 一次性判断，避免 exists 和 kind 之间的竞争条件
-  if @fs.exists(dest) && (try? @fs.kind(dest)) is Ok(Directory) {
+  if dest_exists && (try? @fs.kind(dest)) is Ok(Directory) {
     let name = get_path_name(src)
     let final_dest = join_path(dest, name)
     @log.debug("目标为 \{final_dest}")

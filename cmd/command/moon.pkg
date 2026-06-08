@@ -15,8 +15,6 @@ import {
   "username/mvm/utils",
   "username/mvm/log",
   "username/mvm/i18n",
-  "username/mvm/zip",
-  "username/mvm/progress",
   "username/mvm/checksum",
   "username/mvm/command" @mvm_cmd,
   "moonbitlang/async/io",
