@@ -306,9 +306,9 @@ async fn extract_file(file : String, dest : String) -> Unit {
   @log.info(@i18n.t("install.extracting", args={ "file": file, "dest": dest }))
   let (code, data) = match file {
     f if f.has_suffix(".tar.gz") || f.has_suffix(".tgz") =>
-      @process.collect_output_merged("tar", ["-xzf", f, "-C", dest])
+      @mvm_cmd.collect_output_merged("tar", ["-xzf", f, "-C", dest])
     f if f.has_suffix(".tar.xz") =>
-      @process.collect_output_merged("tar", ["-xJf", f, "-C", dest])
+      @mvm_cmd.collect_output_merged("tar", ["-xJf", f, "-C", dest])
     f if f.has_suffix(".zip") => extract_zip(file, dest)
     // 未知的压缩格式
     _ => raise fail(@i18n.t("install.unknown_format", args={ "file": file }))
@@ -334,13 +334,9 @@ async fn extract_zip(
   output_dir : String,
 ) -> (Int, &@io.Data) {
   let os_info = @os.get_os_info()
-  // Windows 使用自带的 PowerShell Expand-Archive 命令
+  // Windows 10+ 自带 tar 命令（基于 libarchive），原生支持解压 zip 文件
   if os_info.name is Windows {
-    // 使用 PowerShell 的 Expand-Archive 命令
-    let ps_script = "Expand-Archive -Path '\{zip_file}' -DestinationPath '\{output_dir}' -Force"
-    @process.collect_output_merged("powershell", [
-      "-NoProfile", "-Command", ps_script,
-    ])
+    @mvm_cmd.collect_output_merged("tar", ["-xf", zip_file, "-C", output_dir])
   } else {
     // macOS 和 Linux 使用 unzip 命令
     if !@mvm_cmd.command_exists("unzip") {
@@ -373,7 +369,7 @@ async fn extract_zip(
       }
     }
     // 使用系统 unzip 命令解压
-    @process.collect_output_merged("unzip", ["-o", zip_file, "-d", output_dir])
+    @mvm_cmd.collect_output_merged("unzip", ["-o", zip_file, "-d", output_dir])
   }
 }
 

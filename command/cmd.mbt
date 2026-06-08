@@ -107,15 +107,47 @@ async test "get_best_downloader" {
   )
 }
 
+/// Windows 自带命令白名单，这些命令可以直接执行，无需通过 PowerShell 包装
+/// 包括：系统内置命令（cmd 内建）、Windows 10+ 自带的独立工具等
+fn is_windows_native_cmd(cmd : StringView) -> Bool {
+  let native_cmds = [
+    // 压缩/解压工具（Windows 10+ 自带）
+    "tar", "tar.exe",
+    // 网络工具（Windows 10+ 自带）
+    "curl", "curl.exe", "wget", "wget.exe",
+    // 系统内置命令
+    "cmd", "where", "echo", "type", "copy", "move", "del", "mkdir", "rmdir",
+    "xcopy", "robocopy", "findstr", "attrib", "icacls",
+    // 网络诊断
+    "ping", "ipconfig", "net", "netsh", "nslookup",
+    // 包管理
+    "winget",
+    // 证书工具
+    "certutil",
+    // PowerShell 自身（避免嵌套）
+    "powershell", "powershell.exe", "pwsh", "pwsh.exe",
+    // 解压工具（可能通过第三方安装）
+    "unzip", "unzip.exe", "7z", "7z.exe",
+  ]
+  let cmd_lower = cmd.to_owned().to_lower()
+  native_cmds.any(c => c == cmd_lower)
+}
+
 ///|
 fn get_cmd_and_args(
   cmd : StringView,
   args : ArrayView[String],
 ) -> (StringView, ArrayView[String]) {
-  // 在windows下，需要使用powershell -Command
+  // 在 Windows 下，PowerShell 专属命令需要通过 powershell -Command 包装
+  // 系统自带命令（白名单）可以直接执行，无需包装
   let os = @os.get_os_name()
   match os {
-    Windows => ("powershell", ["-Command", join_args([cmd.to_owned(), ..args])])
+    Windows =>
+      if is_windows_native_cmd(cmd) {
+        (cmd, args)
+      } else {
+        ("powershell", ["-Command", join_args([cmd.to_owned(), ..args])])
+      }
     _ => (cmd, args)
   }
 }
@@ -154,6 +186,20 @@ pub async fn run(
     stderr?,
     cwd?,
   )
+}
+
+///|
+/// 执行命令并收集合并的 stdout/stderr 输出
+pub async fn collect_output_merged(
+  cmd : StringView,
+  args : ArrayView[String],
+) -> (Int, &@io.Data) {
+  let (cmd, args) = get_cmd_and_args(cmd, args)
+  let arg_str = join_args(args)
+  @log.debug(
+    @i18n.t("cmd.debug_running", args={ "cmd": "\{cmd}", "args": arg_str }),
+  )
+  @process.collect_output_merged(cmd, args.to_owned())
 }
 
 ///|
