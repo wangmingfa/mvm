@@ -28,7 +28,7 @@ pub fn[T1 : Show, T2 : Show] join_path(T1, T2) -> String
 
 pub fn[T : Show] join_paths(ArrayView[T]) -> String
 
-pub async fn mv(String, String) -> Unit
+pub async fn mv(String, String, remove_dest_if_exists? : Bool) -> Unit
 
 pub fn readlink_target(String) -> String?
 

@@ -9,6 +9,8 @@ import {
 // Values
 pub async fn chmod_x(Array[String]) -> Unit
 
+pub async fn collect_output_merged(StringView, ArrayView[String]) -> (Int, &@io.Data)
+
 pub async fn command_exists(String) -> Bool
 
 pub async fn get_best_downloader() -> String?

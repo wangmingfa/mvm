@@ -151,7 +151,11 @@ pub async fn download(
           }),
         )
       }
-      let file_path = if dest_is_file { dest } else { @fs_ext.join_path(dest_dir, name) }
+      let file_path = if dest_is_file {
+        dest
+      } else {
+        @fs_ext.join_path(dest_dir, name)
+      }
       let file = @fs.open(
         file_path,
         mode=@fs.Mode::WriteOnly,

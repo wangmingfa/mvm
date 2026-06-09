@@ -16,7 +16,7 @@ pub let end_of_central_dir_signature : UInt
 
 pub fn extract_all(ZipArchive, Bytes, password? : String) -> Result[Map[String, Bytes], String]
 
-pub fn extract_file(ZipArchive, ZipFileEntry, Bytes, password? : String) -> Result[Bytes, String]
+pub fn extract_file(ZipFileEntry, Bytes, password? : String) -> Result[Bytes, String]
 
 pub let local_file_header_signature : UInt
 

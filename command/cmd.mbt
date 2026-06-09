@@ -107,6 +107,7 @@ async test "get_best_downloader" {
   )
 }
 
+///|
 /// Windows 自带命令白名单，这些命令可以直接执行，无需通过 PowerShell 包装
 /// 包括：系统内置命令（cmd 内建）、Windows 10+ 自带的独立工具等
 fn is_windows_native_cmd(cmd : StringView) -> Bool {
@@ -114,20 +115,20 @@ fn is_windows_native_cmd(cmd : StringView) -> Bool {
     // 压缩/解压工具（Windows 10+ 自带）
     "tar", "tar.exe",
     // 网络工具（Windows 10+ 自带）
-    "curl", "curl.exe", "wget", "wget.exe",
+     "curl", "curl.exe", "wget", "wget.exe",
     // 系统内置命令
-    "cmd", "where", "echo", "type", "copy", "move", "del", "mkdir", "rmdir",
-    "xcopy", "robocopy", "findstr", "attrib", "icacls",
+     "cmd", "where", "echo", "type", "copy", "move", "del", "mkdir", "rmdir", "xcopy",
+    "robocopy", "findstr", "attrib", "icacls",
     // 网络诊断
-    "ping", "ipconfig", "net", "netsh", "nslookup",
+     "ping", "ipconfig", "net", "netsh", "nslookup",
     // 包管理
-    "winget",
+     "winget",
     // 证书工具
-    "certutil",
+     "certutil",
     // PowerShell 自身（避免嵌套）
-    "powershell", "powershell.exe", "pwsh", "pwsh.exe",
+     "powershell", "powershell.exe", "pwsh", "pwsh.exe",
     // 解压工具（可能通过第三方安装）
-    "unzip", "unzip.exe", "7z", "7z.exe",
+     "unzip", "unzip.exe", "7z", "7z.exe",
   ]
   let cmd_lower = cmd.to_owned().to_lower()
   native_cmds.any(c => c == cmd_lower)

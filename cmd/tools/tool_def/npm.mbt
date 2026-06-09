@@ -5,6 +5,38 @@ let uninstall_cmds : ReadOnlyArray[String] = ["uninstall", "un"]
 let global_flags : ReadOnlyArray[String] = ["--global", "-g"]
 
 ///|
+let npm_value_flags : ReadOnlyArray[String] = [
+  "--registry", "--prefix", "--cache", "--userconfig", "--globalconfig", "--tag",
+  "--otp", "--node-options",
+]
+
+///|
+fn extract_pkgs_from_args(
+  args : ArrayView[String],
+  cmds : ReadOnlyArray[String],
+) -> Array[String] {
+  let pkgs : Array[String] = []
+  let arr = args.to_owned()
+  let mut i = 0
+  while i < arr.length() {
+    let arg = arr[i]
+    if cmds.any(cmd => arg == cmd) || global_flags.any(flag => arg == flag) {
+      i = i + 1
+    } else if arg.has_prefix("-") {
+      if npm_value_flags.any(f => arg == f) {
+        i = i + 2
+      } else {
+        i = i + 1
+      }
+    } else {
+      pkgs.push(arg)
+      i = i + 1
+    }
+  }
+  pkgs
+}
+
+///|
 struct Npm {}
 
 ///|
@@ -19,10 +51,7 @@ pub async fn Npm::before_npm_command(
 ) -> Map[String, String]? {
   let global_uninstall = is_global_uninstall(args)
   if global_uninstall {
-    let pkgs = args.filter(arg => {
-      !uninstall_cmds.any(cmd => arg == cmd) &&
-      !global_flags.any(flag => arg == flag)
-    })
+    let pkgs = extract_pkgs_from_args(args, uninstall_cmds)
     let npm_pkg_home = mvm_npm_pkg_home()
     let result : Map[String, String] = {}
     walk_global_pkgs(npm_exe_path, pkgs, fn(cmd_name, _) {
@@ -44,7 +73,7 @@ pub async fn Npm::after_npm_command(
   npm_exe_path : String,
   args : ArrayView[String],
 ) -> Unit {
-  let install_cmds = ["install", "i"]
+  let install_cmds : ReadOnlyArray[String] = ["install", "i"]
   let link_cmds = ["link", "ln"]
   let unlink_cmds = ["unlink"]
 
@@ -61,10 +90,7 @@ pub async fn Npm::after_npm_command(
   let unlink_args = args.filter(arg => !unlink_cmds.any(cmd => arg == cmd))
 
   if global_install {
-    let pkgs = args.filter(arg => {
-      !install_cmds.any(cmd => arg == cmd) &&
-      !global_flags.any(flag => arg == flag)
-    })
+    let pkgs = extract_pkgs_from_args(args, install_cmds)
     // 全局安装
     handle_install_npm_global_package(npm_exe_path, pkgs)
   } else if global_uninstall {
