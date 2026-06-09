@@ -28,8 +28,15 @@ fn normalize_version(version : String) -> String {
 async fn check_version_exists(version : String) -> Bool {
   // 通过 GitHub releases/tags API 验证版本是否存在，返回 200 表示存在，404 表示不存在
   let url = "https://api.github.com/repos/\{GITHUB_REPO}/releases/tags/\{version}"
-  let (res, _) = @request.github_get(url) // 网络错误时 res.code 不会是 200，等同于版本不存在
-  res.code == 200
+  let (res, data) = @request.github_get(url)
+  if res.code != 200 {
+    // 打印详细的请求失败原因，便于排查问题
+    @log.debug(
+      "check_version_exists failed: version=\{version}, code=\{res.code}, reason=\{res.reason}, body=\{data.text()}",
+    )
+    return false
+  }
+  true
 }
 
 ///|
@@ -187,7 +194,8 @@ async fn run_upgrade_list() -> CommandResult {
   let body = data.text()
   let versions = extract_all_tag_names(body)
   if versions.is_empty() {
-    // 未找到版本信息
+    // 未找到版本信息，打印响应内容便于排查
+    @log.debug("run_upgrade_list: no versions found in response body: \{body}")
     raise fail(@i18n.t("upgrade.no_versions_found"))
   }
   // 可用版本列表
@@ -214,18 +222,35 @@ async fn fetch_latest_version() -> String {
   try {
     let (res, data) = @request.github_get(GITHUB_API_LATEST)
     if !(res.code is (200..<300)) {
+      // 打印详细的请求失败原因，便于排查问题
+      @log.debug(
+        "fetch_latest_version failed: code=\{res.code}, reason=\{res.reason}, url=\{GITHUB_API_LATEST}, body=\{data.text()}",
+      )
       return ""
     }
     let body = data.text()
     // 从 JSON 中提取 "tag_name": "vX.Y.Z"
     let prefix = "\"tag_name\":"
-    guard body.find(prefix) is Some(start) else { return "" }
+    guard body.find(prefix) is Some(start) else {
+      @log.debug("fetch_latest_version: tag_name not found in response body")
+      return ""
+    }
     let after = body[start + prefix.length():]
-    guard after.find("\"") is Some(q1) else { return "" }
+    guard after.find("\"") is Some(q1) else {
+      @log.debug("fetch_latest_version: malformed JSON - missing opening quote")
+      return ""
+    }
     let tag_start = after[q1 + 1:]
-    guard tag_start.find("\"") is Some(q2) else { return "" }
+    guard tag_start.find("\"") is Some(q2) else {
+      @log.debug("fetch_latest_version: malformed JSON - missing closing quote")
+      return ""
+    }
     tag_start[:q2].to_owned()
   } catch {
-    _ => ""
+    err => {
+      // 捕获并打印异常信息，便于排查网络或解析错误
+      @log.debug("fetch_latest_version exception: \{err}")
+      ""
+    }
   }
 }
