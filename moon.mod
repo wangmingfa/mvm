@@ -3,7 +3,7 @@ name = "username/mvm"
 version = "0.1.0"
 
 import {
-  "moonbitlang/async@0.19.0",
+  "moonbitlang/async@0.19.2",
   "moonbitlang/regexp@0.3.5",
   "moonbitlang/x@0.4.43",
 }

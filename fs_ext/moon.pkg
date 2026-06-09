@@ -9,6 +9,7 @@ import {
   "username/mvm/ffi",
   "username/mvm/log",
   "username/mvm/os",
+  "username/mvm/utils",
 }
 
 options(

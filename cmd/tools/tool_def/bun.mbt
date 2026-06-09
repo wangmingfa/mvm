@@ -112,7 +112,7 @@ fn Bun::_parse_versions_from_html(html : String) -> Array[String] raise {
     .replace_all(old="&quot;", new="\"")
     .replace_all(old="&gt;", new=">")
 
-  guard (try? @json.parse(props_content)) is Ok(Object(json)) &&
+  guard @utils.to_result(() => @json.parse(props_content)) is Ok(Object(json)) &&
     json.get("versions") is Some(Array(versions)) &&
     versions.get(1) is Some(Array(versions)) else {
     raise fail(@i18n.t("bun.cannot_parse_version"))
@@ -294,7 +294,7 @@ pub async fn Bun::get_expected_checksum(
   version : String,
 ) -> String? {
   // 构建归档文件名（与 get_download_info 一致）
-  let platform_name_result = try? Bun::_get_platform_asset_name()
+  let platform_name_result = @utils.to_result(() => Bun::_get_platform_asset_name())
   guard platform_name_result is Ok(platform_name) else { return None }
   let archive_filename = "\{platform_name}.zip"
 

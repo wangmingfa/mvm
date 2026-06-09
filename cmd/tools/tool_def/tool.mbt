@@ -249,7 +249,7 @@ test "Tool::from_string 所有工具" {
 
 ///|
 test "Tool::from_string 无效工具" {
-  guard (try? Tool::from_string("foobar")) is Err(_) else {
+  guard @utils.to_result(() => Tool::from_string("foobar")) is Err(_) else {
     fail("invalid tool should raise error")
   }
 }

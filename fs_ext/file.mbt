@@ -15,13 +15,16 @@ pub async fn mv(
   }
 
   // dest 已存在且是目录时，将 src 移入该目录内（类似 Unix mv 命令行为）
-  // 使用 try? @fs.kind 一次性判断，避免 exists 和 kind 之间的竞争条件
-  if dest_exists && (try? @fs.kind(dest)) is Ok(Directory) {
-    let name = get_path_name(src)
-    let final_dest = join_path(dest, name)
-    @log.debug("目标为 \{final_dest}")
-    @fs.rename(src, final_dest)
-    return
+  // 直接调用 @fs.kind 判断，避免 exists 和 kind 之间的竞争条件
+  if dest_exists {
+    let kind_result = try @fs.kind(dest) |> Ok catch { e => Err(e) }
+    if kind_result is Ok(Directory) {
+      let name = get_path_name(src)
+      let final_dest = join_path(dest, name)
+      @log.debug("目标为 \{final_dest}")
+      @fs.rename(src, final_dest)
+      return
+    }
   }
   // 确保父目录存在
   ensure_parent_dir(dest)

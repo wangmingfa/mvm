@@ -119,22 +119,22 @@ test "compare_version 边界情况" {
 ///|
 test "parse_version 错误输入" {
   // 空字符串 → 报错
-  guard (try? parse_version("")) is Err(_) else {
+  guard to_result(() => parse_version("")) is Err(_) else {
     fail("空字符串应报错")
   }
 
   // 纯字母 → 报错
-  guard (try? parse_version("abc")) is Err(_) else {
+  guard to_result(() => parse_version("abc")) is Err(_) else {
     fail("纯字母应报错")
   }
 
   // 单段数字（正则要求至少两段，所以"1"是无效的）
-  guard (try? parse_version("1")) is Err(_) else {
+  guard to_result(() => parse_version("1")) is Err(_) else {
     fail("单段数字应报错（正则要求至少两段）")
   }
 
   // 两段版本号（有效）
-  guard (try? parse_version("1.2")) is Ok(arr2) else {
+  guard to_result(() => parse_version("1.2")) is Ok(arr2) else {
     fail("两段版本号应成功")
   }
   guard arr2[0] == 1 && arr2[1] == 2 else {
