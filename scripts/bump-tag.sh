@@ -2,17 +2,65 @@
 set -euo pipefail
 
 # =============================
+# bump-tag.sh - Git 语义化版本 tag 管理工具
+# =============================
+#
+# 用法:
+#   ./bump-tag.sh              交互式选择版本升级类型（major/minor/patch），带确认提示
+#   ./bump-tag.sh -y           交互式选择版本升级类型，跳过确认提示
+#   ./bump-tag.sh major        自动升级主版本号（如 v1.2.3 → v2.0.0）
+#   ./bump-tag.sh minor        自动升级次版本号（如 v1.2.3 → v1.3.0）
+#   ./bump-tag.sh patch        自动升级补丁版本号（如 v1.2.3 → v1.2.4）
+#   ./bump-tag.sh -d           删除并重新发布当前最新 tag，带确认提示
+#   ./bump-tag.sh -d -y        删除并重新发布当前最新 tag，跳过确认提示
+#   ./bump-tag.sh -dy          删除并重新发布当前最新 tag，跳过确认提示（合并选项）
+#   ./bump-tag.sh -yd          删除并重新发布当前最新 tag，跳过确认提示（合并选项）
+#   ./bump-tag.sh -h           显示帮助信息
+#
+# 选项:
+#   -y    自动模式，跳过所有确认提示
+#   -d    删除模式，删除并重新发布当前最新 tag（不升级版本号）
+#
+# 说明:
+#   - 脚本会自动从远程拉取最新 tag 作为基准版本
+#   - 如果没有 tag，默认从 v0.0.0 开始
+#   - 指定版本类型（major/minor/patch）时自动进入自动模式（隐含 -y）
+#   - 交互模式下使用 ↑ ↓ 方向键选择，回车确认
+#
+# =============================
 # 解析参数
 # =============================
 auto_mode=false
 delete_mode=false
 selected=2
 
-while getopts "yd" opt; do
+show_help() {
+  echo "用法: $0 [-y] [-d] [major|minor|patch]"
+  echo
+  echo "Git 语义化版本 tag 管理工具"
+  echo
+  echo "选项:"
+  echo "  -y    自动模式，跳过所有确认提示"
+  echo "  -d    删除模式，删除并重新发布当前最新 tag"
+  echo
+  echo "版本类型:"
+  echo "  major 升级主版本号 (v1.2.3 → v2.0.0)"
+  echo "  minor 升级次版本号 (v1.2.3 → v1.3.0)"
+  echo "  patch 升级补丁版本号 (v1.2.3 → v1.2.4)"
+  echo
+  echo "示例:"
+  echo "  $0              交互式选择版本升级类型"
+  echo "  $0 patch        自动升级补丁版本号"
+  echo "  $0 -d -y        删除并重新发布当前 tag，跳过确认"
+  exit 1
+}
+
+while getopts "ydh" opt; do
   case "$opt" in
     y) auto_mode=true ;;
     d) delete_mode=true ;;
-    *) echo "用法: $0 [-y] [-d] [major|minor|patch]" && exit 1 ;;
+    h) show_help ;;
+    *) show_help ;;
   esac
 done
 
