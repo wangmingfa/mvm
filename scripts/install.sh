@@ -17,31 +17,6 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-# 检查是否有正在运行的 mvm 进程（排除 mvm setup 和当前脚本自身）
-MVM_PIDS=$(ps aux | grep '[m]vm' | grep -v 'mvm setup' | grep -v "install" | awk '{print $2}' || true)
-if [ -n "$MVM_PIDS" ]; then
-  echo "检测到以下 mvm 进程正在运行："
-  ps aux | grep '[m]vm' | grep -v 'mvm setup' | grep -v "install"
-  echo ""
-  read -r -p "是否终止这些进程以继续安装？(y/N): " CONFIRM
-  if [ "$CONFIRM" = "y" ] || [ "$CONFIRM" = "Y" ]; then
-    echo "正在终止 mvm 进程..."
-    echo "$MVM_PIDS" | xargs kill -9 2>/dev/null || true
-    sleep 1
-    # 二次检查：确认进程已全部终止
-    REMAINING=$(ps aux | grep '[m]vm' | grep -v 'mvm setup' | grep -v "install" || true)
-    if [ -n "$REMAINING" ]; then
-      echo "以下 mvm 进程未能终止，请手动处理后重试："
-      echo "$REMAINING"
-      exit 1
-    fi
-    echo "所有 mvm 进程已终止。"
-  else
-    echo "安装已取消。"
-    exit 0
-  fi
-fi
-
 # 确定 MVM_HOME 目录（有环境变量则直接使用，否则使用 $HOME/.mvm）
 MVM_HOME="${MVM_HOME:-$HOME/.mvm}"
 
@@ -138,9 +113,16 @@ else
     exit 1
   fi
 
-  # 复制可执行文件
+  # 复制可执行文件（用 cat 重建以避免继承 com.apple.provenance 属性导致 Killed: 9）
   BUILD_DIR="_build/native/release/build/cmd"
-  cp "${BUILD_DIR}/main/main.exe" "${BIN_DIR}/mvm"
+  cat "${BUILD_DIR}/main/main.exe" > "${BIN_DIR}/mvm"
+  chmod +x "${BIN_DIR}/mvm"
+fi
+
+# macOS 下清除扩展属性并 ad-hoc 签名，防止 Killed: 9
+if [ "$(uname -s)" = "Darwin" ]; then
+  xattr -cr "${BIN_DIR}/mvm" 2>/dev/null || true
+  codesign --force --sign - "${BIN_DIR}/mvm" 2>/dev/null || true
 fi
 
 # 执行 setup（创建工具软连接、配置 PATH 等）
