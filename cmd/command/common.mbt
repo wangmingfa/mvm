@@ -19,7 +19,9 @@ async fn recover_installed_file(installed_file_path : String) -> Json {
   )
   // 将损坏文件备份（如果备份文件已存在则覆盖）
   @fs_ext.remove_if_exists(backup_path)
-  let mv_result = try @fs_ext.mv(installed_file_path, backup_path) |> Ok catch { e => Err(e) }
+  let mv_result = try @fs_ext.mv(installed_file_path, backup_path) |> Ok catch {
+    e => Err(e)
+  }
   if mv_result is Err(_) {
     @log.warn(@i18n.t("common.backup_failed_delete"))
     @fs_ext.remove_if_exists(installed_file_path)

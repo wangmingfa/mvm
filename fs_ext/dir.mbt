@@ -45,4 +45,5 @@ pub async fn remove_dir(dir : String) -> Unit {
     @log.debug("删除目录 \{dir}")
     @fs.rmdir(dir, recursive=true)
   }
+  @log.debug("删除目录 \{dir} 结束")
 }
