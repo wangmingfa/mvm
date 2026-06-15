@@ -343,6 +343,7 @@ pub let en_dict : Map[String, String] = {
   "node.debug_bin_path_not_exists": "Program {program} executable path {path} does not exist (declared in {pkg_json})",
   "node.debug_js_file_use_node": "Detected .js file {js_file}, using same version node to execute: {node_exe}",
   "node.warn_cannot_get_node_exe": "Cannot get node executable path for version {version}, falling back to system node",
+"node.warn_rosetta_fallback": "Version {version} does not have a native {arch} build for macOS, will use x64 version via Rosetta 2",
 
   // === log 模块（用户面向）===
   "log.operation_complete": "Operation complete",
@@ -376,7 +377,7 @@ pub let en_dict : Map[String, String] = {
   "error.version_info_empty": "{tool} version info is empty",
   "error.parse_version_info_failed": "Failed to parse {tool} version info, reason: {reason}",
   "error.cannot_get_bin_dir": "Cannot get {tool} bin directory",
-  "error.version_os_arch_unsupported": "Version {version} does not support {os} OS with {arch} architecture",
+  "error.version_os_arch_unsupported": "Version {version} is not available for {os.name} ({os.arch})",
   "error.cannot_be_empty": "Cannot be empty",
   "error.invalid_path": "Invalid path {path}",
   "error.managed_tools_unsupported": "managed_tools contains unsupported tool names: {names}. Supported tools: {tools}",

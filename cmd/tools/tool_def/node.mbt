@@ -11,6 +11,11 @@ const NODE_INDEX_URL = "https://nodejs.org/dist/index.json"
 const NODE_INDEX_CACHE_FILE = "nodejs_index.json"
 
 ///|
+// 存储当前安装是否使用 Rosetta 2 回退到 x64 版本
+// 在 _check_os_compatiable 中设置，在 get_download_info 和 get_expected_checksum 中读取
+let node_use_rosetta_fallback : Ref[Bool] = Ref(false)
+
+///|
 struct Node {}
 
 ///|
@@ -168,8 +173,28 @@ fn Node::_check_os_compatiable(
   ].join("-")
   let { version, files, .. } = nodeJsInfo
   if files.all(v => !v.has_prefix(file_prefix)) {
+    // macOS ARM 支持通过 Rosetta 2 运行 x64 版本
+    if os.name is MacOS && os.arch is Aarch64 {
+      let x64_prefix = "osx-x64"
+      if files.any(v => v.has_prefix(x64_prefix)) {
+        // 只在首次设置回退标志时打印警告，避免重复提示
+        if !node_use_rosetta_fallback.val {
+          @log.warn(
+            @i18n.t("node.warn_rosetta_fallback", args={
+              "version": version,
+              "arch": "arm64",
+            }),
+          )
+          // 标记使用 Rosetta 回退，供 get_download_info 和 get_expected_checksum 读取
+          node_use_rosetta_fallback.val = true
+        }
+        return version
+      }
+    }
     raise fail(format_os_compat_error(error_msg_tpl, version, os))
   }
+  // 有原生版本支持，重置回退标志
+  node_use_rosetta_fallback.val = false
   version
 }
 
@@ -179,7 +204,12 @@ pub fn Node::get_download_info(
   os_info : @os.OsInfo,
   version : String,
 ) -> DownloadInfo raise {
-  let arch = if os_info.arch is Aarch64 { "arm64" } else { "x64" }
+  // macOS ARM 使用 Rosetta 回退时，强制使用 x64 架构
+  let arch = if os_info.arch is Aarch64 && !node_use_rosetta_fallback.val {
+    "arm64"
+  } else {
+    "x64"
+  }
   let (os, ext) = match os_info.name {
     Windows => ("win", "zip")
     Linux => ("linux", "tar.gz")
@@ -201,7 +231,12 @@ pub async fn Node::get_expected_checksum(
   version : String,
 ) -> String? {
   // 构建归档文件名（与 get_download_url 一致）
-  let arch = if os_info.arch is Aarch64 { "arm64" } else { "x64" }
+  // macOS ARM 使用 Rosetta 回退时，强制使用 x64 架构
+  let arch = if os_info.arch is Aarch64 && !node_use_rosetta_fallback.val {
+    "arm64"
+  } else {
+    "x64"
+  }
   let (os, ext) = match os_info.name {
     Windows => ("win", "zip")
     Linux => ("linux", "tar.gz")

@@ -343,6 +343,7 @@ pub let zh_dict : Map[String, String] = {
   "node.debug_bin_path_not_exists": "程序 {program} 的可执行文件路径 {path} 不存在 (声明于 {pkg_json})",
   "node.debug_js_file_use_node": "检测到 .js 文件 {js_file}，使用同版本 node 执行: {node_exe}",
   "node.warn_cannot_get_node_exe": "无法获取版本 {version} 的 node 可执行文件路径，回退使用系统 node",
+"node.warn_rosetta_fallback": "版本 {version} 没有 macOS {arch} 原生版本，将通过 Rosetta 2 使用 x64 版本",
 
   // === log 模块（用户面向）===
   "log.operation_complete": "操作完成",
@@ -376,7 +377,7 @@ pub let zh_dict : Map[String, String] = {
   "error.version_info_empty": "{tool}版本信息为空",
   "error.parse_version_info_failed": "解析{tool}版本信息失败，原因：{reason}",
   "error.cannot_get_bin_dir": "无法获取到 {tool} 的 bin 目录",
-  "error.version_os_arch_unsupported": "版本 {version} 不支持 {os} 操作系统下的 {arch} 架构",
+  "error.version_os_arch_unsupported": "版本 {version} 不支持 {os.name} ({os.arch})",
   "error.cannot_be_empty": "不能为空",
   "error.invalid_path": "无效的路径 {path}",
   "error.managed_tools_unsupported": "managed_tools 中包含不支持的工具名：{names}。支持的工具：{tools}",
