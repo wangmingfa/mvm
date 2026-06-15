@@ -13,6 +13,8 @@
 #else
 #include <unistd.h>
 #include <termios.h>
+#include <fcntl.h>
+#include <errno.h>
 #endif
 
 #define MAX_ITEMS 128
@@ -100,6 +102,12 @@ int read_key() {
 static struct termios original_termios;
 
 void enable_raw_mode() {
+    // 清除 stdin 的 O_NONBLOCK 标志，防止后续 read() 因非阻塞返回 EAGAIN
+    int flags = fcntl(STDIN_FILENO, F_GETFL, 0);
+    if (flags != -1) {
+        fcntl(STDIN_FILENO, F_SETFL, flags & ~O_NONBLOCK);
+    }
+
     tcgetattr(STDIN_FILENO, &original_termios);
 
     struct termios raw = original_termios;
@@ -115,8 +123,14 @@ void disable_raw_mode() {
 
 int read_key() {
     char c;
+    int n;
 
-    if (read(STDIN_FILENO, &c, 1) != 1) {
+    // 重试读取，忽略 EAGAIN 错误（非阻塞模式下无数据可读时返回）
+    do {
+        n = read(STDIN_FILENO, &c, 1);
+    } while (n == -1 && errno == EAGAIN);
+
+    if (n != 1) {
         return KEY_NONE;
     }
 

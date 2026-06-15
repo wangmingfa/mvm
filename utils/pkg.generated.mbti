@@ -50,6 +50,8 @@ pub fn strip_colors(String) -> String
 
 pub fn to_debug_string(String) -> String
 
+pub fn[T] to_result(() -> T raise) -> Result[T, Error]
+
 pub fn[T : ToStr] yellow(T) -> String
 
 // Errors
