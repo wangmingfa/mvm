@@ -168,8 +168,14 @@ int read_key() {
 
 #endif
 
+static int last_draw_lines = 0;
+
 void clear_screen() {
     printf("\x1b[2J\x1b[H");
+}
+
+void move_cursor_home() {
+    printf("\x1b[H");
 }
 
 void hide_cursor() {
@@ -182,13 +188,16 @@ void show_cursor() {
 
 void draw(Item* items, int count, int current, const char* title) {
 
-    clear_screen();
+    move_cursor_home();
+    
+    int lines = 0;
     
     if (title != NULL && *title != '\0') {
         // Title (highlighted with bold + cyan)
         printf("\n\n\x1b[36m");
         printf(">>>>%s", title);
         printf("\x1b[0m\n");
+        lines += 3;
     }
 
     // Key hints (compact, single line)
@@ -198,10 +207,12 @@ void draw(Item* items, int count, int current, const char* title) {
     printf("\x1b[33mi\x1b[0m:Invert  ");
     printf("\x1b[33mENTER\x1b[0m:OK  ");
     printf("\x1b[33mq\x1b[0m:Quit\n");
+    lines++;
 
     printf("\x1b[90m");
     printf("----------------------------------------\n");
     printf("\x1b[0m");
+    lines++;
 
     for (int i = 0; i < count; i++) {
 
@@ -231,9 +242,11 @@ void draw(Item* items, int count, int current, const char* title) {
 
         printf("\x1b[0m");
         printf("\n");
+        lines++;
     }
 
     printf("\x1b[90m----------------------------------------\x1b[0m\n");
+    lines++;
 
     // footer stats
     int selected = 0;
@@ -242,6 +255,14 @@ void draw(Item* items, int count, int current, const char* title) {
     }
 
     printf("\x1b[36mSelected:\x1b[0m %d/%d\n", selected, count);
+    lines++;
+
+    // Clear any leftover lines from previous draw
+    for (int i = lines; i < last_draw_lines; i++) {
+        printf("\x1b[K\n");
+    }
+    
+    last_draw_lines = lines;
 
     fflush(stdout);
 }

@@ -474,6 +474,7 @@ pub let zh_dict : Map[String, String] = {
   "tool.debug_create_shell": "创建shell文件 {path}",
   "tool.debug_create_ps1": "创建ps1文件 {path}",
   "tool.debug_create_cmd": "创建cmd文件 {path}",
+  "tool.debug_create_bash": "创建bash文件 {path}",
   "tool.debug_find_version": "在 {dir} 查找 {tool} 的版本号",
   "tool.debug_found_version": "在 {path} 找到 {tool} 版本 {version}",
   "tool.debug_volta_node_version": "从 Volta package.json 找到 node 版本: {version}",

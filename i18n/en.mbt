@@ -474,6 +474,7 @@ pub let en_dict : Map[String, String] = {
   "tool.debug_create_shell": "Creating shell file {path}",
   "tool.debug_create_ps1": "Creating ps1 file {path}",
   "tool.debug_create_cmd": "Creating cmd file {path}",
+  "tool.debug_create_bash": "Creating bash file {path}",
   "tool.debug_find_version": "Looking for {tool} version number in {dir}",
   "tool.debug_found_version": "Found {tool} version {version} in {path}",
   "tool.debug_volta_node_version": "Found node version from Volta package.json: {version}",

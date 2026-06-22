@@ -379,15 +379,19 @@ pub async fn create_tool_cmd_windows(
   file_name? : String = cmd_name,
   cmd_dir? : String = "",
 ) -> Unit {
-  // 创建ps1、cmd文件，里面执行mvm run {tool} -- {cmd_name} $args / %*
   let mvm_bin = mvm_bin_home()
+  let tool_name = tool.to_string()
   let ps1_file_path = @fs_ext.join_paths([mvm_bin, cmd_dir, "\{file_name}.ps1"])
   let cmd_file_path = @fs_ext.join_paths([mvm_bin, cmd_dir, "\{file_name}.cmd"])
-  let tool_name = tool.to_string()
+  let bash_file_path = @fs_ext.join_paths([mvm_bin, cmd_dir, file_name])
   let ps1_content = "mvm run \{tool_name} \{cmd_name} $args"
   let cmd_content = "@mvm run \{tool_name} \{cmd_name} %*"
+  let bash_content = "#!/bin/sh\nmvm run \{tool_name} \{cmd_name} \"$@\""
   @fs.write_file(ps1_file_path, ps1_content, create_mode=CreateOrTruncate)
   @fs.write_file(cmd_file_path, cmd_content, create_mode=CreateOrTruncate)
+  @fs.write_file(bash_file_path, bash_content, create_mode=CreateOrTruncate)
+  @mvm_cmd.chmod_x([bash_file_path])
   @log.debug(@i18n.t("tool.debug_create_ps1", args={ "path": ps1_file_path }))
   @log.debug(@i18n.t("tool.debug_create_cmd", args={ "path": cmd_file_path }))
+  @log.debug(@i18n.t("tool.debug_create_bash", args={ "path": bash_file_path }))
 }
