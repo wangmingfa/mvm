@@ -73,7 +73,7 @@ fn _build_rust_target(os_info : @os.OsInfo) -> String raise {
 pub async fn Rust::get_target_version(
   os : @os.OsInfo,
   version : String,
-  _version_count : Int,
+  version_count : Int,
 ) -> String {
   match version {
     "" | "stable" | "lts" | "latest" =>
@@ -97,8 +97,34 @@ pub async fn Rust::get_target_version(
         RUST_BETA_MANIFEST_URL,
         "rust_beta_manifest.toml",
       )
+    _ if version_count >= 1 && version_count < 3 => {
+      let resolved = Rust::_get_channel_version(
+        os,
+        "stable",
+        RUST_STABLE_MANIFEST_URL,
+        RUST_INDEX_CACHE_FILE,
+      )
+      let resolved_ver = if resolved.has_prefix("v") {
+        resolved.sub(start=1).to_owned()
+      } else {
+        resolved
+      }
+      let prefix = if version.has_prefix("v") {
+        version.sub(start=1).to_owned()
+      } else {
+        version
+      }
+      if !resolved_ver.has_prefix(prefix + ".") && resolved_ver != prefix {
+        raise fail(
+          @i18n.t("rust.partial_version_mismatch", args={
+            "version": version,
+            "latest": resolved,
+          }),
+        )
+      }
+      resolved
+    }
     _ => {
-      // 具体版本号，加 v 前缀；同时清空 manifest 缓存（指定版本时无 manifest 数据）
       rust_manifest_target_info.val = None
       let ver = if version.has_prefix("v") { version } else { "v\{version}" }
       ver
@@ -299,9 +325,8 @@ pub fn Rust::get_expected_checksum(
 pub fn Rust::get_exe_path(version : String) -> String raise {
   let os = @os.get_os_name()
   let suffix = if os is Windows { ".exe" } else { "" }
-  [version_dir(Tool::Rust, version), "bin", "rustc\{suffix}"]
-  .filter(v => !v.is_blank())
-  .join("/")
+  let base = version_dir(Tool::Rust, version)
+  @fs_ext.join_paths([base, "rustc", "bin", "rustc\{suffix}"])
 }
 
 ///|
@@ -366,28 +391,52 @@ pub async fn Rust::get_program_exe_info(
   let prog_low = program.to_lower()
   if prog_low == "rustc" {
     return rustc_info
-  } else if prog_low == "cargo" {
-    // 直接构造 ProgramExeInfo
-    let os = @os.get_os_name()
-    let suffix = if os is Windows { ".exe" } else { "" }
-    let rust_bin_dir = @fs_ext.get_parent_dir(rustc_info.path)
-    match rust_bin_dir {
-      Some(dir) => {
-        let tool_path = @fs_ext.join_path(dir, "\{prog_low}\{suffix}")
-        let cargo_exists = @fs.exists(tool_path)
+  }
+  let os = @os.get_os_name()
+  let suffix = if os is Windows { ".exe" } else { "" }
+  let base = version_dir(Tool::Rust, version)
+  let component = match prog_low {
+    "cargo" => Some("cargo")
+    "rustdoc" | "rust-gdb" | "rust-gdbgui" | "rust-lldb" => Some("rustc")
+    "rustfmt" | "cargo-fmt" => Some("rustfmt-preview")
+    "cargo-clippy" | "clippy-driver" => Some("clippy-preview")
+    "rust-analyzer" => Some("rust-analyzer-preview")
+    _ => None
+  }
+  match component {
+    Some(comp) => {
+      let new_path = @fs_ext.join_paths([
+        base,
+        comp,
+        "bin",
+        "\{prog_low}\{suffix}",
+      ])
+      if @fs.exists(new_path) {
         return ProgramExeInfo(
           prog_low,
-          tool_path,
+          new_path,
           version,
           version,
           envs={},
-          cargo_exists,
+          true,
           Tool::Rust,
           exists,
         )
       }
-      _ => ()
+      let old_path = @fs_ext.join_paths([base, "bin", "\{prog_low}\{suffix}"])
+      let old_exists = @fs.exists(old_path)
+      return ProgramExeInfo(
+        prog_low,
+        old_path,
+        version,
+        version,
+        envs={},
+        old_exists,
+        Tool::Rust,
+        exists,
+      )
     }
+    None => ()
   }
   raise fail(
     @i18n.t("error.exe_info_not_found", args={

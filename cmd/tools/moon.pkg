@@ -7,5 +7,6 @@ import {
   "moonbitlang/core/json",
   "moonbitlang/core/env",
   "moonbitlang/core/string",
+  "moonbitlang/async/fs",
   "username/mvm/cmd/tools/tool_def",
 }

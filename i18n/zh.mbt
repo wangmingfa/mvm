@@ -343,7 +343,7 @@ pub let zh_dict : Map[String, String] = {
   "node.debug_bin_path_not_exists": "程序 {program} 的可执行文件路径 {path} 不存在 (声明于 {pkg_json})",
   "node.debug_js_file_use_node": "检测到 .js 文件 {js_file}，使用同版本 node 执行: {node_exe}",
   "node.warn_cannot_get_node_exe": "无法获取版本 {version} 的 node 可执行文件路径，回退使用系统 node",
-"node.warn_rosetta_fallback": "版本 {version} 没有 macOS {arch} 原生版本，将通过 Rosetta 2 使用 x64 版本",
+  "node.warn_rosetta_fallback": "版本 {version} 没有 macOS {arch} 原生版本，将通过 Rosetta 2 使用 x64 版本",
 
   // === log 模块（用户面向）===
   "log.operation_complete": "操作完成",
@@ -441,6 +441,7 @@ pub let zh_dict : Map[String, String] = {
   // === rust 模块 ===
   "rust.cannot_fetch_manifest": "无法获取 Rust {channel} manifest（HTTP {code} {reason}，URL: {url}）",
   "rust.cannot_extract_version": "无法从 Rust manifest 中提取 [pkg.rust] 版本号",
+  "rust.partial_version_mismatch": "Rust 部分版本 {version} 与最新稳定版 {latest} 不匹配。请使用更具体的版本号或 'stable'",
 
   // === go 模块 ===
   "go.cache_not_exists": "Go 索引缓存不存在，无法获取校验值",

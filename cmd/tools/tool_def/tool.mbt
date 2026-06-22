@@ -75,7 +75,19 @@ pub async fn is_installed(tool : Tool, version : String) -> Bool {
     Node => NodePath(version).get_exe_path(Node.to_string())
     Kotlin => Kotlin::get_exe_path(version)
   }
-  @fs.exists(tool_exe_path)
+  if @fs.exists(tool_exe_path) {
+    return true
+  }
+  if tool is Rust {
+    let os = @os.get_os_name()
+    let suffix = if os is Windows { ".exe" } else { "" }
+    let base = version_dir(Tool::Rust, version)
+    let old_path = @fs_ext.join_paths([base, "bin", "rustc\{suffix}"])
+    if @fs.exists(old_path) {
+      return true
+    }
+  }
+  false
 }
 
 ///|
@@ -165,6 +177,7 @@ let python_executable_programs : ReadOnlyArray[String] = ["python3", "python"]
 ///|
 let rust_executable_programs : ReadOnlyArray[String] = [
   "rustc", "cargo", "rustfmt", "cargo-fmt", "clippy-driver", "cargo-clippy", "rustdoc",
+  "rust-gdb", "rust-gdbgui", "rust-lldb", "rust-analyzer",
 ]
 
 ///|

@@ -294,7 +294,9 @@ pub async fn Bun::get_expected_checksum(
   version : String,
 ) -> String? {
   // 构建归档文件名（与 get_download_info 一致）
-  let platform_name_result = @utils.to_result(() => Bun::_get_platform_asset_name())
+  let platform_name_result = @utils.to_result(() => {
+    Bun::_get_platform_asset_name()
+  })
   guard platform_name_result is Ok(platform_name) else { return None }
   let archive_filename = "\{platform_name}.zip"
 

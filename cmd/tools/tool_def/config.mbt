@@ -716,7 +716,8 @@ test "validate_managed_tools_value 空值" {
 
 ///|
 test "validate_managed_tools_value 非法值" {
-  guard @utils.to_result(() => validate_managed_tools_value("node,foobar")) is Err(_) else {
+  guard @utils.to_result(() => validate_managed_tools_value("node,foobar"))
+    is Err(_) else {
     fail("非法工具名应抛出错误")
   }
 }

@@ -343,7 +343,7 @@ pub let en_dict : Map[String, String] = {
   "node.debug_bin_path_not_exists": "Program {program} executable path {path} does not exist (declared in {pkg_json})",
   "node.debug_js_file_use_node": "Detected .js file {js_file}, using same version node to execute: {node_exe}",
   "node.warn_cannot_get_node_exe": "Cannot get node executable path for version {version}, falling back to system node",
-"node.warn_rosetta_fallback": "Version {version} does not have a native {arch} build for macOS, will use x64 version via Rosetta 2",
+  "node.warn_rosetta_fallback": "Version {version} does not have a native {arch} build for macOS, will use x64 version via Rosetta 2",
 
   // === log 模块（用户面向）===
   "log.operation_complete": "Operation complete",
@@ -441,6 +441,7 @@ pub let en_dict : Map[String, String] = {
   // === rust 模块 ===
   "rust.cannot_fetch_manifest": "Cannot fetch Rust {channel} manifest (HTTP {code} {reason}, URL: {url})",
   "rust.cannot_extract_version": "Cannot extract [pkg.rust] version number from Rust manifest",
+  "rust.partial_version_mismatch": "Rust partial version {version} does not match latest stable {latest}. Please use a more specific version or 'stable'",
 
   // === go 模块 ===
   "go.cache_not_exists": "Go index cache does not exist, cannot get checksum",

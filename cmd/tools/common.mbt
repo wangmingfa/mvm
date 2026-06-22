@@ -291,10 +291,32 @@ pub async fn post_install(tool : Tool, target_dir : String) -> Unit {
       // Python 可执行文件在 bin 子目录下
       Python => [@fs_ext.join_path(target_dir, "bin/python3")]
       // Rust 的可执行文件在 bin 子目录下
-      Rust =>
-        ["rustc", "cargo"].map(name => {
-          @fs_ext.join_paths([target_dir, "bin", name])
-        })
+      Rust => {
+        let base = target_dir
+        let rustc_path = @fs_ext.join_paths([base, "rustc", "bin", "rustc"])
+        if @fs.exists(rustc_path) {
+          [
+            @fs_ext.join_paths([base, "rustc", "bin", "rustc"]),
+            @fs_ext.join_paths([base, "rustc", "bin", "rustdoc"]),
+            @fs_ext.join_paths([base, "rustc", "bin", "rust-gdb"]),
+            @fs_ext.join_paths([base, "rustc", "bin", "rust-gdbgui"]),
+            @fs_ext.join_paths([base, "rustc", "bin", "rust-lldb"]),
+            @fs_ext.join_paths([base, "cargo", "bin", "cargo"]),
+            @fs_ext.join_paths([base, "rustfmt-preview", "bin", "rustfmt"]),
+            @fs_ext.join_paths([base, "rustfmt-preview", "bin", "cargo-fmt"]),
+            @fs_ext.join_paths([base, "clippy-preview", "bin", "cargo-clippy"]),
+            @fs_ext.join_paths([base, "clippy-preview", "bin", "clippy-driver"]),
+            @fs_ext.join_paths([
+              base, "rust-analyzer-preview", "bin", "rust-analyzer",
+            ]),
+          ]
+        } else {
+          [
+            "rustc", "cargo", "rustfmt", "cargo-fmt", "cargo-clippy", "clippy-driver",
+            "rust-analyzer", "rustdoc", "rust-gdb", "rust-gdbgui", "rust-lldb",
+          ].map(name => @fs_ext.join_paths([base, "bin", name]))
+        }
+      }
       // Deno 是单一二进制文件，无 bin 子目录
       Deno => [@fs_ext.join_path(target_dir, "deno")]
       // Java (JDK) 的可执行文件在 bin 子目录下
