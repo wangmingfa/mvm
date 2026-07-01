@@ -14,4 +14,9 @@ trap '
   fi
 ' EXIT
 
-moon run cmd/main "$@"
+# 获取脚本所在目录，并定位项目根目录（scripts/ 的上一级）
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+
+# 使用绝对路径执行，保持用户当前工作目录不变
+moon run "${PROJECT_ROOT}/cmd/main" "$@"

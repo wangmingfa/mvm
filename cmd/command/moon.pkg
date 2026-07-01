@@ -17,8 +17,8 @@ import {
   "username/mvm/i18n",
   "username/mvm/checksum",
   "username/mvm/command" @mvm_cmd,
-  "moonbitlang/async/io",
   "username/mvm/stdio",
+  "wangmingfa/zipx",
 }
 
 import {

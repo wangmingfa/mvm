@@ -410,9 +410,24 @@ pub async fn Node::get_program_exe_info(
             }),
           )
           let package_json_path = @fs_ext.join_path(path, "package.json")
-          if @fs.exists(package_json_path) {
+          if @fs_ext.exists(package_json_path) {
             @log.debug("找到package.json: \{package_json_path}")
             break (path, package_json_path)
+          }
+          // 跳过不存在的路径（如损坏的符号链接）
+          if !@fs_ext.exists(path) {
+            @log.debug("路径不存在，跳过: \{path}")
+            continue lib_loop~
+          }
+          // 跳过非目录路径
+          let is_dir = try {
+            @fs.kind(path) is Directory
+          } catch {
+            _ => false
+          }
+          if !is_dir {
+            @log.debug("路径不是目录，跳过: \{path}")
+            continue lib_loop~
           }
           let subs = @fs.readdir(path)
           if subs.length() == 1 {

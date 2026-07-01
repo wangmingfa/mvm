@@ -127,8 +127,6 @@ fn is_windows_native_cmd(cmd : StringView) -> Bool {
      "certutil",
     // PowerShell 自身（避免嵌套）
      "powershell", "powershell.exe", "pwsh", "pwsh.exe",
-    // 解压工具（可能通过第三方安装）
-     "unzip", "unzip.exe", "7z", "7z.exe",
   ]
   let cmd_lower = cmd.to_owned().to_lower()
   native_cmds.any(c => c == cmd_lower)

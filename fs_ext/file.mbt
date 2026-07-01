@@ -365,6 +365,16 @@ async test "readlink_target" {
 }
 
 ///|
+/// 安全地检查路径是否存在，遇到异常（如损坏的符号链接）时返回 false
+pub async fn exists(path : String) -> Bool {
+  try {
+    @fs.exists(path)
+  } catch {
+    _ => false
+  }
+}
+
+///|
 pub async fn remove_if_exists(file_path : String) -> Unit {
   if @fs.exists(file_path) {
     match @fs.kind(file_path) {
