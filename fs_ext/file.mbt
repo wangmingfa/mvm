@@ -137,7 +137,7 @@ async fn generate_tmp_dir_and_files(
   let file_content = "hello world, MoonBit!"
   let temp_dir = get_tmp_dir()
   // tag 用于区分并发测试调用，避免时间戳冲突
-  let src_root_dir = temp_dir.join_path("src_\{tag}_\{@async.now()}")
+  let src_root_dir = temp_dir.join_path("src_\{tag}_\{@env.now()}")
   ensure_dir(src_root_dir)
   let src_root_file_path = "\{src_root_dir}/root.txt"
   @fs.write_file(
@@ -188,7 +188,7 @@ async test "move file" {
   let file_content = "hello world, MoonBit!"
   let temp_dir = get_tmp_dir()
   ensure_dir(temp_dir)
-  let timestamp = @async.now()
+  let timestamp = @env.now()
   let src_file_path = "\{temp_dir}/mv_src_\{timestamp}.txt"
   @fs.write_file(src_file_path, file_content, create_mode=CreateOrTruncate)
   // dest 不存在，mv 将 src 重命名为 dest
@@ -212,7 +212,7 @@ async test "move file into dir" {
   let file_content = "hello world, MoonBit!"
   let temp_dir = get_tmp_dir()
   ensure_dir(temp_dir)
-  let timestamp = @async.now()
+  let timestamp = @env.now()
   let src_file_path = "\{temp_dir}/mv_into_src_\{timestamp}.txt"
   @fs.write_file(src_file_path, file_content, create_mode=CreateOrTruncate)
   // 创建目标目录
@@ -237,9 +237,7 @@ async test "move dir" {
   let (src_root_dir, src_dir_and_files) = generate_tmp_dir_and_files(
     tag="move_dir",
   )
-  let dest_path = src_root_dir
-    .join_path("../")
-    .join_path("dest_\{@async.now()}")
+  let dest_path = src_root_dir.join_path("../").join_path("dest_\{@env.now()}")
   // 移动
   mv(src_root_dir, dest_path)
   let dest_dir_and_files = get_all_sub_dir_or_file_path(
@@ -297,7 +295,7 @@ pub fn readlink_target(path : String) -> String? {
 async test "symlink_status" {
   let temp_dir = get_tmp_dir()
   ensure_dir(temp_dir)
-  let timestamp = @async.now()
+  let timestamp = @env.now()
   let test_dir = "\{temp_dir}/symlink_test_\{timestamp}"
   ensure_dir(test_dir)
 
@@ -339,7 +337,7 @@ async test "symlink_status" {
 async test "readlink_target" {
   let temp_dir = get_tmp_dir()
   ensure_dir(temp_dir)
-  let timestamp = @async.now()
+  let timestamp = @env.now()
   let test_dir = "\{temp_dir}/readlink_test_\{timestamp}"
   ensure_dir(test_dir)
 
@@ -367,9 +365,7 @@ async test "readlink_target" {
 ///|
 /// 安全地检查路径是否存在，遇到异常（如损坏的符号链接）时返回 false
 pub async fn exists(path : String) -> Bool {
-  try {
-    @fs.exists(path)
-  } catch {
+  @fs.exists(path) catch {
     _ => false
   }
 }

@@ -336,10 +336,9 @@ async fn extract_file(file : String, dest : String) -> Unit {
 async fn extract_zip(file : String, dest : String) -> Unit {
   let unzip_available = @mvm_cmd.collect_output_merged("unzip", ["-v"])
   if unzip_available.0 == 0 {
-    let (code, data) = @mvm_cmd.collect_output_merged(
-      "unzip",
-      ["-o", file, "-d", dest],
-    )
+    let (code, data) = @mvm_cmd.collect_output_merged("unzip", [
+      "-o", file, "-d", dest,
+    ])
     if code == 0 {
       return ()
     }
@@ -353,7 +352,8 @@ async fn extract_zip(file : String, dest : String) -> Unit {
       let os = @os.get_os_name()
       let hint = match os {
         MacOS => "brew install unzip"
-        Linux => "apt-get install unzip (Debian/Ubuntu) 或 yum install unzip (CentOS/RHEL)"
+        Linux =>
+          "apt-get install unzip (Debian/Ubuntu) 或 yum install unzip (CentOS/RHEL)"
         Windows => "winget install unzip"
         _ => @i18n.t("install.install_unzip_unknown")
       }

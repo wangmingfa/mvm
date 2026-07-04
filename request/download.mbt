@@ -321,14 +321,14 @@ test "parse_content_length_from_headers" {
 
 ///|
 async test "download" {
-  let start = @async.now()
+  let start = @env.now()
   guard @env.current_dir() is Some(dir)
   // 使用阿里云镜像上的小文件（~810KB），测试速度快且能验证进度条
   let url = "https://mirrors.aliyun.com/macports/distfiles/bzip2/bzip2-1.0.8.tar.gz"
   let output_path = "\{dir}/.temp/bzip2-1.0.8.tar.gz"
   download(url, output_path, dest_is_file=true)
-  let end = @async.now()
-  let time = end - start
+  let end = @env.now()
+  let time = (end - start).reinterpret_as_int64()
   println("耗时：\{@utils.get_readable_time(time)}")
 }
 
@@ -452,7 +452,7 @@ async test "download_by_native_command" {
   // 使用阿里云镜像上的小文件（~2KB SHASUMS256.txt），测试速度快
   let url = "https://mirrors.aliyun.com/nodejs-release/v22.14.0/SHASUMS256.txt"
   let name = @fs_ext.get_path_name(url)
-  let dest_dir = ".temp/\{@async.now()}"
+  let dest_dir = ".temp/\{@env.now()}"
   ensure_dir(dest_dir)
   let dest = @fs_ext.join_path(dest_dir, name)
   download_by_native_command(url, dest)

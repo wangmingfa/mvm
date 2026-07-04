@@ -1,6 +1,7 @@
 import {
   "moonbitlang/async",
   "moonbitlang/core/encoding/utf8",
+  "moonbitlang/core/env",
   "username/mvm/utils",
   "username/mvm/stdio",
 }

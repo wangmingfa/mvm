@@ -1,6 +1,6 @@
 import {
-  "moonbitlang/async",
   "moonbitlang/core/string",
   "moonbitlang/core/cmp",
+  "moonbitlang/core/env",
   "moonbitlang/x/time",
 }

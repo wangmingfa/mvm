@@ -123,7 +123,7 @@ test "no_cache_mode_toggle" {
 async test "cache_read_write_normal_mode" {
   // 正常模式：写入缓存后可以读取
   set_no_cache_mode(false)
-  let test_key = "test/\{@async.now()}"
+  let test_key = "test/\{@env.now()}"
   let test_content = "hello cache test"
   write_cache_file_content(test_key, test_content)
   let read_result = read_cache_file_content(test_key)
@@ -139,7 +139,7 @@ async test "cache_read_write_normal_mode" {
 async test "cache_read_no_cache_mode" {
   // no_cache 模式：写入缓存后读取仍返回 None
   set_no_cache_mode(false)
-  let test_key = "test_nocache/\{@async.now()}"
+  let test_key = "test_nocache/\{@env.now()}"
   let test_content = "hello no_cache test"
   write_cache_file_content(test_key, test_content)
   // 开启 no_cache 模式

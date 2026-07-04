@@ -19,7 +19,10 @@ import {
   "username/mvm/command" @mvm_cmd,
   "username/mvm/stdio",
   "wangmingfa/zipx",
+  "wangmingfa/promptx",
 }
+
+supported_targets = "native"
 
 import {
   "moonbitlang/async",

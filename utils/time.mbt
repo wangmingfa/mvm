@@ -52,7 +52,7 @@ pub fn get_duration_and_total_time(
   start_time_ms~ : Int64,
   current_speed~ : Int64,
 ) -> String {
-  let current_time = @async.now()
+  let current_time = @env.now().reinterpret_as_int64()
   let duration_ms = current_time - start_time_ms
   if file_size <= 0L {
     let duration_str = format_duration(duration_ms, false)
@@ -88,7 +88,7 @@ test "get_duration_and_total_time" {
     get_duration_and_total_time(
       current_size=230_000,
       file_size=1000 * 1000,
-      start_time_ms=@async.now() - 23_000,
+      start_time_ms=@env.now().reinterpret_as_int64() - 23_000,
       current_speed=10000,
     ),
     content=(
@@ -103,7 +103,7 @@ test "get_duration_and_total_time no info" {
     get_duration_and_total_time(
       current_size=0,
       file_size=1000 * 1000,
-      start_time_ms=@async.now(),
+      start_time_ms=@env.now().reinterpret_as_int64(),
       current_speed=0,
     ),
     content=(

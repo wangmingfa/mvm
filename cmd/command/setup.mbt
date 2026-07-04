@@ -1,49 +1,56 @@
 ///|
-/// 交互式选择工具（使用 C 语言实现完整终端交互）
+/// 交互式选择工具（使用 promptx checkbox 实现）
 /// 返回用户选择的工具列表
 async fn interactive_select_tools() -> Array[Tool] {
   let all_tools = Tool::all_tools()
-
-  // 构建工具名数组
   let tool_names = all_tools.map(tool => tool.to_string())
-
-  // 从 config 中读取之前保存的工具，用于预选中
   let (_, global_config) = @tools.get_global_config()
   let preselected = match global_config.managed_tools {
     Some(str) if !str.is_blank() =>
       str.split(",").map(s => s.trim().to_owned()).to_array()
     _ => []
   }
-
-  // 调用 C 语言实现的交互选择，传入预选中的工具和标题
   let title = @i18n.t("setup.select_tools_title")
-
-  let selected_str = @stdio.interactive_select_tools_c(
-    tool_names, preselected, title,
-  )
-  println("标题：\{title}")
-
-  // 解析返回的选中工具名
+  let questions = if preselected.length() > 0 {
+    [
+      @promptx.checkbox(
+        question_name="tools",
+        question_message=title,
+        question_choices=tool_names,
+        question_default=@promptx.AnswerValue::from_array(preselected),
+      ),
+    ]
+  } else {
+    [
+      @promptx.checkbox(
+        question_name="tools",
+        question_message=title,
+        question_choices=tool_names,
+      ),
+    ]
+  }
+  let answers = @promptx.prompt(questions)
   let result : Array[Tool] = []
-  if selected_str.is_blank() {
-    raise fail(@i18n.t("error.cannot_be_empty"))
-  }
-  if selected_str == "_QUIT_" {
-    raise fail(@i18n.t("error.operation_cancelled"))
-  }
-  for name in selected_str.split(",") {
-    let trimmed = name.trim().to_owned()
-    if trimmed != "" {
-      let tool = Tool::from_string_with_option_result(trimmed)
-      match tool {
-        Some(t) => result.push(t)
-        None => ()
+  match answers["tools"] {
+    @promptx.AnswerValue::ArrayValue(selected_names) => {
+      if selected_names.length() == 0 {
+        raise fail(@i18n.t("error.cannot_be_empty"))
+      }
+      for name in selected_names {
+        let trimmed = name.trim().to_owned()
+        if trimmed != "" {
+          let tool = Tool::from_string_with_option_result(trimmed)
+          match tool {
+            Some(t) => result.push(t)
+            None => ()
+          }
+        }
       }
     }
+    _ => raise fail(@i18n.t("error.cannot_be_empty"))
   }
-  // 打印已选择的工具
-  let tool_names = result.map(tool => tool.to_string()).join(", ")
-  println(@i18n.t("setup.selected_tools", args={ "tools": tool_names }))
+  let tool_names_str = result.map(tool => tool.to_string()).join(", ")
+  println(@i18n.t("setup.selected_tools", args={ "tools": tool_names_str }))
   result
 }
 

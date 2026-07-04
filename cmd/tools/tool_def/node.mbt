@@ -420,9 +420,7 @@ pub async fn Node::get_program_exe_info(
             continue lib_loop~
           }
           // 跳过非目录路径
-          let is_dir = try {
-            @fs.kind(path) is Directory
-          } catch {
+          let is_dir = try (@fs.kind(path) is Directory) catch {
             _ => false
           }
           if !is_dir {

@@ -135,7 +135,7 @@ async test "progress_bar_with_detailed_info" {
   let total : Int64 = 100_000_000
   let mut completed : Int64 = 0
   let step : Int64 = 20_000_000
-  let start_time = @async.now()
+  let start_time = @env.now().reinterpret_as_int64()
   let period : Int64 = 100
   let sleep_time = period.to_int()
   while completed < total {
@@ -187,7 +187,7 @@ pub fn ProgressBar::ProgressBar(
   show_time_info? : Bool = true,
   show_unit? : Bool = true,
 ) -> Self {
-  let time = @async.now()
+  let time = @env.now().reinterpret_as_int64()
   {
     prefix,
     mode,
@@ -231,7 +231,7 @@ fn ProgressBar::print(self : Self) -> Unit {
 ///|
 pub fn ProgressBar::set_completed(self : Self, completed : Int64) -> Unit {
   let completed = if completed > self.total { self.total } else { completed }
-  let now = @async.now()
+  let now = @env.now().reinterpret_as_int64()
   let period = now - self.prev_time
   let completed_in_period = completed - self.competed
   self.competed = completed

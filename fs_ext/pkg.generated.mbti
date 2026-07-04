@@ -20,6 +20,8 @@ pub async fn ensure_parent_dir(String) -> Unit
 
 pub async fn ensure_paths(ArrayView[String]) -> Unit
 
+pub async fn exists(String) -> Bool
+
 pub fn get_parent_dir(String, levels? : Int) -> String? raise
 
 pub fn get_path_name(String) -> String
