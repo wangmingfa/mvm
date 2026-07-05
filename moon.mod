@@ -6,8 +6,8 @@ import {
   "moonbitlang/async@0.19.2",
   "moonbitlang/regexp@0.3.5",
   "moonbitlang/x@0.4.43",
-  "wangmingfa/zipx@0.1.2",
-  "wangmingfa/promptx@0.1.1",
+  "wangmingfa/zipx@0.1.3",
+  "wangmingfa/promptx@0.1.2",
 }
 
 readme = "README.mbt.md"
