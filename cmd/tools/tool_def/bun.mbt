@@ -382,6 +382,20 @@ pub async fn Bun::get_program_exe_info(
   }
   let program_path = Bun::get_exe_path(version)
   let exists = @fs.exists(program_path)
+  // bunx 是 bun x 的别名，真实二进制仍是 bun，需要前置参数 x
+  if program.to_lower() == "bunx" {
+    return ProgramExeInfo(
+      "bunx",
+      program_path,
+      version,
+      version,
+      envs={},
+      exists,
+      Tool::Bun,
+      exists,
+      extra_args=["x"],
+    )
+  }
   if program.to_lower() == "bun" {
     return ProgramExeInfo(
       "bun",
