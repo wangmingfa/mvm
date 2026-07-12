@@ -7,7 +7,7 @@ import {
   "moonbitlang/regexp@0.3.5",
   "moonbitlang/x@0.4.43",
   "wangmingfa/zipx@0.1.3",
-  "wangmingfa/promptx@0.1.2",
+  "wangmingfa/promptx@0.1.4",
 }
 
 readme = "README.mbt.md"
