@@ -11,27 +11,20 @@ async fn interactive_select_tools() -> Array[Tool] {
     _ => []
   }
   let title = @i18n.t("setup.select_tools_title")
-  let selected_json = @promptx.checkbox(title, tool_names, default_items=preselected)
-  let json_val = @json.parse(selected_json) catch {
-    _ => raise fail(@i18n.t("error.cannot_be_empty"))
-  }
-  guard json_val is Array(selected_names) else {
-    raise fail(@i18n.t("error.cannot_be_empty"))
-  }
+  // checkbox返回的是英文逗号隔开的字符串
+  let selected_tools = @promptx.checkbox(title, tool_names, default_items=preselected)
+  // 去掉空数据
+  let selected_names = selected_tools.split(",").filter(v => !v.trim().is_blank()).to_array()
   if selected_names.length() == 0 {
     raise fail(@i18n.t("error.cannot_be_empty"))
   }
   let result : Array[Tool] = []
   for name in selected_names {
-    guard name is String(trimmed_name) else { continue }
-    let trimmed = trimmed_name.trim().to_owned()
-    if trimmed != "" {
-      let tool = Tool::from_string_with_option_result(trimmed)
+    let tool = Tool::from_string_with_option_result(name.to_owned())
       match tool {
         Some(t) => result.push(t)
         None => ()
       }
-    }
   }
   if result.length() == 0 {
     raise fail(@i18n.t("error.cannot_be_empty"))
