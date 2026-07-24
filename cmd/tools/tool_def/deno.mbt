@@ -171,7 +171,7 @@ pub fn Deno::get_download_info(
   }
   let url = "\{DENO_RELEASE_URL}/\{ver}/deno-\{target}.zip"
   // Deno 是单一二进制文件，压缩包内无子目录
-  { url, headers: {}, root_path_depth: 0 }
+  { url, headers: Map([]), root_path_depth: 0 }
 }
 
 ///|
@@ -207,7 +207,7 @@ pub async fn Deno::get_program_exe_info(
       program_path,
       version,
       version,
-      envs={},
+      envs=Map([]),
       exists,
       Tool::Deno,
       exists,

@@ -41,7 +41,7 @@ async fn add_installed(tool : Tool, version : String) -> Unit {
       _ => recover_installed_file(installed_file_path)
     }
   } else {
-    {}
+    Json::empty_object()
   }
   guard json is Object(map) else {
     // 格式不是 Object，自动恢复后重新读取

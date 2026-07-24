@@ -11,7 +11,7 @@ fn LogLevel::to_int(self : LogLevel) -> Int = "%identity"
 
 ///|
 impl Show for LogLevel with fn output(s, logger) {
-  logger.write_string(s.to_string())
+  logger.write_string(Show::to_string(s))
 }
 
 ///|

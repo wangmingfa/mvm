@@ -70,7 +70,7 @@ pub async fn get_target_version_with_cache(
   version : String,
   version_count : Int,
   parse_fn : (@os.OsInfo, String, Int, Json) -> String raise,
-  headers? : Map[String, String] = {},
+  headers? : Map[String, String] = Map([]),
 ) -> String {
   if version_count == 3 {
     let cache_file_content = read_cache_file_content(cache_file)

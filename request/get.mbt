@@ -4,7 +4,7 @@
 /// 返回 Some((成功的URL, 文件内容)) 或 None（所有URL均失败）
 pub async fn try_urls(
   urls : Array[String],
-  headers? : Map[String, String] = {},
+  headers? : Map[String, String] = Map([]),
   desc : String,
 ) -> (String, String)? {
   let headers = merge_detault_headers(headers~)

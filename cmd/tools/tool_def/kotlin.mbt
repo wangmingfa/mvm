@@ -153,7 +153,7 @@ pub fn Kotlin::get_download_info(
   // Kotlin download tag 带 v 前缀
   let ver = if version.has_prefix("v") { version } else { "v\{version}" }
   let url = "\{KOTLIN_RELEASE_URL}/\{ver}/kotlin-compiler-\{version}.zip"
-  { url, headers: {}, root_path_depth: 1 }
+  { url, headers: Map([]), root_path_depth: 1 }
 }
 
 ///|
@@ -228,7 +228,7 @@ pub async fn Kotlin::get_program_exe_info(
     program_path,
     version,
     version,
-    envs={},
+    envs=Map([]),
     exists,
     Tool::Kotlin,
     exists,
@@ -250,7 +250,7 @@ pub async fn Kotlin::get_program_exe_info(
           tool_path,
           version,
           version,
-          envs={},
+          envs=Map([]),
           tool_exists,
           Tool::Kotlin,
           exists,

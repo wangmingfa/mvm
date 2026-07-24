@@ -30,7 +30,7 @@ let _current_lang_code : Ref[String] = Ref("en")
 
 ///|
 /// 已缓存的外部字典（从 MVM_HOME/langs 的 JSON 文件加载）
-let _external_dicts : Ref[Map[String, Map[String, String]]] = Ref({})
+let _external_dicts : Ref[Map[String, Map[String, String]]] = Ref(Map([]))
 
 ///|
 /// 外部语言字典目录路径（由 main.mbt 在初始化时通过 set_langs_dir 设置为 MVM_HOME/langs）
@@ -163,7 +163,7 @@ fn _fallback_dir() -> String {
 /// 翻译函数：按键查找当前语言的文本，可选参数插值
 /// 查找顺序：1. 外部 JSON 字典  2. 内置字典  3. 英文 fallback  4. 返回键本身
 /// args 为 {变量名} 占位符提供替换值，缺失参数保留原样
-pub fn t(key : String, args? : Map[String, String] = {}) -> String {
+pub fn t(key : String, args? : Map[String, String] = Map([])) -> String {
   let text = _lookup(key, _current_lang_code.val)
   if args.is_empty() {
     text
@@ -203,7 +203,7 @@ fn _get_dict(lang_code : String) -> Map[String, String] {
       // 扩展语言：从缓存的外部字典查找
       match _external_dicts.val.get(lang_code) {
         Some(dict) => dict
-        None => {} // 外部字典不存在，回退到 en_dict（由 _lookup 处理）
+        None => Map([]) // 外部字典不存在，回退到 en_dict（由 _lookup 处理）
       }
   }
 }

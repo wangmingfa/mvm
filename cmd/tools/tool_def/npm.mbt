@@ -53,7 +53,7 @@ pub async fn Npm::before_npm_command(
   if global_uninstall {
     let pkgs = extract_pkgs_from_args(args, uninstall_cmds)
     let npm_pkg_home = mvm_npm_pkg_home()
-    let result : Map[String, String] = {}
+    let result : Map[String, String] = Map([])
     walk_global_pkgs(npm_exe_path, pkgs, fn(cmd_name, _) {
       // key为命令的名称，value为对应npm-pkg中的软连接路径
       let symlink_file_path = @fs_ext.join_path(npm_pkg_home, cmd_name)

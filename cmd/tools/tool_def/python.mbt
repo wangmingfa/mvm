@@ -176,7 +176,7 @@ pub fn Python::get_download_info(
     MacOS => 1
     _ => 0
   }
-  { url, headers: {}, root_path_depth: root_depth }
+  { url, headers: Map([]), root_path_depth: root_depth }
 }
 
 ///|
@@ -265,7 +265,7 @@ pub async fn Python::get_program_exe_info(
       program_path,
       version,
       version,
-      envs={},
+      envs=Map([]),
       exists,
       Tool::Python,
       exists,
@@ -282,7 +282,7 @@ pub async fn Python::get_program_exe_info(
       pip_path,
       version,
       version,
-      envs={},
+      envs=Map([]),
       pip_exists,
       Tool::Python,
       exists,

@@ -299,12 +299,12 @@ pub fn Rust::get_download_info(
   let cached_info = rust_manifest_target_info.val
   match cached_info {
     Some((manifest_url, _)) =>
-      { url: manifest_url, headers: {}, root_path_depth: 1 }
+      { url: manifest_url, headers: Map([]), root_path_depth: 1 }
     None => {
       // 无缓存时手动构造 URL（适用于指定具体版本号的场景）
       let ext = if os_info.name is Windows { "zip" } else { "tar.gz" }
       let url = "\{RUST_RELEASE_URL}/rust-\{ver}-\{target}.\{ext}"
-      { url, headers: {}, root_path_depth: 1 }
+      { url, headers: Map([]), root_path_depth: 1 }
     }
   }
 }
@@ -383,7 +383,7 @@ pub async fn Rust::get_program_exe_info(
     program_path,
     version,
     version,
-    envs={},
+    envs=Map([]),
     exists,
     Tool::Rust,
     exists,
@@ -417,7 +417,7 @@ pub async fn Rust::get_program_exe_info(
           new_path,
           version,
           version,
-          envs={},
+          envs=Map([]),
           true,
           Tool::Rust,
           exists,
@@ -430,7 +430,7 @@ pub async fn Rust::get_program_exe_info(
         old_path,
         version,
         version,
-        envs={},
+        envs=Map([]),
         old_exists,
         Tool::Rust,
         exists,

@@ -163,7 +163,7 @@ async test "run node -v" {
 pub async fn run(
   cmd : StringView,
   args : ArrayView[String],
-  extra_env? : Map[String, String] = {},
+  extra_env? : Map[String, String] = Map([]),
   inherit_env? : Bool = true,
   stdin? : &@process.ProcessInput,
   stdout? : &@process.ProcessOutput,
@@ -223,7 +223,7 @@ fn join_args(args : ArrayView[String]) -> String {
 pub async fn run_with_output(
   cmd : StringView,
   args : ArrayView[String],
-  extra_env? : Map[String, String] = {},
+  extra_env? : Map[String, String] = Map([]),
   inherit_env? : Bool = true,
   stdin? : &@process.ProcessInput,
   cwd? : StringView,

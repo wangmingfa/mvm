@@ -361,7 +361,7 @@ pub fn Java::get_download_info(
   // root_path_depth=1: 剥离 jdk-{version}/ 外层目录
   // macOS 安装后结构为 Contents/Home/bin/java（.app bundle），get_exe_path 会适配
   // Linux/Windows 安装后结构为 bin/java
-  { url, headers: {}, root_path_depth: 1U }
+  { url, headers: Map([]), root_path_depth: 1U }
 }
 
 ///|
@@ -438,7 +438,7 @@ pub async fn Java::get_program_exe_info(
     program_path,
     version,
     version,
-    envs={},
+    envs=Map([]),
     exists,
     Tool::Java,
     exists,
@@ -460,7 +460,7 @@ pub async fn Java::get_program_exe_info(
           tool_path,
           version,
           version,
-          envs={},
+          envs=Map([]),
           tool_exists,
           Tool::Java,
           exists,

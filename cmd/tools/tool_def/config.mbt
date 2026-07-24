@@ -266,7 +266,7 @@ pub struct Config {
 
 ///|
 impl Show for Config with fn output(s, logger) {
-  logger.write_string(s.to_string())
+  logger.write_string(Show::to_string(s))
 }
 
 ///|
@@ -462,7 +462,7 @@ async fn write_config(
   let json = if @fs.exists(config_file_path) {
     @fs.read_file(config_file_path).json()
   } else {
-    {}
+    Json::empty_object()
   }
   guard json is Object(map) else {
     raise fail(@i18n.t("error.invalid_json", args={ "path": config_file_path }))

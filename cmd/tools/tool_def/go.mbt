@@ -35,10 +35,10 @@ pub async fn Go::get_target_version(
     version
   }
   // 重新计算版本号层级
-  let version_count = lexmatch version with longest {
-    "[[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+" => 3
-    "[[:digit:]]+\.[[:digit:]]+" => 2
-    "[[:digit:]]+" => 1
+  let version_count = lexscan version with longest {
+    re"^[[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+$" => 3
+    re"^[[:digit:]]+\.[[:digit:]]+$" => 2
+    re"^[[:digit:]]+$" => 1
     _ => 0
   }
 
@@ -227,7 +227,7 @@ pub fn Go::get_download_info(
       )
   }
   let url = "\{GO_RELEASE_URL}/go\{version}.\{version_release_key}.\{ext}"
-  { url, headers: {}, root_path_depth: 1 }
+  { url, headers: Map([]), root_path_depth: 1 }
 }
 
 ///|
@@ -348,7 +348,7 @@ pub async fn Go::get_program_exe_info(
       program_path,
       version,
       version,
-      envs={},
+      envs=Map([]),
       exists,
       Tool::Go,
       exists,
@@ -363,7 +363,7 @@ pub async fn Go::get_program_exe_info(
       gofmt_path,
       version,
       version,
-      envs={},
+      envs=Map([]),
       gofmt_exists,
       Tool::Go,
       exists,

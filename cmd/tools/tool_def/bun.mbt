@@ -283,7 +283,7 @@ pub fn Bun::get_download_info(
     "bun-v\{version}"
   }
   let url = "\{BUN_RELEASE_URL}/\{tag}/\{platform_name}.\{ext}"
-  { url, headers: {}, root_path_depth: 1 }
+  { url, headers: Map([]), root_path_depth: 1 }
 }
 
 ///|
@@ -389,7 +389,7 @@ pub async fn Bun::get_program_exe_info(
       program_path,
       version,
       version,
-      envs={},
+      envs=Map([]),
       exists,
       Tool::Bun,
       exists,
@@ -402,7 +402,7 @@ pub async fn Bun::get_program_exe_info(
       program_path,
       version,
       version,
-      envs={},
+      envs=Map([]),
       exists,
       Tool::Bun,
       exists,

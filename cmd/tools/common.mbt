@@ -55,13 +55,13 @@ fn parse_version(version : String) -> (String, Int) {
   // 20.1：指定主版本和次版本，下载20.1版本下的最新版本
   // 24.1.0：指定完整的版本
 
-  let version_count = lexmatch version with longest {
+  let version_count = lexscan version with longest {
     // x.y.z
-    "v?[[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+" => 3
+    re"^v?[[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+$" => 3
     // x.y
-    "v?[[:digit:]]+\.[[:digit:]]+" => 2
+    re"^v?[[:digit:]]+\.[[:digit:]]+$" => 2
     // x
-    "v?[[:digit:]]+" => 1
+    re"^v?[[:digit:]]+$" => 1
     _ => 0
   }
   return (version, version_count)

@@ -277,7 +277,7 @@ async fn run_install(
 async fn download_file(
   url : String,
   dest : String,
-  headers? : Map[String, String] = {},
+  headers? : Map[String, String] = Map([]),
   show_progress? : Bool = true,
 ) -> Unit {
   // 正在下载

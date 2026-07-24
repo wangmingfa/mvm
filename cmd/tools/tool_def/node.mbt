@@ -220,7 +220,7 @@ pub fn Node::get_download_info(
       )
   }
   let url = "\{NODE_RELEASE_URL}/\{version}/node-\{version}-\{os}-\{arch}.\{ext}"
-  { url, headers: {}, root_path_depth: 1 }
+  { url, headers: Map([]), root_path_depth: 1 }
 }
 
 ///|
@@ -357,7 +357,7 @@ pub async fn Node::get_program_exe_info(
         program_path,
         version,
         version,
-        envs={},
+        envs=Map([]),
         node_exists,
         Tool::Node,
         node_exists,
@@ -386,7 +386,7 @@ pub async fn Node::get_program_exe_info(
           program_path,
           version,
           version,
-          envs={},
+          envs=Map([]),
           false,
           Tool::Node,
           node_exists,
@@ -539,7 +539,7 @@ pub async fn Node::get_program_exe_info(
               program_path,
               pkg_version,
               version,
-              envs={},
+              envs=Map([]),
               true,
               Tool::Node,
               node_exists,
@@ -559,7 +559,7 @@ pub async fn Node::get_program_exe_info(
         program_path,
         version,
         version,
-        envs={},
+        envs=Map([]),
         false,
         Tool::Node,
         node_exists,

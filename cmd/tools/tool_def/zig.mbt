@@ -165,7 +165,7 @@ pub fn Zig::get_download_info(
       )
   }
   let url = "\{ZIG_RELEASE_URL}/\{version}/zig-\{version_release_key}-\{version}.\{ext}"
-  { url, headers: {}, root_path_depth: 1 }
+  { url, headers: Map([]), root_path_depth: 1 }
 }
 
 ///|
@@ -261,7 +261,7 @@ pub async fn Zig::get_program_exe_info(
       program_path,
       version,
       version,
-      envs={},
+      envs=Map([]),
       exists,
       Tool::Zig,
       exists,

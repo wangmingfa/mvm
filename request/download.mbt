@@ -93,7 +93,7 @@ pub async fn download(
   url : String,
   dest : String,
   dest_is_file? : Bool = false,
-  headers? : Map[String, String] = {},
+  headers? : Map[String, String] = Map([]),
   show_progress? : Bool = true,
 ) -> Unit {
   let max_retries = 3
@@ -219,7 +219,7 @@ async fn get_client(
   range_start? : Int64 = 0,
   dest? : String = "",
   dest_is_file? : Bool = false,
-  headers? : Map[String, String] = {},
+  headers? : Map[String, String] = Map([]),
 ) -> (@http.Client, Int64, String, Int64) {
   // 合并默认 headers 和用户提供的 headers
   // 用户提供的 headers 会覆盖默认值
@@ -339,7 +339,7 @@ async test "download" {
 pub async fn download_by_native_command(
   url : String,
   dest : String,
-  headers? : Map[String, String] = {},
+  headers? : Map[String, String] = Map([]),
   show_progress? : Bool = true,
 ) -> Unit {
   guard @command.get_best_downloader() is Some(downloader) else {

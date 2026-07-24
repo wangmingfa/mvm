@@ -319,7 +319,7 @@ pub fn ProgramExeInfo::ProgramExeInfo(
   path : String,
   version : String,
   tool_version : String,
-  envs? : Map[String, String] = {},
+  envs? : Map[String, String] = Map([]),
   program_exists : Bool,
   tool : Tool,
   tool_exists : Bool,
