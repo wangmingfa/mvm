@@ -166,10 +166,14 @@ pub async fn download(
       defer file.close()
       if show_progress {
         let progress_bar = @progress.ProgressBar(size)
+        let done = Ref(false)
         @async.any([
-          () => file.write_reader(client),
           () => {
-            while true {
+            file.write_reader(client)
+            done.val = true
+          },
+          () => {
+            while !done.val {
               let current_size = file.size()
               progress_bar.set_completed(current_size)
               @async.sleep(1000)

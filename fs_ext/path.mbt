@@ -23,17 +23,8 @@ pub fn[T1 : Show, T2 : Show] join_path(
   path_to_join : T2,
 ) -> String {
   let mut path = "\{current}/\{path_to_join}"
-  while true {
-    let mut continue_loop = false
-    for str in ["//", "\\\\", "\\/", "/\\"] {
-      if path.contains(str) {
-        path = path.replace_all(old=str, new="/")
-        continue_loop = false
-      }
-    }
-    if !continue_loop {
-      break
-    }
+  for str in ["//", "\\\\", "\\/", "/\\"] {
+    path = path.replace_all(old=str, new="/")
   }
   path.canonicalize_path()
 }
