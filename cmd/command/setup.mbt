@@ -12,19 +12,26 @@ async fn interactive_select_tools() -> Array[Tool] {
   }
   let title = @i18n.t("setup.select_tools_title")
   // checkbox返回的是英文逗号隔开的字符串
-  let selected_tools = @promptx.checkbox(title, tool_names, default_items=preselected)
+  let selected_tools = @promptx.checkbox(
+    title,
+    tool_names,
+    default_items=preselected,
+  )
   // 去掉空数据
-  let selected_names = selected_tools.split(",").filter(v => !v.trim().is_blank()).to_array()
+  let selected_names = selected_tools
+    .split(",")
+    .filter(v => !v.trim().is_blank())
+    .to_array()
   if selected_names.length() == 0 {
     raise fail(@i18n.t("error.cannot_be_empty"))
   }
   let result : Array[Tool] = []
   for name in selected_names {
     let tool = Tool::from_string_with_option_result(name.to_owned())
-      match tool {
-        Some(t) => result.push(t)
-        None => ()
-      }
+    match tool {
+      Some(t) => result.push(t)
+      None => ()
+    }
   }
   if result.length() == 0 {
     raise fail(@i18n.t("error.cannot_be_empty"))

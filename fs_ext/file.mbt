@@ -113,7 +113,9 @@ async fn get_all_sub_dir_or_file_path(
     let pending_dirs = [path]
     while pending_dirs.length() > 0 {
       if arr.length() >= max_files {
-        println("警告：遍历的文件数超过上限 \{max_files}，已停止遍历")
+        println(
+          "警告：遍历的文件数超过上限 \{max_files}，已停止遍历",
+        )
         break
       }
       let dir = pending_dirs.remove(0)

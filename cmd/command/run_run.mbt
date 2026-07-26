@@ -50,17 +50,10 @@ async fn run_run(
           "version": target_version,
         }),
       )
-      let install_result = run_install(
-        tool,
-        Some(target_version),
-        false,
-        false,
-      )
+      let install_result = run_install(tool, Some(target_version), false, false)
       if !install_result.is_success() {
         raise fail(
-          install_result.error.unwrap_or(
-            @i18n.t("run.install_failed_fallback"),
-          ),
+          install_result.error.unwrap_or(@i18n.t("run.install_failed_fallback")),
         )
       }
       // 安装后重新获取程序信息

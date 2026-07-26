@@ -238,10 +238,19 @@ pub async fn Python::get_expected_checksum(
 ///|
 pub fn Python::get_exe_path(version : String) -> String raise {
   let os = @os.get_os_name()
+  let dir = version_dir(Tool::Python, version)
   match os {
-    Windows => [version_dir(Tool::Python, version), "python.exe"].join("/")
-    MacOS | Linux =>
-      [version_dir(Tool::Python, version), "bin", "python3"].join("/")
+    Windows => [dir, "python.exe"].join("/")
+    MacOS | Linux => {
+      // Python 2 使用 python，Python 3 使用 python3
+      let exe_name = if dir.contains("/python/2.") ||
+        dir.contains("/python/v2.") {
+        "python"
+      } else {
+        "python3"
+      }
+      [dir, "bin", exe_name].join("/")
+    }
     _ => raise fail(@i18n.t("python.unsupported_os"))
   }
 }

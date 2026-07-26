@@ -276,6 +276,10 @@ pub async fn get_program_exe_info(
 pub async fn post_install(tool : Tool, target_dir : String) -> Unit {
   let os = @os.get_os_name()
   if os is Linux || os is MacOS {
+    // Python 源码包需要编译
+    if tool is Python {
+      compile_python_source(target_dir)
+    }
     // 增加可执行权限
     // macOS JDK 使用 .app bundle 结构，实际路径为 Contents/Home/bin/
     let java_bin_dir = if os is MacOS { "Contents/Home/bin" } else { "bin" }
@@ -289,7 +293,16 @@ pub async fn post_install(tool : Tool, target_dir : String) -> Unit {
       Go =>
         ["go", "gofmt"].map(name => @fs_ext.join_path(target_dir, "bin/\{name}"))
       // Python 可执行文件在 bin 子目录下
-      Python => [@fs_ext.join_path(target_dir, "bin/python3")]
+      // Python 2 使用 python，Python 3 使用 python3
+      Python => {
+        let exe_name = if target_dir.contains("/python/2.") ||
+          target_dir.contains("/python/v2.") {
+          "python"
+        } else {
+          "python3"
+        }
+        [@fs_ext.join_path(target_dir, "bin/\{exe_name}")]
+      }
       // Rust 的可执行文件在 bin 子目录下
       Rust => {
         let base = target_dir
@@ -336,6 +349,46 @@ pub async fn post_install(tool : Tool, target_dir : String) -> Unit {
     // let _ = @process.run("chmod", exe_files)
     @mvm_cmd.chmod_x(exe_files)
   }
+}
+
+///|
+/// 编译 Python 源码包
+async fn compile_python_source(target_dir : String) -> Unit {
+  // 检查是否是源码目录（包含 configure 脚本）
+  let configure_path = @fs_ext.join_path(target_dir, "configure")
+  if !@fs.exists(configure_path) {
+    // 不是源码目录，可能是预编译包，跳过编译
+    return
+  }
+
+  @log.info("正在编译 Python 源码...")
+
+  // 运行 ./configure --prefix={target_dir}
+  @log.debug("运行: ./configure --prefix=\{target_dir}")
+  let configure_code = @mvm_cmd.run(
+    "bash",
+    ["-c", "./configure --prefix=\{target_dir}"],
+    cwd=target_dir,
+  )
+  if configure_code != 0 {
+    raise fail("Python configure 失败，退出码: \{configure_code}")
+  }
+
+  // 运行 make
+  @log.debug("运行: make")
+  let make_code = @mvm_cmd.run("make", [], cwd=target_dir)
+  if make_code != 0 {
+    raise fail("Python make 失败，退出码: \{make_code}")
+  }
+
+  // 运行 make install
+  @log.debug("运行: make install")
+  let install_code = @mvm_cmd.run("make", ["install"], cwd=target_dir)
+  if install_code != 0 {
+    raise fail("Python make install 失败，退出码: \{install_code}")
+  }
+
+  @log.info("Python 编译完成")
 }
 
 ///|
