@@ -11,43 +11,23 @@ async fn interactive_select_tools() -> Array[Tool] {
     _ => []
   }
   let title = @i18n.t("setup.select_tools_title")
-  let questions = if preselected.length() > 0 {
-    [
-      @promptx.checkbox(
-        question_name="tools",
-        question_message=title,
-        question_choices=tool_names,
-        question_default=@promptx.AnswerValue::from_array(preselected),
-      ),
-    ]
-  } else {
-    [
-      @promptx.checkbox(
-        question_name="tools",
-        question_message=title,
-        question_choices=tool_names,
-      ),
-    ]
+  // checkbox返回的是英文逗号隔开的字符串
+  let selected_tools = @promptx.checkbox(title, tool_names, default_items=preselected)
+  // 去掉空数据
+  let selected_names = selected_tools.split(",").filter(v => !v.trim().is_blank()).to_array()
+  if selected_names.length() == 0 {
+    raise fail(@i18n.t("error.cannot_be_empty"))
   }
-  let answers = @promptx.prompt(questions)
   let result : Array[Tool] = []
-  match answers["tools"] {
-    @promptx.AnswerValue::ArrayValue(selected_names) => {
-      if selected_names.length() == 0 {
-        raise fail(@i18n.t("error.cannot_be_empty"))
+  for name in selected_names {
+    let tool = Tool::from_string_with_option_result(name.to_owned())
+      match tool {
+        Some(t) => result.push(t)
+        None => ()
       }
-      for name in selected_names {
-        let trimmed = name.trim().to_owned()
-        if trimmed != "" {
-          let tool = Tool::from_string_with_option_result(trimmed)
-          match tool {
-            Some(t) => result.push(t)
-            None => ()
-          }
-        }
-      }
-    }
-    _ => raise fail(@i18n.t("error.cannot_be_empty"))
+  }
+  if result.length() == 0 {
+    raise fail(@i18n.t("error.cannot_be_empty"))
   }
   let tool_names_str = result.map(tool => tool.to_string()).join(", ")
   println(@i18n.t("setup.selected_tools", args={ "tools": tool_names_str }))
