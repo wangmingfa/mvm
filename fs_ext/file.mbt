@@ -104,13 +104,18 @@ async fn get_all_sub_dir_or_file_path(
   path : String,
   include_root? : Bool = false,
 ) -> Array[String] {
-  let arr = []
+  let max_files = 100_000
+  let arr : Array[String] = []
   if include_root {
     arr.push(path)
   }
   if @fs.exists(path) {
     let pending_dirs = [path]
     while pending_dirs.length() > 0 {
+      if arr.length() >= max_files {
+        println("警告：遍历的文件数超过上限 \{max_files}，已停止遍历")
+        break
+      }
       let dir = pending_dirs.remove(0)
       for entry in @fs.readdir(dir) {
         let path = Path(dir).join(entry).to_string()

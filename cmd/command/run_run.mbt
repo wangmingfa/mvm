@@ -22,68 +22,60 @@ async fn run_run(
     },
   )
 
-  let mut try_install = true
+  // 获取程序信息
+  let mut program_exe_info = @tools.get_program_exe_info(
+    tool, exec_program, version,
+  )
+  @log.debug(
+    @i18n.t("run.debug_program_info", args={
+      "info": to_repr(program_exe_info).to_string(),
+    }),
+  )
+  let {
+    path: exec_program_path,
+    version: target_version,
+    program_exists,
+    tool_exists,
+    ..,
+  } = program_exe_info
+  let mut exec_program_path = exec_program_path
+  let mut program_exists = program_exists
 
-  let program_exe_info = while true {
-    @log.debug(@i18n.t("run.debug_fetching_program_info"))
-    let program_exe_info = @tools.get_program_exe_info(
-      tool, exec_program, version,
-    )
-    @log.debug(
-      @i18n.t("run.debug_program_info", args={
-        "info": to_repr(program_exe_info).to_string(),
-      }),
-    )
-    let {
-      path: exec_program_path,
-      version: target_version,
-      program_exists,
-      tool_exists,
-      ..,
-    } = program_exe_info
-
-    // 使用tool@version运行命令
-    @log.debug(
-      @i18n.t("run.debug_running_command", args={
-        "tool": tool.to_string(),
-        "version": target_version,
-        "path": exec_program_path,
-        "args": to_repr(args).to_string(),
-      }),
-    )
-    // 检查工具是否安装，未安装则自动安装
-    if !tool_exists {
-      if try_install {
-        try_install = false
-        // 非 TTY 环境不支持自动安装
-        if !@stdio.is_stdout_tty() {
-          // 非 TTY 环境不支持自动安装
-          raise fail(@i18n.t("run.not_tty_environment"))
-        }
-        // 尝试安装
-        @log.info(
-          @i18n.t("run.auto_installing", args={
-            "tool": tool.to_string(),
-            "version": target_version,
-          }),
+  // 检查工具是否安装，未安装则尝试自动安装
+  if !tool_exists {
+    if @stdio.is_stdout_tty() {
+      @log.info(
+        @i18n.t("run.auto_installing", args={
+          "tool": tool.to_string(),
+          "version": target_version,
+        }),
+      )
+      let install_result = run_install(
+        tool,
+        Some(target_version),
+        false,
+        false,
+      )
+      if !install_result.is_success() {
+        raise fail(
+          install_result.error.unwrap_or(
+            @i18n.t("run.install_failed_fallback"),
+          ),
         )
-        let install_result = run_install(
-          tool,
-          Some(target_version),
-          false,
-          false,
-        )
-        if !install_result.is_success() {
-          // 安装失败
-          raise fail(
-            install_result.error.unwrap_or(
-              @i18n.t("run.install_failed_fallback"),
-            ),
-          )
-        }
-        continue
-      } else {
-        // 安装后，工具还是不存在
+      }
+      // 安装后重新获取程序信息
+      program_exe_info = @tools.get_program_exe_info(
+        tool, exec_program, target_version,
+      )
+      @log.debug(
+        @i18n.t("run.debug_program_info", args={
+          "info": to_repr(program_exe_info).to_string(),
+        }),
+      )
+      exec_program_path = program_exe_info.path
+      program_exists = program_exe_info.program_exists
+      // 安装后工具仍不存在，报错
+      if !program_exe_info.tool_exists {
         raise fail(
           @i18n.t("run.install_tool_failed", args={
             "tool": tool.to_string(),
@@ -91,21 +83,19 @@ async fn run_run(
           }),
         )
       }
+    } else {
+      raise fail(@i18n.t("run.not_tty_environment"))
     }
-    // 检查要运行的程序是否存在
-    if !program_exists {
-      // 要执行的程序不存在
-      raise fail(
-        @i18n.t("run.program_not_exists", args={
-          "program": exec_program,
-          "path": exec_program_path,
-        }),
-      )
-    }
-    break program_exe_info
-  } nobreak {
-    // 无法运行命令
-    raise fail(@i18n.t("run.cannot_run_command"))
+  }
+
+  // 检查要运行的程序是否存在
+  if !program_exists {
+    raise fail(
+      @i18n.t("run.program_not_exists", args={
+        "program": exec_program,
+        "path": exec_program_path,
+      }),
+    )
   }
 
   let before_run_result = before_run(program_exe_info, exec_args)

@@ -140,16 +140,7 @@ pub fn canonicalize_path(path : String) -> String {
       stack.push(part)
     }
   }
-  let mut result = ""
-  let mut first = true
-  for part in stack {
-    if first {
-      result = part
-      first = false
-    } else {
-      result = "\{result}/\{part}"
-    }
-  }
+  let result = stack.join("/")
   let result = if is_absolute { "/\{result}" } else { result }
   let result = if result.has_suffix("/") {
     result[0:-1].to_owned()

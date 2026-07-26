@@ -38,18 +38,12 @@ fn format_size(bytes : Int64, show_unit? : Bool = true) -> String {
 ///|
 /// 构建进度条字符串（如 "[======>               ]"）
 fn build_bar(filled : Int, bar_width : Int) -> String {
-  let mut bar = ""
-  for _ in 0..<filled {
-    bar = bar + "="
-  }
+  let bar = "=".repeat(filled)
   if filled < bar_width {
-    bar = bar + ">"
-    let remaining = bar_width - filled - 1
-    for _ in 0..<remaining {
-      bar = bar + " "
-    }
+    bar + ">" + " ".repeat(bar_width - filled - 1)
+  } else {
+    bar
   }
-  bar
 }
 
 ///|
