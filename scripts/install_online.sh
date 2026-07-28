@@ -10,4 +10,4 @@ BRANCH="main"
 URL="https://raw.githubusercontent.com/${REPO}/${BRANCH}/scripts/install.sh"
 
 echo "正在下载 mvm 安装脚本..."
-curl -fsSL "${URL}" | bash -s -- --online
+bash -c "$(curl -fsSL "${URL}")" -- --online

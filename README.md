@@ -29,7 +29,7 @@ mvm 是一款现代化的多语言版本管理工具，支持 Node.js、Bun、Zi
 
 **macOS / Linux**
 ```bash
-curl -fsSL https://raw.githubusercontent.com/wangmingfa/mvm/main/scripts/install_online.sh | bash
+bash <(curl -fsSL https://raw.githubusercontent.com/wangmingfa/mvm/main/scripts/install_online.sh)
 ```
 
 **Windows（PowerShell）**

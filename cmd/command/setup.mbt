@@ -1,8 +1,15 @@
 ///|
 /// 交互式选择工具（使用 promptx checkbox 实现）
+/// 非交互环境（stdin 不是 TTY）下自动选择所有工具
 /// 返回用户选择的工具列表
 async fn interactive_select_tools() -> Array[Tool] {
   let all_tools = Tool::all_tools()
+  // 非交互环境（如 curl | bash 管道安装），stdin 不是 TTY，无法进行交互选择
+  if !@stdio.is_stdin_tty() {
+    let tool_names_str = all_tools.map(tool => tool.to_string()).join(", ")
+    println(@i18n.t("setup.selected_tools", args={ "tools": tool_names_str }))
+    return all_tools
+  }
   let tool_names = all_tools.map(tool => tool.to_string())
   let (_, global_config) = @tools.get_global_config()
   let preselected = match global_config.managed_tools {
