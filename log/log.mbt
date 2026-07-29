@@ -129,6 +129,8 @@ extern "C" fn c_exit_alternate_screen() -> Unit = "exit_alternate_screen"
 ///|
 pub fn clear_all_lines() -> Unit {
   @stdio.clear_lines(log_line_count.val)
+  // println("清除了 \{log_line_count.val} 行日志")
+  log_line_count.val = 0
 }
 
 ///|
