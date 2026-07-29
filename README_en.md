@@ -53,10 +53,10 @@ mvm supports 9 development tools, each with full version management commands (in
 | Command Name | Tool | Executable Commands | Command Test Coverage |
 |--------------|------|---------------------|----------------------|
 | node | Node.js | node, npm, npx, corepack, npm global packages | ★★★★★ |
-| bun | Bun | bun, bunx | ★ |
+| bun | Bun | bun, bunx | ★★★★ |
 | zig | Zig | zig | ★ |
 | go | Go | go, gofmt | ★ |
-| python / python3 | Python | python3, python | ★ |
+| python / python3 | Python | python3, python | ★★ |
 | rust / rustc | Rust | rustc, cargo, rustfmt, cargo-fmt, <br>clippy-driver, cargo-clippy, rustdoc | ★ |
 | deno | Deno | deno | ★ |
 | java / jdk | Java | java, javac, jar, javadoc, jps, jcmd, jstat, keytool | ★ |

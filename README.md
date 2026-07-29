@@ -53,10 +53,10 @@ mvm 支持 9 种开发工具，每种工具均可使用全部版本管理命令�
 | 命令名 | 工具 | 可执行命令 | 命令测试覆盖 |
 |--------|------|-----------|-------------|
 | node | Node.js | node, npm, npx, corepack, npm 全局包 | ★★★★★ |
-| bun | Bun | bun, bunx | ★ |
+| bun | Bun | bun, bunx | ★★★★ |
 | zig | Zig | zig | ★ |
 | go | Go | go, gofmt | ★ |
-| python / python3 | Python | python3, python | ★ |
+| python / python3 | Python | python3, python | ★★ |
 | rust / rustc | Rust | rustc, cargo, rustfmt, cargo-fmt, <br>clippy-driver, cargo-clippy, rustdoc | ★ |
 | deno | Deno | deno | ★ |
 | java / jdk | Java | java, javac, jar, javadoc, jps, jcmd, jstat, keytool | ★ |
