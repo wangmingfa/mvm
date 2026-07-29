@@ -39,7 +39,7 @@ pub async fn remove_dir(dir : String) -> Unit {
   @log.debug("开始删除目录 \{dir}")
   let exists = @fs.exists(dir)
   if @log.is_debug() && exists {
-    @log.debug("目录信息 \{exists} | \{to_repr(@fs.kind(dir))}")
+    @log.debug("目录信息 \{exists} | \{Repr(@fs.kind(dir))}")
   }
   if exists && @fs.kind(dir) is Directory {
     @log.debug("删除目录 \{dir}")

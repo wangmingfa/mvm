@@ -253,7 +253,7 @@ async test "move dir" {
   )
   debug_inspect(
     src_dir_and_files.remove_prefix(src_root_dir),
-    content=to_repr(dest_dir_and_files.remove_prefix(dest_path)).to_string(),
+    content=Repr(dest_dir_and_files.remove_prefix(dest_path)).to_string(),
   )
   // 删除临时文件
   @fs.rmdir(dest_path, recursive=true)

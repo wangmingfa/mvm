@@ -6,7 +6,7 @@ async fn run_run(
   version : String,
   args : Array[String],
 ) -> CommandResult {
-  @log.debug("run_run参数 \{tool} \{version} \{to_repr(args)}")
+  @log.debug("run_run参数 \{tool} \{version} \{Repr(args)}")
   // 参数不能为空
   if args.is_empty() {
     // 运行的命令不能为空
@@ -28,7 +28,7 @@ async fn run_run(
   )
   @log.debug(
     @i18n.t("run.debug_program_info", args={
-      "info": to_repr(program_exe_info).to_string(),
+      "info": Repr(program_exe_info).to_string(),
     }),
   )
   let {
@@ -62,7 +62,7 @@ async fn run_run(
       )
       @log.debug(
         @i18n.t("run.debug_program_info", args={
-          "info": to_repr(program_exe_info).to_string(),
+          "info": Repr(program_exe_info).to_string(),
         }),
       )
       exec_program_path = program_exe_info.path
@@ -107,7 +107,7 @@ async fn run_run(
   let (exit_code, output) = if @log.is_debug() {
     @mvm_cmd.run_with_output(actual_program, actual_args, extra_env=exec_envs)
   } else {
-    @log.debug("运行命令: \{actual_program} \{to_repr(actual_args)}")
+    @log.debug("运行命令: \{actual_program} \{Repr(actual_args)}")
     (@mvm_cmd.run(actual_program, actual_args, extra_env=exec_envs), "")
   }
 

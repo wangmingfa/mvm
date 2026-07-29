@@ -48,7 +48,7 @@ pub impl Show for Command with fn to_string(s) {
     Current(Some(tool)) => "Current(\{tool.to_string()})"
     Current(None) => "Current(All)"
     Run(tool, version, args) =>
-      "Run(\{tool.to_string()}, \{version}, \{to_repr(args)})"
+      "Run(\{tool.to_string()}, \{version}, \{Repr(args)})"
     CacheClean => "CacheClean"
     ConfigList => "ConfigList"
     ConfigSet(key, value) => "ConfigSet(\{key}, \{value})"
@@ -271,7 +271,7 @@ pub fn get_command(argv : ArrayView[String]) -> Command raise {
       @log.debug(
         @i18n.t("command.debug_volta_syntax_entry", args={
           "flag": tool_flag,
-          "args": to_repr(run_args).to_string(),
+          "args": Repr(run_args).to_string(),
         }),
       )
       let tool_name = tool_flag[2:].to_owned()
@@ -299,7 +299,7 @@ pub fn get_command(argv : ArrayView[String]) -> Command raise {
             @i18n.t("command.debug_volta_parsed", args={
               "tool": t.to_string(),
               "version": version,
-              "cmd_args": to_repr(cmd_args).to_string(),
+              "cmd_args": Repr(cmd_args).to_string(),
             }),
           )
           Run(t, version, cmd_args)
@@ -322,7 +322,7 @@ pub fn get_command(argv : ArrayView[String]) -> Command raise {
       @log.debug(
         @i18n.t("command.debug_positional_syntax_entry", args={
           "tool_version": tool_version,
-          "args": to_repr(run_args).to_string(),
+          "args": Repr(run_args).to_string(),
         }),
       )
       match tool_version.split("@").to_array() {
@@ -333,7 +333,7 @@ pub fn get_command(argv : ArrayView[String]) -> Command raise {
             @i18n.t("command.debug_positional_parsed", args={
               "tool": t.to_string(),
               "version": version.to_owned(),
-              "cmd_args": to_repr(run_args).to_string(),
+              "cmd_args": Repr(run_args).to_string(),
             }),
           )
           Run(t, version.to_owned(), run_args.to_owned())
@@ -344,7 +344,7 @@ pub fn get_command(argv : ArrayView[String]) -> Command raise {
           @log.debug(
             @i18n.t("command.debug_positional_no_version", args={
               "tool": t.to_string(),
-              "cmd_args": to_repr(run_args).to_string(),
+              "cmd_args": Repr(run_args).to_string(),
             }),
           )
           Run(t, "", run_args.to_owned())

@@ -453,7 +453,7 @@ pub async fn Node::get_program_exe_info(
                 "reason": e.to_string(),
               }),
             )
-            continue
+            continue lib_loop~
           }
         }
         guard json is Object(map) else {
@@ -463,7 +463,7 @@ pub async fn Node::get_program_exe_info(
               "path": package_json_path,
             }),
           )
-          continue
+          continue lib_loop~
         }
         let pkg_version = match map.get("version") {
           Some(String(v)) => v
@@ -474,7 +474,7 @@ pub async fn Node::get_program_exe_info(
                 "path": package_json_path,
               }),
             )
-            continue
+            continue lib_loop~
           }
         }
         let bin = map.get("bin")
@@ -483,7 +483,7 @@ pub async fn Node::get_program_exe_info(
           @log.warn(
             @i18n.t("node.parse_json_no_bin", args={ "path": package_json_path }),
           )
-          continue
+          continue lib_loop~
         }
         // 记录 bin_map 中的所有命令名
         let bin_keys = bin_map.keys().map(k => k).join(", ")

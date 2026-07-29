@@ -119,7 +119,7 @@ pub fn to_debug_string(msg : String) -> String {
     result = result.replace_all(old=color, new="<\{str}>")
   }
   result = result.replace_all(old=RESET, new="<RESET>")
-  to_repr(result).to_string()
+  Repr(result).to_string()
 }
 
 ///|

@@ -266,9 +266,7 @@ async fn handle_install_npm_global_package(
   @log.debug(@i18n.t("npm.exe_path_debug", args={ "path": npm_exe_path }))
   // 全局安装NPM包
   @log.debug(
-    @i18n.t("npm.global_install_debug", args={
-      "pkgs": to_repr(pkgs).to_string(),
-    }),
+    @i18n.t("npm.global_install_debug", args={ "pkgs": Repr(pkgs).to_string() }),
   )
 
   let npm_pkg_home = mvm_npm_pkg_home()
