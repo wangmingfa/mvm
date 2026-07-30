@@ -22,7 +22,7 @@ jobs:
             os_name: linux
             artifact_path: _build/native/release/build/cmd/main/main.exe
             ext: ""
-          - runner: macos-latest
+          - runner: macos-15
             os_name: macos
             artifact_path: _build/native/release/build/cmd/main/main.exe
             ext: ""
