@@ -214,7 +214,7 @@ test "match_version" {
 ///   url: 下载地址
 ///   headers: 下载请求需要携带的 headers
 ///   root_path_depth: 压缩包解压出来之后，需要进入多少层级才能到达实际工具根目录
-pub fn get_download_info(tool : Tool, version : String) -> DownloadInfo raise {
+pub async fn get_download_info(tool : Tool, version : String) -> DownloadInfo {
   let os_info = @os.get_os_info()
   match tool {
     Node => Node::get_download_info(os_info, version)
@@ -253,7 +253,14 @@ pub async fn get_program_exe_info(
       ].join(" ")
       raise fail(msg)
     }
-    v
+    // python3 命令强制使用 Python 3.x 版本
+    if tool is Python &&
+      program == "python3" &&
+      (v.has_prefix("v2.") || v.has_prefix("2.")) {
+      "3"
+    } else {
+      v
+    }
   } else {
     version
   }

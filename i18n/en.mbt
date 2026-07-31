@@ -461,6 +461,8 @@ pub let en_dict : Map[String, String] = {
 
   // === python 模块 ===
   "python.cannot_fetch_shasums": "Cannot fetch Python SHA256 checksum file from {url}: {code} {reason}",
+  "python.cannot_fetch_standalone_tag": "Cannot fetch latest Python standalone release tag: {code} {reason}",
+  "python.cannot_parse_standalone_tag": "Cannot parse Python standalone release tag from GitHub API response",
   "python.unsupported_os": "Unsupported operating system",
 
   // === cache 模块（补充） ===

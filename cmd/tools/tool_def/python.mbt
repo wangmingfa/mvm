@@ -3,6 +3,13 @@
 const PYTHON_RELEASE_URL = "https://www.python.org/ftp/python"
 
 ///|
+/// Python standalone 预编译包（astral-sh/python-build-standalone）
+const PYTHON_STANDALONE_REPO = "astral-sh/python-build-standalone"
+
+///|
+const PYTHON_STANDALONE_CACHE = "python_standalone_tag.txt"
+
+///|
 const PYTHON_INDEX_URL = "https://endoflife.date/api/python.json"
 
 ///|
@@ -147,43 +154,72 @@ fn Python::_get_proper_version(
 }
 
 ///|
+/// 获取 astral-sh/python-build-standalone 最新 release 的 tag
+async fn get_standalone_tag() -> String {
+  let cached = read_cache_file_content(PYTHON_STANDALONE_CACHE)
+  if cached is Some(tag) && !tag.is_blank() {
+    return tag.trim().to_owned()
+  }
+  let url = "https://api.github.com/repos/\{PYTHON_STANDALONE_REPO}/releases/latest"
+  let (res, data) = @http.get(url, headers=@request.merge_detault_headers())
+  guard res.code is (200..<300) else {
+    raise fail(
+      @i18n.t("python.cannot_fetch_standalone_tag", args={
+        "code": res.code.to_string(),
+        "reason": res.reason,
+      }),
+    )
+  }
+  let json = data.json()
+  guard json is Object(map) && map.get("tag_name") is Some(String(tag)) else {
+    raise fail(@i18n.t("python.cannot_parse_standalone_tag"))
+  }
+  write_cache_file_content(PYTHON_STANDALONE_CACHE, tag)
+  tag
+}
+
+///|
 /// 获取 Python 的下载信息
-pub fn Python::get_download_info(
+/// Python 3.x 各平台统一使用 astral-sh/python-build-standalone 预编译包
+/// Python 2.x 无预编译包，回退官方源码包（Linux/macOS 走编译流程）
+pub async fn Python::get_download_info(
   os_info : @os.OsInfo,
   version : String,
-) -> DownloadInfo raise {
+) -> DownloadInfo {
   // Python URL 中版本号不带 v 前缀
   let ver = if version.has_prefix("v") {
     version.sub(start=1).to_owned()
   } else {
     version
   }
-  let url = match os_info.name {
-    Windows => {
-      let arch = if os_info.arch is Aarch64 { "arm64" } else { "amd64" }
-      "\{PYTHON_RELEASE_URL}/\{ver}/python-\{ver}-embed-\{arch}.zip"
-    }
-    Linux => "\{PYTHON_RELEASE_URL}/\{ver}/Python-\{ver}.tgz"
-    MacOS => "\{PYTHON_RELEASE_URL}/\{ver}/Python-\{ver}.tgz"
+  // Python 2.x 回退官方源码包
+  let source_url = "\{PYTHON_RELEASE_URL}/\{ver}/Python-\{ver}.tgz"
+  let source_info = { url: source_url, headers: Map([]), root_path_depth: 1 }
+  if ver.has_prefix("2.") {
+    return source_info
+  }
+  let arch = if os_info.arch is Aarch64 { "aarch64" } else { "x86_64" }
+  let triple = match os_info.name {
+    Windows => "\{arch}-pc-windows-msvc"
+    Linux => "\{arch}-unknown-linux-gnu"
+    MacOS => "\{arch}-apple-darwin"
     name =>
       raise fail(
         @i18n.t("error.unsupported_os_detail", args={ "name": name.to_string() }),
       )
   }
-  let root_depth : UInt = match os_info.name {
-    Windows => 0
-    Linux => 1
-    MacOS => 1
-    _ => 0
-  }
-  { url, headers: Map([]), root_path_depth: root_depth }
+  let tag = get_standalone_tag() catch { _ => return source_info }
+  let url = "https://github.com/\{PYTHON_STANDALONE_REPO}/releases/download/\{tag}/cpython-\{ver}+\{tag}-\{triple}-install_only.tar.gz"
+  // standalone 安装包解压后顶层为 python/ 目录
+  { url, headers: Map([]), root_path_depth: 1 }
 }
 
 ///|
 /// 获取 Python 的预期 SHA256 校验值
-/// 从 python.org 获取 .sha256 文件
+/// Python 3.x 使用 standalone 预编译包，其 SHA256 与 python.org 源码包不同，跳过校验
+/// Python 2.x 回退官方源码包，从 python.org 获取 sha256 文件
 pub async fn Python::get_expected_checksum(
-  os_info : @os.OsInfo,
+  _os_info : @os.OsInfo,
   version : String,
 ) -> String? {
   let ver = if version.has_prefix("v") {
@@ -191,13 +227,10 @@ pub async fn Python::get_expected_checksum(
   } else {
     version
   }
-  // macOS/Linux 使用源码包的 sha256 文件
-  // Windows embeddable 包没有单独的 sha256 文件
-  let sha256_filename = match os_info.name {
-    Windows => return None
-    Linux | MacOS => "Python-\{ver}.tgz.sha256"
-    _ => return None
+  if !ver.has_prefix("2.") {
+    return None
   }
+  let sha256_filename = "Python-\{ver}.tgz.sha256"
   let sha256_url = "\{PYTHON_RELEASE_URL}/\{ver}/\{sha256_filename}"
 
   // 应用镜像/代理配置

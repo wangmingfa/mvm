@@ -461,6 +461,8 @@ pub let zh_dict : Map[String, String] = {
 
   // === python 模块 ===
   "python.cannot_fetch_shasums": "无法从 {url} 获取 Python SHA256 校验文件: {code} {reason}",
+  "python.cannot_fetch_standalone_tag": "无法获取 Python standalone 最新 release tag: {code} {reason}",
+  "python.cannot_parse_standalone_tag": "无法从 GitHub API 响应中解析 Python standalone release tag",
   "python.unsupported_os": "不支持的操作系统",
 
   // === cache 模块（补充） ===
