@@ -2,13 +2,15 @@
 pub fn merge_detault_headers(
   headers? : Map[String, String] = Map([]),
 ) -> Map[String, String] {
-  // 注意：不包含 Accept-Encoding 头
-  // MoonBit 的 @http.get 不自动解压 gzip/br 响应，如果发送 Accept-Encoding
-  // 服务器可能返回压缩数据，导致 data.text() 解码时抛出 utf8.Malformed 错误
+  // 显式声明 identity，避免服务器返回 gzip 压缩内容：
+  // MoonBit 的 @http 客户端会自动发送 Accept-Encoding: gzip,identity 并尝试自动解压，
+  // 但该自动解压路径存在 bug（gzip 流解码完成时产出 0 字节会抛 ReaderClosed，
+  // 已在 GitHub API 响应上复现），且压缩内容经 data.text() 解码可能抛 utf8.Malformed
   // 实际的大文件下载通过 curl/PowerShell 处理，它们有自己的压缩机制
   let merged_headers = {
     "User-Agent": "curl/8.7.1",
     "Accept": "*/*",
+    "Accept-Encoding": "identity",
     "Connection": "keep-alive",
   }
   for k, v in headers {
