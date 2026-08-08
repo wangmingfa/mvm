@@ -1,0 +1,9 @@
+* text=auto
+*.mbt text
+*.mbti text
+*.json text
+*.moon text
+*.c text
+*.sh text eol=lf
+*.ps1 text
+*.md text
