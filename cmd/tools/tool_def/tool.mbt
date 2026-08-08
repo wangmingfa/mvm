@@ -68,7 +68,7 @@ pub async fn is_installed(tool : Tool, version : String) -> Bool {
     Java => Java::get_exe_path(version)
     Deno => Deno::get_exe_path(version)
     Rust => Rust::get_exe_path(version)
-    Python | Python3 => Python::get_exe_path(version)
+    Python | Python3 => Python::get_exe_path(tool, version)
     Go => Go::get_exe_path(version)
     Zig => Zig::get_exe_path(version)
     Bun => Bun::get_exe_path(version)

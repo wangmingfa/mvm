@@ -290,9 +290,9 @@ pub async fn Python::get_expected_checksum(
 }
 
 ///|
-pub fn Python::get_exe_path(version : String) -> String raise {
+pub fn Python::get_exe_path(tool : Tool, version : String) -> String raise {
   let os = @os.get_os_name()
-  let dir = version_dir(Tool::Python, version)
+  let dir = version_dir(tool, version)
   match os {
     Windows => [dir, "python.exe"].join("/")
     MacOS | Linux => {
@@ -311,14 +311,15 @@ pub fn Python::get_exe_path(version : String) -> String raise {
 
 ///|
 pub async fn Python::get_program_exe_info(
+  tool : Tool,
   program : String,
   version : String,
 ) -> ProgramExeInfo {
   if program.is_blank() || version.is_blank() {
     raise fail(@i18n.t("error.specify_program_or_version"))
   }
-  let tool_dir = version_dir(Tool::Python, version)
-  let program_path = Python::get_exe_path(version)
+  let tool_dir = version_dir(tool, version)
+  let program_path = Python::get_exe_path(tool, version)
   let exists = @fs.exists(program_path)
   let os = @os.get_os_name()
   let prog_low = program.to_lower()
@@ -330,7 +331,7 @@ pub async fn Python::get_program_exe_info(
       version,
       envs=Map([]),
       exists,
-      Tool::Python,
+      tool,
       exists,
     )
   } else if prog_low == "pip" || prog_low == "pip3" {
@@ -347,7 +348,7 @@ pub async fn Python::get_program_exe_info(
       version,
       envs=Map([]),
       pip_exists,
-      Tool::Python,
+      tool,
       exists,
     )
   }

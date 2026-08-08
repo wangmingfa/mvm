@@ -290,7 +290,8 @@ pub async fn get_program_exe_info(
     Bun => Bun::get_program_exe_info(program, effective_version)
     Zig => Zig::get_program_exe_info(program, effective_version)
     Go => Go::get_program_exe_info(program, effective_version)
-    Python | Python3 => Python::get_program_exe_info(program, effective_version)
+    Python | Python3 =>
+      Python::get_program_exe_info(tool, program, effective_version)
     Rust => Rust::get_program_exe_info(program, effective_version)
     Deno => Deno::get_program_exe_info(program, effective_version)
     Java => Java::get_program_exe_info(program, effective_version)
