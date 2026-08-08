@@ -152,5 +152,15 @@ if ($ONLINE) {
 
     # Run setup (create tool scripts, configure PATH, etc.)
     # In prefix mode, automatically manage all tools (--tools all) since prefix doesn't affect existing tools
-    if ($USE_PREFIX) { & (Join-Path $BIN_DIR "mvm.exe") setup '-p' '--tools' 'all' } else { & (Join-Path $BIN_DIR "mvm.exe") setup }
+    # Switch console to UTF-8 to prevent garbled output from mvm's interactive menu (promptx C library)
+    $prevOutputEncoding = [Console]::OutputEncoding
+    $prevInputEncoding = [Console]::InputEncoding
+    try {
+      [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+      [Console]::InputEncoding = [System.Text.Encoding]::UTF8
+      if ($USE_PREFIX) { & (Join-Path $BIN_DIR "mvm.exe") setup '-p' '--tools' 'all' } else { & (Join-Path $BIN_DIR "mvm.exe") setup }
+    } finally {
+      [Console]::OutputEncoding = $prevOutputEncoding
+      [Console]::InputEncoding = $prevInputEncoding
+    }
 }
