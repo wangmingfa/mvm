@@ -5,4 +5,5 @@ _build/
 .temp
 .idea
 .aicode
+.workbuddy/
 trace.json
