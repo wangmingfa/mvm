@@ -51,7 +51,7 @@ pub async fn write_cache_file_content(
 ) -> Unit {
   let file_path = @fs_ext.join_path(cache_dir(), cache_file_path)
   let parent_dir = @fs_ext.get_parent_dir(file_path)
-  guard parent_dir is Some(parent_dir)
+  guard! parent_dir is Some(parent_dir)
   @fs_ext.ensure_dir(parent_dir)
   @fs.write_file(file_path, content, create_mode=CreateOrTruncate)
 }

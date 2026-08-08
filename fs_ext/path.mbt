@@ -187,7 +187,7 @@ test "canonicalize_path windows" {
 /// 获取一个路径的名称：如果是文件，则返回文件名；如果是文件夹，则返回文件夹名ing成
 pub fn get_path_name(path : String) -> String {
   let paths = path.split("\\").flat_map(v => v.split("/"))
-  guard paths.last() is Some(name)
+  guard! paths.last() is Some(name)
   name.to_owned()
 }
 

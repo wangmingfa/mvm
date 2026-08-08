@@ -322,7 +322,7 @@ pub async fn get_config(
   let dir = if dir is Some(dir) {
     dir
   } else {
-    guard @env.current_dir() is Some(dir)
+    guard! @env.current_dir() is Some(dir)
     dir
   }
   if tool is Some(t) {
@@ -466,7 +466,7 @@ async fn get_node_version_from_volta_package_json(dir : String) -> String? {
 
 ///|
 fn get_project_config_path() -> String {
-  guard @env.current_dir() is Some(cwd)
+  guard! @env.current_dir() is Some(cwd)
   return @fs_ext.join_path(cwd, CONFIG_FILE)
 }
 

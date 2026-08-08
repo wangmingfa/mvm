@@ -326,7 +326,7 @@ test "parse_content_length_from_headers" {
 ///|
 async test "download" {
   let start = @env.now()
-  guard @env.current_dir() is Some(dir)
+  guard! @env.current_dir() is Some(dir)
   // 使用阿里云镜像上的小文件（~810KB），测试速度快且能验证进度条
   let url = "https://mirrors.aliyun.com/macports/distfiles/bzip2/bzip2-1.0.8.tar.gz"
   let output_path = "\{dir}/.temp/bzip2-1.0.8.tar.gz"

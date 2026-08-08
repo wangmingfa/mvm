@@ -474,44 +474,44 @@ test "get_arg_value" {
 ///|
 test "get_command: 基本命令" {
   // 无参数 → Help
-  guard @utils.to_result(() => get_command([])) is Ok(cmd)
+  guard! @utils.to_result(() => get_command([])) is Ok(cmd)
   debug_inspect(cmd, content=@debug.to_string(Help))
   // --help → Help
-  guard @utils.to_result(() => get_command(["--help"])) is Ok(cmd)
+  guard! @utils.to_result(() => get_command(["--help"])) is Ok(cmd)
   debug_inspect(cmd, content=@debug.to_string(Help))
   // -h → Help
-  guard @utils.to_result(() => get_command(["-h"])) is Ok(cmd)
+  guard! @utils.to_result(() => get_command(["-h"])) is Ok(cmd)
   debug_inspect(cmd, content=@debug.to_string(Help))
   // --version → Version
-  guard @utils.to_result(() => get_command(["--version"])) is Ok(cmd)
+  guard! @utils.to_result(() => get_command(["--version"])) is Ok(cmd)
   debug_inspect(cmd, content=@debug.to_string(Version))
   // -v → Version
-  guard @utils.to_result(() => get_command(["-v"])) is Ok(cmd)
+  guard! @utils.to_result(() => get_command(["-v"])) is Ok(cmd)
   debug_inspect(cmd, content=@debug.to_string(Version))
 }
 
 ///|
 test "get_command: install 命令" {
   // install node@20
-  guard @utils.to_result(() => get_command(["install", "node@20"])) is Ok(cmd)
+  guard! @utils.to_result(() => get_command(["install", "node@20"])) is Ok(cmd)
   debug_inspect(
     cmd,
     content=@debug.to_string(Install(Node, Some("20"), false, false)),
   )
   // i node@20 (缩写)
-  guard @utils.to_result(() => get_command(["i", "node@20"])) is Ok(cmd)
+  guard! @utils.to_result(() => get_command(["i", "node@20"])) is Ok(cmd)
   debug_inspect(
     cmd,
     content=@debug.to_string(Install(Node, Some("20"), false, false)),
   )
   // install node (无版本号)
-  guard @utils.to_result(() => get_command(["install", "node"])) is Ok(cmd)
+  guard! @utils.to_result(() => get_command(["install", "node"])) is Ok(cmd)
   debug_inspect(
     cmd,
     content=@debug.to_string(Install(Node, None, false, false)),
   )
   // install node@20 --skip-verify
-  guard @utils.to_result(() => {
+  guard! @utils.to_result(() => {
       get_command(["install", "node@20", "--skip-verify"])
     })
     is Ok(cmd)
@@ -520,14 +520,16 @@ test "get_command: install 命令" {
     content=@debug.to_string(Install(Node, Some("20"), true, false)),
   )
   // install node@20 --no-cache
-  guard @utils.to_result(() => get_command(["install", "node@20", "--no-cache"]))
+  guard! @utils.to_result(() => {
+      get_command(["install", "node@20", "--no-cache"])
+    })
     is Ok(cmd)
   debug_inspect(
     cmd,
     content=@debug.to_string(Install(Node, Some("20"), false, true)),
   )
   // install node@20 --skip-verify --no-cache
-  guard @utils.to_result(() => {
+  guard! @utils.to_result(() => {
       get_command(["install", "node@20", "--skip-verify", "--no-cache"])
     })
     is Ok(cmd)
@@ -536,13 +538,13 @@ test "get_command: install 命令" {
     content=@debug.to_string(Install(Node, Some("20"), true, true)),
   )
   // install bun@lts
-  guard @utils.to_result(() => get_command(["install", "bun@lts"])) is Ok(cmd)
+  guard! @utils.to_result(() => get_command(["install", "bun@lts"])) is Ok(cmd)
   debug_inspect(
     cmd,
     content=@debug.to_string(Install(Bun, Some("lts"), false, false)),
   )
   // install go@1.23
-  guard @utils.to_result(() => get_command(["install", "go@1.23"])) is Ok(cmd)
+  guard! @utils.to_result(() => get_command(["install", "go@1.23"])) is Ok(cmd)
   debug_inspect(
     cmd,
     content=@debug.to_string(Install(Go, Some("1.23"), false, false)),
@@ -552,7 +554,7 @@ test "get_command: install 命令" {
 ///|
 test "get_command: install 灵活 flag 位置" {
   // --skip-verify 在工具参数前
-  guard @utils.to_result(() => {
+  guard! @utils.to_result(() => {
       get_command(["install", "--skip-verify", "node@20"])
     })
     is Ok(cmd)
@@ -561,14 +563,16 @@ test "get_command: install 灵活 flag 位置" {
     content=@debug.to_string(Install(Node, Some("20"), true, false)),
   )
   // --no-cache 在工具参数前
-  guard @utils.to_result(() => get_command(["install", "--no-cache", "node@20"]))
+  guard! @utils.to_result(() => {
+      get_command(["install", "--no-cache", "node@20"])
+    })
     is Ok(cmd)
   debug_inspect(
     cmd,
     content=@debug.to_string(Install(Node, Some("20"), false, true)),
   )
   // 两个 flag 在工具参数前
-  guard @utils.to_result(() => {
+  guard! @utils.to_result(() => {
       get_command(["install", "--skip-verify", "--no-cache", "node@20"])
     })
     is Ok(cmd)
@@ -577,7 +581,7 @@ test "get_command: install 灵活 flag 位置" {
     content=@debug.to_string(Install(Node, Some("20"), true, true)),
   )
   // flag 在前和在后的组合
-  guard @utils.to_result(() => {
+  guard! @utils.to_result(() => {
       get_command(["install", "--no-cache", "node@20", "--skip-verify"])
     })
     is Ok(cmd)
@@ -586,7 +590,7 @@ test "get_command: install 灵活 flag 位置" {
     content=@debug.to_string(Install(Node, Some("20"), true, true)),
   )
   // 缩写 i 也支持灵活位置
-  guard @utils.to_result(() => get_command(["i", "--skip-verify", "node@20"]))
+  guard! @utils.to_result(() => get_command(["i", "--skip-verify", "node@20"]))
     is Ok(cmd)
   debug_inspect(
     cmd,
@@ -597,53 +601,53 @@ test "get_command: install 灵活 flag 位置" {
 ///|
 test "get_command: use/pin/unuse 命令" {
   // use node@20
-  guard @utils.to_result(() => get_command(["use", "node@20"])) is Ok(cmd)
+  guard! @utils.to_result(() => get_command(["use", "node@20"])) is Ok(cmd)
   debug_inspect(cmd, content=@debug.to_string(Use(Node, Some("20"))))
   // use node (无版本号)
-  guard @utils.to_result(() => get_command(["use", "node"])) is Ok(cmd)
+  guard! @utils.to_result(() => get_command(["use", "node"])) is Ok(cmd)
   debug_inspect(cmd, content=@debug.to_string(Use(Node, None)))
   // pin node@20.18.0
-  guard @utils.to_result(() => get_command(["pin", "node@20.18.0"])) is Ok(cmd)
+  guard! @utils.to_result(() => get_command(["pin", "node@20.18.0"])) is Ok(cmd)
   debug_inspect(cmd, content=@debug.to_string(Pin(Node, "20.18.0")))
   // unuse node
-  guard @utils.to_result(() => get_command(["unuse", "node"])) is Ok(cmd)
+  guard! @utils.to_result(() => get_command(["unuse", "node"])) is Ok(cmd)
   debug_inspect(cmd, content=@debug.to_string(Unuse(Node)))
 }
 
 ///|
 test "get_command: list/current/which 命令" {
   // list
-  guard @utils.to_result(() => get_command(["list"])) is Ok(cmd)
+  guard! @utils.to_result(() => get_command(["list"])) is Ok(cmd)
   debug_inspect(cmd, content=@debug.to_string(List(None)))
   // ls (缩写)
-  guard @utils.to_result(() => get_command(["ls"])) is Ok(cmd)
+  guard! @utils.to_result(() => get_command(["ls"])) is Ok(cmd)
   debug_inspect(cmd, content=@debug.to_string(List(None)))
   // list node
-  guard @utils.to_result(() => get_command(["list", "node"])) is Ok(cmd)
+  guard! @utils.to_result(() => get_command(["list", "node"])) is Ok(cmd)
   debug_inspect(cmd, content=@debug.to_string(List(Some(Node))))
   // current
-  guard @utils.to_result(() => get_command(["current"])) is Ok(cmd)
+  guard! @utils.to_result(() => get_command(["current"])) is Ok(cmd)
   debug_inspect(cmd, content=@debug.to_string(Current(None)))
   // current node
-  guard @utils.to_result(() => get_command(["current", "node"])) is Ok(cmd)
+  guard! @utils.to_result(() => get_command(["current", "node"])) is Ok(cmd)
   debug_inspect(cmd, content=@debug.to_string(Current(Some(Node))))
   // which node
-  guard @utils.to_result(() => get_command(["which", "node"])) is Ok(cmd)
+  guard! @utils.to_result(() => get_command(["which", "node"])) is Ok(cmd)
   debug_inspect(cmd, content=@debug.to_string(Which(Node)))
 }
 
 ///|
 test "get_command: run 命令（位置参数新语法）" {
   // run node@18 node -v
-  guard @utils.to_result(() => get_command(["run", "node@18", "node", "-v"]))
+  guard! @utils.to_result(() => get_command(["run", "node@18", "node", "-v"]))
     is Ok(cmd)
   debug_inspect(cmd, content=@debug.to_string(Run(Node, "18", ["node", "-v"])))
   // run node npm -v (无版本号)
-  guard @utils.to_result(() => get_command(["run", "node", "npm", "-v"]))
+  guard! @utils.to_result(() => get_command(["run", "node", "npm", "-v"]))
     is Ok(cmd)
   debug_inspect(cmd, content=@debug.to_string(Run(Node, "", ["npm", "-v"])))
   // run bun@1.1.0 bun run dev
-  guard @utils.to_result(() => {
+  guard! @utils.to_result(() => {
       get_command(["run", "bun@1.1.0", "bun", "run", "dev"])
     })
     is Ok(cmd)
@@ -656,7 +660,7 @@ test "get_command: run 命令（位置参数新语法）" {
 ///|
 test "get_command: run 命令（Volta 兼容语法）" {
   // run --node 18 node app.js
-  guard @utils.to_result(() => {
+  guard! @utils.to_result(() => {
       get_command(["run", "--node", "18", "node", "app.js"])
     })
     is Ok(cmd)
@@ -665,7 +669,7 @@ test "get_command: run 命令（Volta 兼容语法）" {
     content=@debug.to_string(Run(Node, "18", ["node", "app.js"])),
   )
   // run --bun 1.1.0 bun run dev
-  guard @utils.to_result(() => {
+  guard! @utils.to_result(() => {
       get_command(["run", "--bun", "1.1.0", "bun", "run", "dev"])
     })
     is Ok(cmd)
@@ -674,7 +678,7 @@ test "get_command: run 命令（Volta 兼容语法）" {
     content=@debug.to_string(Run(Bun, "1.1.0", ["bun", "run", "dev"])),
   )
   // run --go 1.23 go version
-  guard @utils.to_result(() => {
+  guard! @utils.to_result(() => {
       get_command(["run", "--go", "1.23", "go", "version"])
     })
     is Ok(cmd)
@@ -687,30 +691,34 @@ test "get_command: run 命令（Volta 兼容语法）" {
 ///|
 test "get_command: upgrade 命令" {
   // upgrade（升级到最新版）
-  guard @utils.to_result(() => get_command(["upgrade"])) is Ok(cmd)
+  guard! @utils.to_result(() => get_command(["upgrade"])) is Ok(cmd)
   debug_inspect(cmd, content=@debug.to_string(Upgrade(None, false)))
   // upgrade v1.0.0（升级到指定版本）
-  guard @utils.to_result(() => get_command(["upgrade", "v1.0.0"])) is Ok(cmd)
+  guard! @utils.to_result(() => get_command(["upgrade", "v1.0.0"])) is Ok(cmd)
   debug_inspect(cmd, content=@debug.to_string(Upgrade(Some("v1.0.0"), false)))
   // upgrade --list（查看版本列表）
-  guard @utils.to_result(() => get_command(["upgrade", "--list"])) is Ok(cmd)
+  guard! @utils.to_result(() => get_command(["upgrade", "--list"])) is Ok(cmd)
   debug_inspect(cmd, content=@debug.to_string(UpgradeList))
   // upgrade -l（查看版本列表）
-  guard @utils.to_result(() => get_command(["upgrade", "-l"])) is Ok(cmd)
+  guard! @utils.to_result(() => get_command(["upgrade", "-l"])) is Ok(cmd)
   debug_inspect(cmd, content=@debug.to_string(UpgradeList))
   // upgrade --reinstall（重新安装当前版本）
-  guard @utils.to_result(() => get_command(["upgrade", "--reinstall"]))
+  guard! @utils.to_result(() => get_command(["upgrade", "--reinstall"]))
     is Ok(cmd)
   debug_inspect(cmd, content=@debug.to_string(Upgrade(None, true)))
   // upgrade -r（重新安装当前版本，缩写）
-  guard @utils.to_result(() => get_command(["upgrade", "-r"])) is Ok(cmd)
+  guard! @utils.to_result(() => get_command(["upgrade", "-r"])) is Ok(cmd)
   debug_inspect(cmd, content=@debug.to_string(Upgrade(None, true)))
   // upgrade --reinstall v1.0.0（重新安装指定版本）
-  guard @utils.to_result(() => get_command(["upgrade", "--reinstall", "v1.0.0"]))
+  guard! @utils.to_result(() => {
+      get_command(["upgrade", "--reinstall", "v1.0.0"])
+    })
     is Ok(cmd)
   debug_inspect(cmd, content=@debug.to_string(Upgrade(Some("v1.0.0"), true)))
   // upgrade v1.0.0 --reinstall（flag 在后）
-  guard @utils.to_result(() => get_command(["upgrade", "v1.0.0", "--reinstall"]))
+  guard! @utils.to_result(() => {
+      get_command(["upgrade", "v1.0.0", "--reinstall"])
+    })
     is Ok(cmd)
   debug_inspect(cmd, content=@debug.to_string(Upgrade(Some("v1.0.0"), true)))
 }
@@ -718,41 +726,41 @@ test "get_command: upgrade 命令" {
 ///|
 test "get_command: setup/cache/config 命令" {
   // setup
-  guard @utils.to_result(() => get_command(["setup"])) is Ok(cmd)
+  guard! @utils.to_result(() => get_command(["setup"])) is Ok(cmd)
   debug_inspect(cmd, content=@debug.to_string(Setup(false, None)))
   // setup --prefix
-  guard @utils.to_result(() => get_command(["setup", "--prefix"])) is Ok(cmd)
+  guard! @utils.to_result(() => get_command(["setup", "--prefix"])) is Ok(cmd)
   debug_inspect(cmd, content=@debug.to_string(Setup(true, None)))
   // setup -p
-  guard @utils.to_result(() => get_command(["setup", "-p"])) is Ok(cmd)
+  guard! @utils.to_result(() => get_command(["setup", "-p"])) is Ok(cmd)
   debug_inspect(cmd, content=@debug.to_string(Setup(true, None)))
   // setup --tools all
-  guard @utils.to_result(() => get_command(["setup", "--tools", "all"]))
+  guard! @utils.to_result(() => get_command(["setup", "--tools", "all"]))
     is Ok(cmd)
   debug_inspect(cmd, content=@debug.to_string(Setup(false, Some("all"))))
   // setup --tools=node,bun
-  guard @utils.to_result(() => get_command(["setup", "--tools=node,bun"]))
+  guard! @utils.to_result(() => get_command(["setup", "--tools=node,bun"]))
     is Ok(cmd)
   debug_inspect(cmd, content=@debug.to_string(Setup(false, Some("node,bun"))))
   // setup -t node,bun
-  guard @utils.to_result(() => get_command(["setup", "-t", "node,bun"]))
+  guard! @utils.to_result(() => get_command(["setup", "-t", "node,bun"]))
     is Ok(cmd)
   debug_inspect(cmd, content=@debug.to_string(Setup(false, Some("node,bun"))))
   // setup -p --tools all
-  guard @utils.to_result(() => get_command(["setup", "-p", "--tools", "all"]))
+  guard! @utils.to_result(() => get_command(["setup", "-p", "--tools", "all"]))
     is Ok(cmd)
   debug_inspect(cmd, content=@debug.to_string(Setup(true, Some("all"))))
   // cache clean
-  guard @utils.to_result(() => get_command(["cache", "clean"])) is Ok(cmd)
+  guard! @utils.to_result(() => get_command(["cache", "clean"])) is Ok(cmd)
   debug_inspect(cmd, content=@debug.to_string(CacheClean))
   // config list
-  guard @utils.to_result(() => get_command(["config", "list"])) is Ok(cmd)
+  guard! @utils.to_result(() => get_command(["config", "list"])) is Ok(cmd)
   debug_inspect(cmd, content=@debug.to_string(ConfigList))
   // config ls
-  guard @utils.to_result(() => get_command(["config", "ls"])) is Ok(cmd)
+  guard! @utils.to_result(() => get_command(["config", "ls"])) is Ok(cmd)
   debug_inspect(cmd, content=@debug.to_string(ConfigList))
   // config set github_proxy https://example.com/$URL
-  guard @utils.to_result(() => {
+  guard! @utils.to_result(() => {
       get_command(["config", "set", "github_proxy", "https://example.com/$URL"])
     })
     is Ok(cmd)
@@ -763,7 +771,7 @@ test "get_command: setup/cache/config 命令" {
     ),
   )
   // config set china (预设)
-  guard @utils.to_result(() => get_command(["config", "set", "china"]))
+  guard! @utils.to_result(() => get_command(["config", "set", "china"]))
     is Ok(cmd)
   debug_inspect(cmd, content=@debug.to_string(ConfigPreset("china")))
 }
@@ -771,18 +779,18 @@ test "get_command: setup/cache/config 命令" {
 ///|
 test "get_command: 错误命令" {
   // unuse 无参数 → 报错
-  guard @utils.to_result(() => get_command(["unuse"])) is Err(_)
+  guard! @utils.to_result(() => get_command(["unuse"])) is Err(_)
   // which 无参数 → 报错
-  guard @utils.to_result(() => get_command(["which"])) is Err(_)
+  guard! @utils.to_result(() => get_command(["which"])) is Err(_)
   // run 无参数 → 报错
-  guard @utils.to_result(() => get_command(["run"])) is Err(_)
+  guard! @utils.to_result(() => get_command(["run"])) is Err(_)
   // run 使用未知的 --flag → 报错
-  guard @utils.to_result(() => get_command(["run", "--unknown", "1.0", "cmd"]))
+  guard! @utils.to_result(() => get_command(["run", "--unknown", "1.0", "cmd"]))
     is Err(_)
   // run 使用 --flag 但缺版本号 → 报错
-  guard @utils.to_result(() => get_command(["run", "--node"])) is Err(_)
+  guard! @utils.to_result(() => get_command(["run", "--node"])) is Err(_)
   // 不存在的命令 → 报错
-  guard @utils.to_result(() => get_command(["foobar"])) is Err(_)
+  guard! @utils.to_result(() => get_command(["foobar"])) is Err(_)
   // pin 无版本号 → 报错
-  guard @utils.to_result(() => get_command(["pin", "node"])) is Err(_)
+  guard! @utils.to_result(() => get_command(["pin", "node"])) is Err(_)
 }

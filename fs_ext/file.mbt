@@ -185,7 +185,7 @@ async test "get_all_sub_dir_or_file_path" {
 
 ///|
 fn get_tmp_dir() -> String {
-  guard @env.current_dir() is Some(current_dir)
+  guard! @env.current_dir() is Some(current_dir)
   "\{current_dir}/.temp"
 }
 
@@ -363,7 +363,7 @@ async test "readlink_target" {
   )
 
   // 验证非软连接文件返回 None
-  guard readlink_target(target_file) is None
+  guard! readlink_target(target_file) is None
 
   // 清理
   @fs.rmdir(test_dir, recursive=true)
