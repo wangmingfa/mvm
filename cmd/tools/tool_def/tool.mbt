@@ -68,7 +68,7 @@ pub async fn is_installed(tool : Tool, version : String) -> Bool {
     Java => Java::get_exe_path(version)
     Deno => Deno::get_exe_path(version)
     Rust => Rust::get_exe_path(version)
-    Python => Python::get_exe_path(version)
+    Python | Python3 => Python::get_exe_path(version)
     Go => Go::get_exe_path(version)
     Zig => Zig::get_exe_path(version)
     Bun => Bun::get_exe_path(version)
@@ -97,6 +97,7 @@ pub(all) enum Tool {
   Zig
   Go
   Python
+  Python3
   Rust
   Deno
   Java
@@ -111,6 +112,7 @@ pub impl @utils.ToStr for Tool with fn to_str(s) {
     Zig => "zig"
     Go => "go"
     Python => "python"
+    Python3 => "python3"
     Rust => "rust"
     Deno => "deno"
     Java => "java"
@@ -121,13 +123,13 @@ pub impl @utils.ToStr for Tool with fn to_str(s) {
 ///|
 /// 所有工具列表（包含 Node 内置工具），用于创建 wrapper 脚本
 pub fn Tool::all_tools() -> Array[Tool] {
-  [Node, Bun, Zig, Go, Python, Rust, Deno, Java, Kotlin]
+  [Node, Bun, Zig, Go, Python, Python3, Rust, Deno, Java, Kotlin]
 }
 
 ///|
 /// 可安装的工具列表（不包含内置工具）
 pub fn Tool::installable_tools() -> Array[Tool] {
-  [Node, Bun, Zig, Go, Python, Rust, Deno, Java, Kotlin]
+  [Node, Bun, Zig, Go, Python, Python3, Rust, Deno, Java, Kotlin]
 }
 
 ///|
@@ -142,7 +144,8 @@ pub fn Tool::from_string(tool : String) -> Tool raise {
     "bun" => Bun
     "zig" => Zig
     "go" => Go
-    "python" | "python3" => Python
+    "python" => Python
+    "python3" => Python3
     "rust" | "rustc" => Rust
     "deno" => Deno
     "java" | "jdk" => Java
@@ -172,7 +175,10 @@ let zig_executable_programs : ReadOnlyArray[String] = ["zig"]
 let go_executable_programs : ReadOnlyArray[String] = ["go", "gofmt"]
 
 ///|
-let python_executable_programs : ReadOnlyArray[String] = ["python3", "python"]
+let python_executable_programs : ReadOnlyArray[String] = ["python"]
+
+///|
+let python3_executable_programs : ReadOnlyArray[String] = ["python3"]
 
 ///|
 let rust_executable_programs : ReadOnlyArray[String] = [
@@ -202,6 +208,7 @@ pub fn Tool::get_executable_programs(tool : Tool) -> ReadOnlyArray[String] {
     Zig => zig_executable_programs
     Go => go_executable_programs
     Python => python_executable_programs
+    Python3 => python3_executable_programs
     // Rust 本身不是可执行命令，实际可执行的是 rustc、cargo 等
     Rust => rust_executable_programs
     Deno => deno_executable_programs
@@ -221,6 +228,8 @@ pub fn Tool::get_belonging_tool(cmd : String) -> Tool raise {
     Zig
   } else if go_executable_programs.contains(lower_name) {
     Go
+  } else if python3_executable_programs.contains(lower_name) {
+    Python3
   } else if python_executable_programs.contains(lower_name) {
     Python
   } else if rust_executable_programs.contains(lower_name) {
@@ -243,7 +252,9 @@ test "Tool::from_string 所有工具" {
   guard Tool::from_string("zig") is Zig else { fail("expected Zig") }
   guard Tool::from_string("go") is Go else { fail("expected Go") }
   guard Tool::from_string("python") is Python else { fail("expected Python") }
-  guard Tool::from_string("python3") is Python else { fail("expected Python") }
+  guard Tool::from_string("python3") is Python3 else {
+    fail("expected Python3")
+  }
   guard Tool::from_string("rust") is Rust else { fail("expected Rust") }
   guard Tool::from_string("rustc") is Rust else { fail("expected Rust") }
   guard Tool::from_string("deno") is Deno else { fail("expected Deno") }
@@ -274,6 +285,9 @@ test "Tool::from_string_with_option_result" {
   }
   guard Tool::from_string_with_option_result("python") is Some(Python) else {
     fail("expected Some(Python)")
+  }
+  guard Tool::from_string_with_option_result("python3") is Some(Python3) else {
+    fail("expected Some(Python3)")
   }
   guard Tool::from_string_with_option_result("rust") is Some(Rust) else {
     fail("expected Some(Rust)")

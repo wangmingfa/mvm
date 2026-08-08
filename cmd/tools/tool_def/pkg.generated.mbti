@@ -84,11 +84,13 @@ pub struct Config {
   zig : String?
   go : String?
   python : String?
+  python3 : String?
   rust : String?
   deno : String?
   java : String?
   kotlin : String?
 } derive(ToJson, @debug.Debug, @json.FromJson)
+pub fn Config::get_python_version(Self, String) -> String?
 pub fn Config::get_value(Self, Tool) -> String?
 
 type Deno
@@ -191,7 +193,7 @@ pub struct ProgramExeInfo {
 pub fn ProgramExeInfo::ProgramExeInfo(String, String, String, String, envs? : Map[String, String], Bool, Tool, Bool, extra_args? : Array[String]) -> Self
 
 type Python
-pub async fn Python::get_download_info(@os.OsInfo, String) -> DownloadInfo
+pub fn Python::get_download_info(@os.OsInfo, String) -> DownloadInfo raise
 pub fn Python::get_exe_path(String) -> String raise
 pub async fn Python::get_expected_checksum(@os.OsInfo, String) -> String?
 pub async fn Python::get_program_exe_info(String, String) -> ProgramExeInfo
@@ -213,6 +215,7 @@ pub(all) enum Tool {
   Zig
   Go
   Python
+  Python3
   Rust
   Deno
   Java

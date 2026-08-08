@@ -258,6 +258,7 @@ pub struct Config {
   zig : String?
   go : String?
   python : String?
+  python3 : String?
   rust : String?
   deno : String?
   java : String?
@@ -272,7 +273,7 @@ impl Show for Config with fn output(s, logger) {
 ///|
 impl Show for Config with fn to_string(s) {
   (
-    $|{node: \{@utils.option_to_string(s.node)}, bun: \{@utils.option_to_string(s.bun)}, zig: \{@utils.option_to_string(s.zig)}, go: \{@utils.option_to_string(s.go)}, python: \{@utils.option_to_string(s.python)}, rust: \{@utils.option_to_string(s.rust)}, deno: \{@utils.option_to_string(s.deno)}, java: \{@utils.option_to_string(s.java)}, kotlin: \{@utils.option_to_string(s.kotlin)}}
+    $|{node: \{@utils.option_to_string(s.node)}, bun: \{@utils.option_to_string(s.bun)}, zig: \{@utils.option_to_string(s.zig)}, go: \{@utils.option_to_string(s.go)}, python: \{@utils.option_to_string(s.python)}, python3: \{@utils.option_to_string(s.python3)}, rust: \{@utils.option_to_string(s.rust)}, deno: \{@utils.option_to_string(s.deno)}, java: \{@utils.option_to_string(s.java)}, kotlin: \{@utils.option_to_string(s.kotlin)}}
   )
 }
 
@@ -284,10 +285,30 @@ pub fn Config::get_value(self : Self, tool : Tool) -> String? {
     Zig => self.zig
     Go => self.go
     Python => self.python
+    Python3 => self.python3
     Rust => self.rust
     Deno => self.deno
     Java => self.java
     Kotlin => self.kotlin
+  }
+}
+
+///|
+pub fn Config::get_python_version(self : Self, program : String) -> String? {
+  let prog_low = program.to_lower()
+  if prog_low == "python3" {
+    // python3: 优先用 python3 配置，其次检查 python 是否为 3.x
+    match self.python3 {
+      Some(v) => Some(v)
+      None =>
+        match self.python {
+          Some(v) if v.has_prefix("v3.") || v.has_prefix("3.") => Some(v)
+          _ => None
+        }
+    }
+  } else {
+    // python: 优先用 python 配置
+    self.python
   }
 }
 
@@ -368,6 +389,7 @@ async fn get_config_inner(
           zig: None,
           go: None,
           python: None,
+          python3: None,
           rust: None,
           deno: None,
           java: None,
@@ -568,6 +590,7 @@ test "Config get_value" {
     zig: None,
     go: None,
     python: None,
+    python3: None,
     rust: None,
     deno: None,
     java: None,

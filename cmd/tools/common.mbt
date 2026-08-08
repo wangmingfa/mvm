@@ -76,7 +76,8 @@ pub async fn get_target_version(tool : Tool, version : String) -> String {
     Bun => Bun::get_target_version(os_info, version, version_count)
     Zig => Zig::get_target_version(os_info, version, version_count)
     Go => Go::get_target_version(os_info, version, version_count)
-    Python => Python::get_target_version(os_info, version, version_count)
+    Python | Python3 =>
+      Python::get_target_version(os_info, version, version_count)
     Rust => Rust::get_target_version(os_info, version, version_count)
     Deno => Deno::get_target_version(os_info, version, version_count)
     Java => Java::get_target_version(os_info, version, version_count)
@@ -97,7 +98,7 @@ pub async fn get_expected_checksum(
     Zig => Zig::get_expected_checksum(os_info, version)
     Go => Go::get_expected_checksum(os_info, version)
     Bun => Bun::get_expected_checksum(os_info, version)
-    Python => Python::get_expected_checksum(os_info, version)
+    Python | Python3 => Python::get_expected_checksum(os_info, version)
     Rust => Rust::get_expected_checksum(os_info, version)
     Java => Java::get_expected_checksum(os_info, version)
     // Deno 和 Kotlin 无官方校验文件
@@ -116,7 +117,7 @@ pub fn match_version(
   )
   match tool {
     // Python、Rust、Deno 版本号带 "v" 前缀（与 Node/Bun/Zig 一致）
-    Node | Zig | Bun | Python | Rust | Deno => {
+    Node | Zig | Bun | Python | Python3 | Rust | Deno => {
       let handle_version = if version.has_prefix("v") {
         version
       } else {
@@ -214,14 +215,14 @@ test "match_version" {
 ///   url: 下载地址
 ///   headers: 下载请求需要携带的 headers
 ///   root_path_depth: 压缩包解压出来之后，需要进入多少层级才能到达实际工具根目录
-pub async fn get_download_info(tool : Tool, version : String) -> DownloadInfo {
+pub fn get_download_info(tool : Tool, version : String) -> DownloadInfo raise {
   let os_info = @os.get_os_info()
   match tool {
     Node => Node::get_download_info(os_info, version)
     Bun => Bun::get_download_info(os_info, version)
     Zig => Zig::get_download_info(os_info, version)
     Go => Go::get_download_info(os_info, version)
-    Python => Python::get_download_info(os_info, version)
+    Python | Python3 => Python::get_download_info(os_info, version)
     Rust => Rust::get_download_info(os_info, version)
     Deno => Deno::get_download_info(os_info, version)
     Java => Java::get_download_info(os_info, version)
@@ -239,8 +240,7 @@ pub async fn get_program_exe_info(
   version : String,
 ) -> ProgramExeInfo {
   let effective_version = if version.is_blank() {
-    guard get_config(tool~) is Some((_, config)) &&
-      config.get_value(tool) is Some(v) else {
+    guard get_config(tool~) is Some((_, config)) else {
       // 找不到合适的版本
       let msg = [
         "未指定",
@@ -253,14 +253,33 @@ pub async fn get_program_exe_info(
       ].join(" ")
       raise fail(msg)
     }
-    // python3 命令强制使用 Python 3.x 版本
-    if tool is Python &&
-      program == "python3" &&
-      (v.has_prefix("v2.") || v.has_prefix("2.")) {
-      "3"
+    // Python 特殊处理：根据 program 名选择版本
+    let v = if tool is Python {
+      config.get_python_version(program)
     } else {
-      v
+      config.get_value(tool)
     }
+    guard v is Some(v) else {
+      // Python3 没有配置时，给出更明确的提示
+      let hint = if tool is Python && program.to_lower() == "python3" {
+        "，请使用 \{@utils.yellow("mvm use python3@3.x")} 配置 Python 3 版本"
+      } else {
+        ""
+      }
+      let msg = [
+        "未指定",
+        @utils.yellow(program),
+        "的版本",
+        hint,
+        "。请使用",
+        @utils.yellow("mvm use \{program}@version"),
+        "指定版本，或使用",
+        @utils.yellow("mvm use \{program}"),
+        "指定为最新版",
+      ].join(" ")
+      raise fail(msg)
+    }
+    v
   } else {
     version
   }
@@ -271,7 +290,7 @@ pub async fn get_program_exe_info(
     Bun => Bun::get_program_exe_info(program, effective_version)
     Zig => Zig::get_program_exe_info(program, effective_version)
     Go => Go::get_program_exe_info(program, effective_version)
-    Python => Python::get_program_exe_info(program, effective_version)
+    Python | Python3 => Python::get_program_exe_info(program, effective_version)
     Rust => Rust::get_program_exe_info(program, effective_version)
     Deno => Deno::get_program_exe_info(program, effective_version)
     Java => Java::get_program_exe_info(program, effective_version)
@@ -284,7 +303,7 @@ pub async fn post_install(tool : Tool, target_dir : String) -> Unit {
   let os = @os.get_os_name()
   if os is Linux || os is MacOS {
     // Python 源码包需要编译
-    if tool is Python {
+    if tool is Python || tool is Python3 {
       compile_python_source(target_dir)
     }
     // 增加可执行权限
@@ -310,6 +329,8 @@ pub async fn post_install(tool : Tool, target_dir : String) -> Unit {
         }
         [@fs_ext.join_path(target_dir, "bin/\{exe_name}")]
       }
+      // Python3 永远使用 python3 可执行文件
+      Python3 => [@fs_ext.join_path(target_dir, "bin/python3")]
       // Rust 的可执行文件在 bin 子目录下
       Rust => {
         let base = target_dir
@@ -418,7 +439,7 @@ pub fn prepare_run_command(
   match tool {
     Node => Node::prepare_run_command(program_exe_info, exec_args)
     // 其他工具目前直接使用原始路径和参数
-    Bun | Zig | Go | Python | Rust | Deno | Java | Kotlin =>
+    Bun | Zig | Go | Python | Python3 | Rust | Deno | Java | Kotlin =>
       (path, [..extra_args, ..exec_args])
   }
 }
