@@ -45,4 +45,3 @@ pub fn Lang::to_string(Self) -> String
 // Type aliases
 
 // Traits
-

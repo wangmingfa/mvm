@@ -38,4 +38,3 @@ pub(all) enum ProgressBarMode {
 // Type aliases
 
 // Traits
-

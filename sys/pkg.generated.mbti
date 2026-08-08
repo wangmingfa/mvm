@@ -11,4 +11,3 @@ pub fn is_cancelled(Error) -> Bool
 // Type aliases
 
 // Traits
-

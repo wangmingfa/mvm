@@ -55,4 +55,3 @@ pub fn CommandResult::write(Self, String) -> Unit
 // Type aliases
 
 // Traits
-

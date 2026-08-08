@@ -26,4 +26,3 @@ pub async fn try_urls(Array[String], headers? : Map[String, String], String) -> 
 // Type aliases
 
 // Traits
-

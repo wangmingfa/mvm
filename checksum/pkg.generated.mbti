@@ -11,4 +11,3 @@ pub fn verify_file_checksum(String, String) -> Bool
 // Type aliases
 
 // Traits
-

@@ -11,4 +11,3 @@ pub fn remove_prefix(Array[String], String) -> Array[String]
 // Type aliases
 
 // Traits
-

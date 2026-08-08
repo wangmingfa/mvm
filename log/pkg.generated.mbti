@@ -47,4 +47,3 @@ pub fn LogLevel::from_string_with_default(String, Self) -> Self
 // Type aliases
 
 // Traits
-
