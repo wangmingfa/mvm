@@ -81,6 +81,8 @@ async fn run_install(
     "tar.gz"
   } else if url.has_suffix(".tar.xz") {
     "tar.xz"
+  } else if url.has_suffix(".msi") {
+    "msi"
   } else {
     "zip"
   }
@@ -308,6 +310,10 @@ async fn extract_file(file : String, dest : String) -> Unit {
     extract_zip(file, dest)
     return ()
   }
+  if file.has_suffix(".msi") {
+    extract_msi(file, dest)
+    return ()
+  }
   let (code, data) = match file {
     f if f.has_suffix(".tar.gz") || f.has_suffix(".tgz") =>
       @mvm_cmd.collect_output_merged("tar", ["-xzf", f, "-C", dest])
@@ -364,5 +370,24 @@ async fn extract_zip(file : String, dest : String) -> Unit {
         }),
       )
     }
+  }
+}
+
+///|
+/// 使用 msiexec /a 提取 MSI 安装包内容（管理安装模式，仅提取文件不运行安装程序）
+/// Windows 专用
+async fn extract_msi(file : String, dest : String) -> Unit {
+  let (code, data) = @mvm_cmd.collect_output_merged("msiexec", [
+    "/a",
+    file,
+    "/qn",
+    "TARGETDIR=" + dest,
+  ])
+  match code {
+    0 => ()
+    _ =>
+      raise fail(
+        @i18n.t("install.extract_failed", args={ "reason": data.text() }),
+      )
   }
 }

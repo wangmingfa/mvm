@@ -181,7 +181,9 @@ async fn get_standalone_tag() -> String {
 ///|
 /// 获取 Python 的下载信息
 /// Python 3.x 各平台统一使用 astral-sh/python-build-standalone 预编译包
-/// Python 2.x 无预编译包，回退官方源码包（Linux/macOS 走编译流程）
+/// Python 2.x 无预编译包：
+///   - Windows: 使用官方 MSI 安装包，通过 msiexec /a 提取
+///   - Linux/macOS: 回退官方源码包，走编译流程
 pub async fn Python::get_download_info(
   os_info : @os.OsInfo,
   version : String,
@@ -192,11 +194,24 @@ pub async fn Python::get_download_info(
   } else {
     version
   }
-  // Python 2.x 回退官方源码包
+  // Python 2.x 回退官方包
   let source_url = "\{PYTHON_RELEASE_URL}/\{ver}/Python-\{ver}.tgz"
   let source_info = { url: source_url, headers: Map([]), root_path_depth: 1 }
   if ver.has_prefix("2.") {
-    return source_info
+    match os_info.name {
+      Windows => {
+        // Python 2.7 仅提供 amd64 和 x86 MSI，ARM64 回退 x86（模拟运行）
+        let msi_arch = if os_info.arch is Aarch64 { "" } else { "amd64" }
+        let msi_url = if msi_arch == "" {
+          "\{PYTHON_RELEASE_URL}/\{ver}/python-\{ver}.msi"
+        } else {
+          "\{PYTHON_RELEASE_URL}/\{ver}/python-\{ver}.\{msi_arch}.msi"
+        }
+        // msiexec /a 提取到目标目录，无额外嵌套层级
+        return { url: msi_url, headers: Map([]), root_path_depth: 0 }
+      }
+      _ => return source_info
+    }
   }
   let arch = if os_info.arch is Aarch64 { "aarch64" } else { "x86_64" }
   let triple = match os_info.name {
@@ -217,9 +232,11 @@ pub async fn Python::get_download_info(
 ///|
 /// 获取 Python 的预期 SHA256 校验值
 /// Python 3.x 使用 standalone 预编译包，其 SHA256 与 python.org 源码包不同，跳过校验
-/// Python 2.x 回退官方源码包，从 python.org 获取 sha256 文件
+/// Python 2.x:
+///   - Windows MSI 安装包无独立 sha256 文件，跳过校验
+///   - Linux/macOS 源码包从 python.org 获取 sha256 文件
 pub async fn Python::get_expected_checksum(
-  _os_info : @os.OsInfo,
+  os_info : @os.OsInfo,
   version : String,
 ) -> String? {
   let ver = if version.has_prefix("v") {
@@ -228,6 +245,10 @@ pub async fn Python::get_expected_checksum(
     version
   }
   if !ver.has_prefix("2.") {
+    return None
+  }
+  // Python 2.x Windows MSI 无 sha256 校验文件，跳过
+  if os_info.name is Windows {
     return None
   }
   let sha256_filename = "Python-\{ver}.tgz.sha256"
