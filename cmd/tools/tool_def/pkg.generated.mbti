@@ -194,9 +194,9 @@ pub fn ProgramExeInfo::ProgramExeInfo(String, String, String, String, envs? : Ma
 
 type Python
 pub async fn Python::get_download_info(@os.OsInfo, String) -> DownloadInfo
-pub fn Python::get_exe_path(String) -> String raise
+pub fn Python::get_exe_path(Tool, String) -> String raise
 pub async fn Python::get_expected_checksum(@os.OsInfo, String) -> String?
-pub async fn Python::get_program_exe_info(String, String) -> ProgramExeInfo
+pub async fn Python::get_program_exe_info(Tool, String, String) -> ProgramExeInfo
 pub async fn Python::get_target_version(@os.OsInfo, String, Int) -> String
 
 type PythonVersionInfo derive(@json.FromJson)

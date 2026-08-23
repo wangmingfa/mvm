@@ -5,7 +5,7 @@ version = "0.1.0"
 import {
   "moonbitlang/async@0.19.2",
   "moonbitlang/regexp@0.3.5",
-  "moonbitlang/x@0.4.43",
+  "moonbitlang/x@0.5.1",
   "wangmingfa/zipx@0.1.3",
   "wangmingfa/promptx@0.1.4",
 }

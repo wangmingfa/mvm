@@ -116,13 +116,11 @@ pub async fn download(
         dest_is_file~,
         headers~,
       ) catch {
-        e => {
-          if e is DownloadError::FileAlreadyComplete {
-            @log.info(@i18n.t("download.file_already_complete"))
-            return
-          }
-          raise e
+        DownloadError::FileAlreadyComplete => {
+          @log.info(@i18n.t("download.file_already_complete"))
+          return
         }
+        e => raise e
       }
       defer client.close()
 

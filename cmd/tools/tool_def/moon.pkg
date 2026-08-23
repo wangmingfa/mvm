@@ -13,4 +13,5 @@ import {
   "moonbitlang/core/string",
   "moonbitlang/core/env",
   "moonbitlang/core/set",
+  "moonbitlang/core/lexbuf",
 }

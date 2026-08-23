@@ -35,7 +35,8 @@ pub async fn Go::get_target_version(
     version
   }
   // 重新计算版本号层级
-  let version_count = lexscan version with longest {
+  let version_count = lexscan
+    @lexbuf.StringScanner::{ data: version, cursor: 0 } with longest {
     re"^[[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+$" => 3
     re"^[[:digit:]]+\.[[:digit:]]+$" => 2
     re"^[[:digit:]]+$" => 1

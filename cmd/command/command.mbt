@@ -62,7 +62,7 @@ pub impl Show for Command with fn to_string(s) {
 
 ///|
 pub impl Show for Command with fn output(s, logger) {
-  logger.write_string(s.to_string())
+  logger.write_string(Show::to_string(s))
 }
 
 ///|
