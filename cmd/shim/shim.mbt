@@ -1,5 +1,7 @@
 async fn main {
-  // 执行示例：/path/to/bun.exe run dev
+  // 执行示例：
+  //   unix: /path/to/bun run dev
+  //   windows: D:\\path\\to\\bun.exe run dev
   let args = @env.args()
   // 从第一个参数获取文件名称，并从中截取工具名
   let file_name = @fs_ext.get_path_name(args[0])
