@@ -29,6 +29,7 @@ jobs:
           - runner: windows-latest
             os_name: windows
             artifact_path: _build/native/release/build/cmd/main/main.exe
+            shim_artifact_path: _build/native/release/build/cmd/shim/shim.exe
             ext: ".exe"
 
     steps:
@@ -102,7 +103,11 @@ jobs:
       # -------------------------
       - name: Verify artifact
         shell: bash
-        run: test -f ${{ matrix.artifact_path }}
+        run: |
+          test -f ${{ matrix.artifact_path }}
+          if [ "${{ matrix.os_name }}" = "windows" ]; then
+            test -f ${{ matrix.shim_artifact_path }}
+          fi
 
       # -------------------------
       # 架构检测
@@ -172,6 +177,9 @@ jobs:
         run: |
           echo "Compressing with UPX..."
           upx --best ${{ matrix.artifact_path }}
+          if [ "${{ matrix.os_name }}" = "windows" ]; then
+            upx --best ${{ matrix.shim_artifact_path }}
+          fi
 
       # -------------------------
       # 打包产物
@@ -194,6 +202,7 @@ jobs:
           $ARCH = $Env:ARCH
           New-Item -ItemType Directory -Force -Path stage | Out-Null
           Copy-Item "${{ matrix.artifact_path }}" -Destination "stage\mvm.exe"
+          Copy-Item "${{ matrix.shim_artifact_path }}" -Destination "stage\shim.exe"
           Compress-Archive -Path "stage\*" -DestinationPath "mvm-${VERSION}-windows-${ARCH}.zip"
           Get-Item mvm-*.zip
 

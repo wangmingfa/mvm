@@ -79,6 +79,8 @@ if ($ONLINE) {
 
     $MVM_DEST = Join-Path $BIN_DIR "mvm.exe"
     $MVM_SRC  = Join-Path $EXTRACT_DIR "mvm.exe"
+    $SHIM_DEST = Join-Path $BIN_DIR "shim.exe"
+    $SHIM_SRC  = Join-Path $EXTRACT_DIR "shim.exe"
 
     # Generate update.bat: handles file copy, setup, and cleanup
     # Fresh install: mvm.exe doesn't exist -> copy directly
@@ -96,6 +98,8 @@ if ($ONLINE) {
         "        pause",
         "        exit /b 1",
         "    )",
+        "    echo Installing shim...",
+        "    copy /Y `"$SHIM_SRC`" `"$SHIM_DEST`" >nul",
         "    goto setup",
         ")",
         "echo Upgrading mvm, waiting for process to exit...",
@@ -109,6 +113,7 @@ if ($ONLINE) {
         "ping -n 1 -w 100 127.0.0.1 >nul",
         "goto retry",
         ":copy_ok",
+        "copy /Y `"$SHIM_SRC`" `"$SHIM_DEST`" >nul 2>&1",
         "endlocal",
         "goto setup",
         ":copy_fail",
@@ -142,13 +147,24 @@ if ($ONLINE) {
 
     $BUILD_DIR = "_build/native/release/build/cmd/main"
     $MVM_EXE = Join-Path $BUILD_DIR "main.exe"
-    
+
     if (-not (Test-Path $MVM_EXE)) {
         Write-Error "Build failed, executable not found: $MVM_EXE"
         exit 1
     }
-    
+
     Copy-Item -Path $MVM_EXE -Destination (Join-Path $BIN_DIR "mvm.exe") -Force
+
+    # Build shim and copy alongside mvm.exe
+    moon build --release cmd/shim
+    $shimExit = $LASTEXITCODE
+    if ($shimExit -eq 0) {
+        $SHIM_BUILD_DIR = "_build/native/release/build/cmd/shim"
+        $SHIM_EXE = Join-Path $SHIM_BUILD_DIR "shim.exe"
+        if (Test-Path $SHIM_EXE) {
+            Copy-Item -Path $SHIM_EXE -Destination (Join-Path $BIN_DIR "shim.exe") -Force
+        }
+    }
 
     # Run setup (create tool scripts, configure PATH, etc.)
     # In prefix mode, automatically manage all tools (--tools all) since prefix doesn't affect existing tools

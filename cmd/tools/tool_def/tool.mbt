@@ -387,11 +387,15 @@ pub async fn create_tool_cmd_unix(
 }
 
 ///|
+/// 在 Windows 上为工具创建命令入口：始终创建 .cmd + 无后缀 shell 脚本。
+/// use_shim=true（默认，内置工具如 node/bun/rust/java）时额外复制 shim.exe 并重命名为
+/// {file_name}.exe，使其作为原生 exe 可直接在任意终端调用。
 pub async fn create_tool_cmd_windows(
   tool : Tool,
   cmd_name : String,
   file_name? : String = cmd_name,
   cmd_dir? : String = "",
+  use_shim? : Bool = true,
 ) -> Unit {
   let mvm_bin = mvm_bin_home()
   let tool_name = tool.to_string()
@@ -408,4 +412,11 @@ pub async fn create_tool_cmd_windows(
   @log.debug(@i18n.t("tool.debug_create_ps1", args={ "path": ps1_file_path }))
   @log.debug(@i18n.t("tool.debug_create_cmd", args={ "path": cmd_file_path }))
   @log.debug(@i18n.t("tool.debug_create_bash", args={ "path": bash_file_path }))
+  if use_shim {
+    // shim.exe 与 mvm.exe 同级，setup 时复制到各工具名.exe
+    let shim_src = @fs_ext.join_path(mvm_bin, "shim.exe")
+    let shim_dst = @fs_ext.join_paths([mvm_bin, cmd_dir, "\{file_name}.exe"])
+    @fs_ext.copy(shim_src, shim_dst)
+    @log.debug(@i18n.t("tool.debug_create_shim", args={ "path": shim_dst }))
+  }
 }

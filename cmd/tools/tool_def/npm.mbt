@@ -281,7 +281,7 @@ async fn handle_install_npm_global_package(
     // @fs.symlink(target=cmd_path, symlink_file_path)
     match os {
       MacOS | Linux => create_tool_cmd_unix(Node, cmd_name, cmd_dir=NPM_PKG)
-      Windows => create_tool_cmd_windows(Node, cmd_name, cmd_dir=NPM_PKG)
+      Windows => create_tool_cmd_windows(Node, cmd_name, cmd_dir=NPM_PKG, use_shim=false)
       _ => ()
     }
     // 已安装全局命令
@@ -313,7 +313,7 @@ async fn handle_npm_link() -> Unit {
     // 在 mvm_bin/npm-pkg 下创建 shim 脚本
     match os {
       MacOS | Linux => create_tool_cmd_unix(Node, cmd_name, cmd_dir=NPM_PKG)
-      Windows => create_tool_cmd_windows(Node, cmd_name, cmd_dir=NPM_PKG)
+      Windows => create_tool_cmd_windows(Node, cmd_name, cmd_dir=NPM_PKG, use_shim=false)
       _ => ()
     }
     @log.debug(
