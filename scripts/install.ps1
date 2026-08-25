@@ -153,16 +153,35 @@ if ($ONLINE) {
         exit 1
     }
 
-    Copy-Item -Path $MVM_EXE -Destination (Join-Path $BIN_DIR "mvm.exe") -Force
+    # shim.exe 已由 `moon build --release` 一并编译，直接取产物
+    $SHIM_BUILD_DIR = "_build/native/release/build/cmd/shim"
+    $SHIM_EXE = Join-Path $SHIM_BUILD_DIR "shim.exe"
 
-    # Build shim and copy alongside mvm.exe
-    moon build --release cmd/shim
-    $shimExit = $LASTEXITCODE
-    if ($shimExit -eq 0) {
-        $SHIM_BUILD_DIR = "_build/native/release/build/cmd/shim"
-        $SHIM_EXE = Join-Path $SHIM_BUILD_DIR "shim.exe"
-        if (Test-Path $SHIM_EXE) {
-            Copy-Item -Path $SHIM_EXE -Destination (Join-Path $BIN_DIR "shim.exe") -Force
+    # 复制前若目标被占用（如正在运行的 mvm.exe），等待进程释放后重试
+    function Copy-WithRetry($src, $dst) {
+        if (-not (Test-Path $src)) { return $false }
+        $retries = 0
+        while ($retries -lt 30) {
+            try {
+                Copy-Item -Path $src -Destination $dst -Force
+                return $true
+            } catch {
+                $retries++
+                if ($retries -ge 30) { break }
+                Start-Sleep -Milliseconds 100
+            }
+        }
+        return $false
+    }
+
+    if (-not (Copy-WithRetry $MVM_EXE (Join-Path $BIN_DIR "mvm.exe"))) {
+        Write-Error "Failed to copy mvm.exe: the file is locked by another process. Please close mvm and retry."
+        exit 1
+    }
+
+    if (Test-Path $SHIM_EXE) {
+        if (-not (Copy-WithRetry $SHIM_EXE (Join-Path $BIN_DIR "shim.exe"))) {
+            Write-Warning "Failed to copy shim.exe: the file is locked by another process. You can copy it manually later."
         }
     }
 

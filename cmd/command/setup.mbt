@@ -162,7 +162,11 @@ async fn cleanup_old_shims(
     let executor_path = @fs_ext.join_path(bin_dir, "executor\{ext}")
     @fs_ext.remove_if_exists(executor_path)
   }
-  remove_names(bin_dir, delete_names, exts=["", ".ps1", ".cmd"])
+  let exts = match @os.get_os_name() {
+    Windows => ["", ".ps1", ".cmd", ".exe"]
+    _ => ["", ".ps1", ".cmd"]
+  }
+  remove_names(bin_dir, delete_names, exts=exts)
 }
 
 ///|
