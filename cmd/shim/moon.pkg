@@ -4,6 +4,7 @@ import {
   "moonbitlang/core/env",
   "moonbitlang/x/sys",
   "username/mvm/fs_ext",
+  "username/mvm/cmd/tools"
 }
 
 supported_targets = "native"
