@@ -15,3 +15,7 @@ import {
   "moonbitlang/core/set",
   "moonbitlang/core/lexbuf",
 }
+
+import {
+  "moonbitlang/async",
+} for "wbtest"

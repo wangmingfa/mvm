@@ -11,6 +11,30 @@ let npm_value_flags : ReadOnlyArray[String] = [
 ]
 
 ///|
+fn strip_npm_version(pkg : String) -> String {
+  // 剥离 npm 的版本/别名限定符，得到 node_modules 下的真实目录名
+  //   xxx@beta / xxx@1.2.3 / xxx@latest        -> xxx
+  //   @scope/name@beta                          -> @scope/name
+  //   my-cli@npm:some-cli@2.0.0                 -> my-cli（别名安装，目录用别名）
+  //   @my/alias@npm:@scope/real                 -> @my/alias
+  if pkg.has_prefix("@") {
+    // scoped 包：@scope/name@version，版本分隔符在 "/" 之后
+    match pkg.find("/") {
+      Some(slash) => match pkg[slash + 1:].find("@") {
+        Some(rel) => pkg[:(slash + 1 + rel)].to_owned()
+        None => pkg
+      }
+      None => pkg
+    }
+  } else {
+    match pkg.find("@") {
+      Some(i) => pkg[:i].to_owned()
+      None => pkg
+    }
+  }
+}
+
+///|
 fn extract_pkgs_from_args(
   args : ArrayView[String],
   cmds : ReadOnlyArray[String],
@@ -29,7 +53,7 @@ fn extract_pkgs_from_args(
         i = i + 1
       }
     } else {
-      pkgs.push(arg)
+      pkgs.push(strip_npm_version(arg))
       i = i + 1
     }
   }
