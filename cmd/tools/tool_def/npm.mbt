@@ -5,6 +5,9 @@ let uninstall_cmds : ReadOnlyArray[String] = ["uninstall", "un"]
 let global_flags : ReadOnlyArray[String] = ["--global", "-g"]
 
 ///|
+let install_cmds : ReadOnlyArray[String] = ["install", "i"]
+
+///|
 let npm_value_flags : ReadOnlyArray[String] = [
   "--registry", "--prefix", "--cache", "--userconfig", "--globalconfig", "--tag",
   "--otp", "--node-options",
@@ -69,6 +72,11 @@ fn is_npm_pkg_spec(s : String) -> Bool {
     s.has_suffix(".tar.zst") ||
     s.has_suffix(".zip") ||
     s.has_suffix(".git") {
+    return false
+  }
+  // 含冒号且不是 @npm: 别名（github:user/repo、gitlab:user/repo、gist:xxx、
+  // bitbucket:user/repo 等 shorthand）。npm 包名本身绝不含冒号，唯一例外是别名。
+  if s.contains(":") && !s.contains("@npm:") {
     return false
   }
   true
@@ -139,13 +147,11 @@ pub async fn Npm::after_npm_command(
   npm_exe_path : String,
   args : ArrayView[String],
 ) -> Unit {
-  let install_cmds : ReadOnlyArray[String] = ["install", "i"]
   let link_cmds = ["link", "ln"]
   let unlink_cmds = ["unlink"]
 
   // 判断是否为npm的全局安装，如果是，获取args中所有安装的包名
-  let global_install = args.any(arg => install_cmds.any(cmd => arg == cmd)) &&
-    args.any(arg => global_flags.any(flag => arg == flag))
+  let global_install = is_global_install(args)
   // 判断是否为npm的全局卸载，如果是，获取args中所有卸载的包名
   let global_uninstall = is_global_uninstall(args)
   // 判断是否为 npm link（无参数时链接当前项目到全局）
@@ -170,6 +176,12 @@ pub async fn Npm::after_npm_command(
     // npm unlink（无参数）：从全局取消链接当前项目
     handle_npm_unlink()
   }
+}
+
+///|
+fn is_global_install(args : ArrayView[String]) -> Bool {
+  args.any(arg => install_cmds.any(cmd => arg == cmd)) &&
+  args.any(arg => global_flags.any(flag => arg == flag))
 }
 
 ///|
