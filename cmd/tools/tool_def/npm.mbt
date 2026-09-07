@@ -35,6 +35,46 @@ fn strip_npm_version(pkg : String) -> String {
 }
 
 ///|
+/// 判断一个安装参数是否为合法的 npm 包标识符（而非本地路径 / URL / 归档文件）。
+/// 只有包标识符才参与 shim 的生成与清理；其余（tarball 路径、目录路径、
+/// git/http URL 等）会被跳过，避免把路径拼进 node_modules 造成非法路径崩溃。
+fn is_npm_pkg_spec(s : String) -> Bool {
+  if s.length() == 0 {
+    return false
+  }
+  // 相对 / 绝对路径：./ ../ ~/ / 开头
+  if s.has_prefix("./") ||
+    s.has_prefix("../") ||
+    s.has_prefix("~/") ||
+    s.has_prefix("/") {
+    return false
+  }
+  // Windows 绝对路径或任意含反斜杠的路径（如 D:\code\syncx\x.tgz）
+  if s.contains("\\") {
+    return false
+  }
+  // URL / git / file 协议
+  if s.contains("://") ||
+    s.has_prefix("git+") ||
+    s.has_prefix("git:") ||
+    s.has_prefix("file:") ||
+    s.has_prefix("http") {
+    return false
+  }
+  // 归档文件
+  if s.has_suffix(".tgz") ||
+    s.has_suffix(".tar.gz") ||
+    s.has_suffix(".tar") ||
+    s.has_suffix(".tar.xz") ||
+    s.has_suffix(".tar.zst") ||
+    s.has_suffix(".zip") ||
+    s.has_suffix(".git") {
+    return false
+  }
+  true
+}
+
+///|
 fn extract_pkgs_from_args(
   args : ArrayView[String],
   cmds : ReadOnlyArray[String],
@@ -53,7 +93,9 @@ fn extract_pkgs_from_args(
         i = i + 1
       }
     } else {
-      pkgs.push(strip_npm_version(arg))
+      if is_npm_pkg_spec(arg) {
+        pkgs.push(strip_npm_version(arg))
+      }
       i = i + 1
     }
   }
@@ -203,6 +245,40 @@ async fn walk_global_pkgs(
 }
 
 ///|
+/// 扫描全局 node_modules 下的所有已安装包，对每个 bin 调用 handle_pkg_cmd。
+/// 不依赖命令行传入的包名，因此天然兼容 tarball 安装、@npm: 别名、版本限定符
+/// 以及 scoped 包——只要包实际装在全局 node_modules 里就能正确生成 shim。
+async fn walk_all_global_pkgs(
+  npm_exe_path : String,
+  handle_pkg_cmd : async (String, String) -> Unit,
+) -> Unit {
+  let { lib: lib_dir, .. } = Node::get_node_path_by_node_inner_path(
+    npm_exe_path,
+  )
+  let lib_node_modules_dir = @fs_ext.join_path(lib_dir, "node_modules")
+  guard @fs.exists(lib_node_modules_dir) else { return }
+  for lib_name in @fs.readdir(lib_node_modules_dir) {
+    let lib_path = @fs_ext.join_path(lib_node_modules_dir, lib_name)
+    if lib_name.has_prefix("@") {
+      // scoped 包：@scope 目录下有多个子包，逐一检查
+      guard @fs.kind(lib_path) is Directory else { continue }
+      for sub_name in @fs.readdir(lib_path) {
+        let sub_path = @fs_ext.join_path(lib_path, sub_name)
+        let pkg_json_path = @fs_ext.join_path(sub_path, "package.json")
+        walk_pkg_bins(
+          pkg_json_path,
+          lib_name + "/" + sub_name,
+          handle_pkg_cmd,
+        )
+      }
+    } else {
+      let pkg_json_path = @fs_ext.join_path(lib_path, "package.json")
+      walk_pkg_bins(pkg_json_path, lib_name, handle_pkg_cmd)
+    }
+  }
+}
+
+///|
 /// 收集所有已安装node版本中仍然可用的命令名
 async fn collect_all_available_cmds() -> @set.Set[String] {
   let node_tool_dir = tool_dir(Node)
@@ -295,7 +371,7 @@ async fn handle_install_npm_global_package(
 
   let npm_pkg_home = mvm_npm_pkg_home()
   let os = @os.get_os_name()
-  walk_global_pkgs(npm_exe_path, pkgs, async fn(cmd_name, _cmd_path) {
+  walk_all_global_pkgs(npm_exe_path, async fn(cmd_name, _cmd_path) {
     // 在mvm_bin/npm-pkg下建立软连接
     // let symlink_file_path = @fs_ext.join_path(npm_pkg_home, cmd_name)
     // // 如果文件存在，先删除
