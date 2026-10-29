@@ -424,6 +424,20 @@ async fn get_config_inner(
       None
     }
   }
+  // 防御：父目录与当前目录相同（已到文件系统根）时直接走兜底，避免重复递归
+  if parent == dir {
+    return if fallback_to_global_config {
+      @log.debug(@i18n.t("tool.debug_search_mvm_home"))
+      get_config_inner(
+        tool,
+        mvm_home(),
+        search_upwards,
+        fallback_to_global_config,
+      )
+    } else {
+      None
+    }
+  }
   if search_upwards {
     @log.debug(@i18n.t("tool.debug_search_parent"))
     return get_config_inner(

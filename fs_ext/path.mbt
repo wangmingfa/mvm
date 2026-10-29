@@ -142,7 +142,8 @@ pub fn canonicalize_path(path : String) -> String {
   }
   let result = stack.join("/")
   let result = if is_absolute { "/\{result}" } else { result }
-  let result = if result.has_suffix("/") {
+  // 仅当长度大于 1 时才去掉末尾分隔符，否则文件系统根目录 "/" 会被削成空串
+  let result = if result.length() > 1 && result.has_suffix("/") {
     result[0:-1].to_owned()
   } else {
     result
@@ -330,7 +331,12 @@ pub fn get_parent_dir(path : String, levels~ : Int32 = 1) -> String? raise {
     Windows => "\\"
     _ => "/"
   }
+  // 文件系统根目录没有父目录
+  if path == sep {
+    return None
+  }
   guard path.contains(sep) else { return None }
+  let is_absolute = path.has_prefix(sep)
   let arr = path.split(sep).to_array()
   for _ in 0..<levels {
     guard arr.length() > 0 else { return None }
@@ -339,7 +345,12 @@ pub fn get_parent_dir(path : String, levels~ : Int32 = 1) -> String? raise {
   if arr.is_empty() {
     return None
   }
-  Some(arr.join(sep))
+  let parent = arr.join(sep)
+  // 绝对路径的父目录至少是根目录，不能退化成空串
+  if parent.is_blank() {
+    return if is_absolute { Some(sep) } else { None }
+  }
+  Some(parent)
 }
 
 ///|
@@ -384,19 +395,74 @@ test "get_parent_dir unix" {
   debug_inspect(
     get_parent_dir("/home/peter/code/a.txt", levels=4),
     content=(
-      #|Some("")
+      #|Some("/")
     ),
   )
   debug_inspect(
     get_parent_dir("/home", levels=1),
     content=(
-      #|Some("")
+      #|Some("/")
     ),
   )
   debug_inspect(
     get_parent_dir("/home", levels=2),
     content=(
       #|None
+    ),
+  )
+}
+
+///|
+#cfg(not(platform="windows"))
+test "get_parent_dir at filesystem root" {
+  // 根目录没有父目录
+  debug_inspect(
+    get_parent_dir("/"),
+    content=(
+      #|None
+    ),
+  )
+  // 根的直接子目录的父目录是根，绝不能是空串
+  debug_inspect(
+    get_parent_dir("/usr"),
+    content=(
+      #|Some("/")
+    ),
+  )
+  debug_inspect(
+    get_parent_dir("/usr/"),
+    content=(
+      #|Some("/")
+    ),
+  )
+}
+
+///|
+#cfg(not(platform="windows"))
+test "canonicalize_path at filesystem root" {
+  inspect(canonicalize_path("/"), content="/")
+  inspect(canonicalize_path("//"), content="/")
+  inspect(canonicalize_path("///"), content="/")
+  inspect(canonicalize_path("/."), content="/")
+  inspect(canonicalize_path("/.."), content="/")
+  // 相对路径语义保持不变
+  inspect(canonicalize_path(""), content="")
+  inspect(canonicalize_path("."), content="")
+}
+
+///|
+#cfg(platform="windows")
+test "get_parent_dir at drive root" {
+  debug_inspect(
+    get_parent_dir("C:\\"),
+    content=(
+      #|None
+    ),
+  )
+  debug_inspect(
+    get_parent_dir("C:\\Users"),
+    content=(
+      #|Some("C:\\")
     ),
   )
 }
