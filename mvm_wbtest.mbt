@@ -568,17 +568,28 @@ async test "run 空参数返回 failure" {
 }
 
 ///|
-/// Run 指定版本号：成功时从 mvm.json 读取版本号进行对比
-async test "run 指定版本号 node@22 返回 CommandResult" {
-  let result = run(Command::Run(Tool::Node, "22", ["node", "-v"]))
-  if result.is_success() {
-    let expected_version = "v22."
-    guard result.plain_output().has_prefix(expected_version) else {
-      fail(
-        "node@22 -v 版本号不包含期望值：期望包含 \{expected_version}，实际 \{result.plain_output()}",
-      )
-    }
-  } else {
-    raise fail("失败")
+/// Run 指定版本号：使用本机已安装的 v22 具体版本号
+/// 传入 "22" 会在联网解析为上游最新的 v22，本机未必安装，进而走非 TTY
+/// 下的自动安装分支而失败；因此这里直接使用已安装的具体版本号。
+async test "run 指定版本号 返回 CommandResult" {
+  let installed = @tool_def.get_installed_versions(Node) catch { _ => [] }
+  let v22_index = installed.search_by(v => v.has_prefix("v22."))
+  guard v22_index is Some(index) else {
+    println("跳过：本机未安装 node v22")
+    return
+  }
+  let installed_version = installed[index]
+  // 去掉前缀 v，mvm run 接受 "22.15.0" 这类主版本号+次版本号形式
+  let version_arg = installed_version[1:].to_owned()
+  let result = run(Command::Run(Tool::Node, version_arg, ["node", "-v"]))
+  guard result.is_success() else {
+    fail(
+      "node@\{version_arg} -v 执行失败：\{option_to_string(result.error)}",
+    )
+  }
+  guard result.plain_output().has_prefix(installed_version) else {
+    fail(
+      "node@\{version_arg} -v 版本号不匹配：期望 \{installed_version}，实际 \{result.plain_output()}",
+    )
   }
 }

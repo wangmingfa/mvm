@@ -23,6 +23,8 @@ pub async fn get_config(tool? : Tool, dir? : String, search_upwards? : Bool, fal
 
 pub async fn get_global_config() -> (String, GlobalConfig)
 
+pub async fn get_installed_versions(Tool) -> Array[String]
+
 pub fn get_managed_tools(GlobalConfig) -> Array[Tool]
 
 pub async fn get_target_version_with_cache(String, String, String, @os.OsInfo, String, Int32, (@os.OsInfo, String, Int32, Json) -> String raise, headers? : Map[String, String]) -> String

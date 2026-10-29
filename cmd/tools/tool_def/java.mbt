@@ -117,14 +117,39 @@ pub async fn Java::get_target_version(
 }
 
 ///|
+/// 校验 Adoptium 版本号格式：`major.minor.security+build`，如 "25.0.3+9"
+fn is_adoptium_version_format(version : String) -> Bool {
+  let parts = version.split("+").collect()
+  guard parts.length() == 2 else { return false }
+  let build = @string.parse_int(parts[1]) catch { _ => -1 }
+  guard build >= 0 else { return false }
+  let nums = parts[0].split(".").collect()
+  guard nums.length() == 3 else { return false }
+  for num in nums {
+    let n = @string.parse_int(num) catch { _ => -1 }
+    guard n >= 0 else { return false }
+  }
+  true
+}
+
+///|
+test "is_adoptium_version_format" {
+  assert_true(is_adoptium_version_format("25.0.3+9"))
+  assert_true(is_adoptium_version_format("21.0.5+11"))
+  // LTS 的 semver 会带 .0.LTS 后缀，不应通过
+  assert_false(is_adoptium_version_format("25.0.3+9.0.LTS"))
+  assert_false(is_adoptium_version_format(""))
+  assert_false(is_adoptium_version_format("25.0.3"))
+  assert_false(is_adoptium_version_format("v25.0.3+9"))
+}
+
+///|
+/// 空版本号应回落到最新 LTS 版本。具体版本号随上游发版变化，
+/// 因此只校验格式，不硬编码数值。
 async test "get_target_version empty version" {
   let os = @os.get_os_info()
-  inspect(
-    Java::get_target_version(os, "", 0),
-    content=(
-      #|25.0.3+9
-    ),
-  )
+  let version = Java::get_target_version(os, "", 0)
+  assert_true(is_adoptium_version_format(version))
 }
 
 ///|

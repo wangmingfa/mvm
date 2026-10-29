@@ -64,6 +64,27 @@ pub struct DownloadInfo {
 ///|
 /// 检查版本是否已安装
 pub async fn is_installed(tool : Tool, version : String) -> Bool {
+  is_exe_present(tool, version)
+}
+
+///|
+/// 获取已安装的版本列表
+/// 依据工具安装目录中实际存在可执行文件的版本，按版本号排序返回
+pub async fn get_installed_versions(tool : Tool) -> Array[String] {
+  let dir = tool_dir(tool) catch { _ => return [] }
+  guard @fs.exists(dir) && @fs.kind(dir) is Directory else { return [] }
+  let versions : Array[String] = []
+  for name in @fs.readdir(dir) {
+    if is_exe_present(tool, name) {
+      versions.push(name)
+    }
+  }
+  versions.sort()
+  versions
+}
+
+///|
+async fn is_exe_present(tool : Tool, version : String) -> Bool {
   let tool_exe_path = match tool {
     Java => Java::get_exe_path(version)
     Deno => Deno::get_exe_path(version)
