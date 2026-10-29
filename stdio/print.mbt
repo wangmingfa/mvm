@@ -17,7 +17,7 @@ extern "C" fn c_interactive_select_tools(
 pub extern "C" fn flush_stdout() -> Unit = "flush_stdout"
 
 ///|
-pub extern "C" fn clear_lines(lines : Int) -> Unit = "clear_lines"
+pub extern "C" fn clear_lines(lines : Int32) -> Unit = "clear_lines"
 
 ///|
 pub fn print(str : String) -> Unit {

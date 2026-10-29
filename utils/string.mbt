@@ -33,7 +33,7 @@ fn is_cjk(c : Char) -> Bool {
 }
 
 ///|
-pub fn display_width(s : String) -> Int {
+pub fn display_width(s : String) -> Int32 {
   let mut width = 0
   for c in s {
     width += if is_cjk(c) { 2 } else { 1 }
@@ -42,7 +42,7 @@ pub fn display_width(s : String) -> Int {
 }
 
 ///|
-pub fn pad_right(s : String, width : Int) -> String {
+pub fn pad_right(s : String, width : Int32) -> String {
   let dw = display_width(s)
   if dw >= width {
     s

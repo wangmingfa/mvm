@@ -18,12 +18,12 @@ struct Java {}
 
 ///|
 test "Java" {
-  let _ = Java::{  }
+  let _ = Java::{ }
 }
 
 ///|
 /// 缓存版本信息（兼容旧缓存格式：{"tag_name":"jdk-22.0.2+9"}）
-struct GithubReleaseInfo {
+priv struct GithubReleaseInfo {
   tag_name : String
 } derive(@json.FromJson)
 
@@ -31,37 +31,37 @@ struct GithubReleaseInfo {
 /// Adoptium API 版本信息（从 /v3/assets/latest/{major}/hotspot 获取）
 /// 注意：semver 字段对 LTS 版本会附加后缀（如 "25.0.3+9.0.LTS"），不能直接用于构造下载链接
 /// 使用 major/minor/security/build 字段构造干净版本号（如 "25.0.3+9"）
-struct AdoptiumVersion {
-  major : Int
-  minor : Int
-  security : Int
-  build : Int
+priv struct AdoptiumVersion {
+  major : Int32
+  minor : Int32
+  security : Int32
+  build : Int32
 } derive(@json.FromJson)
 
 ///|
 /// Adoptium API 资产信息
-struct AdoptiumAsset {
+priv struct AdoptiumAsset {
   version : AdoptiumVersion
 } derive(@json.FromJson)
 
 ///|
 /// Adoptium 可用版本信息
-struct JavaAvailableReleases {
+priv struct JavaAvailableReleases {
   // 所有可用版本列表
-  available_releases : Array[Int]
+  available_releases : Array[Int32]
   // 可用的 LTS 版本列表
-  available_lts_releases : Array[Int]
+  available_lts_releases : Array[Int32]
   // 最新的 LTS 版本
-  most_recent_lts : Int
+  most_recent_lts : Int32
   // 最新的可用版本（包括非 LTS）
-  most_recent_feature_release : Int
+  most_recent_feature_release : Int32
 } derive(@json.FromJson)
 
 ///|
 pub async fn Java::get_target_version(
   _os : @os.OsInfo,
   version : String,
-  version_count : Int,
+  version_count : Int32,
 ) -> String {
   match version {
     // 默认/lts：安装最新 LTS 版本
@@ -129,14 +129,14 @@ async test "get_target_version empty version" {
 
 ///|
 /// 获取最新的 LTS 主版本号
-async fn Java::_get_lts_major_version() -> Int {
+async fn Java::_get_lts_major_version() -> Int32 {
   let releases = Java::_fetch_available_releases()
   releases.most_recent_lts
 }
 
 ///|
 /// 获取最新的主版本号（包括非 LTS）
-async fn Java::_get_latest_major_version() -> Int {
+async fn Java::_get_latest_major_version() -> Int32 {
   let releases = Java::_fetch_available_releases()
   releases.most_recent_feature_release
 }
@@ -194,7 +194,7 @@ async fn Java::_fetch_available_releases() -> JavaAvailableReleases {
 
 ///|
 /// 验证主版本号是否可用
-async fn Java::_verify_major_version_available(major : Int) -> Unit {
+async fn Java::_verify_major_version_available(major : Int32) -> Unit {
   let releases = Java::_fetch_available_releases()
   if !releases.available_releases.contains(major) &&
     !releases.available_lts_releases.contains(major) {
@@ -361,7 +361,7 @@ pub fn Java::get_download_info(
   // root_path_depth=1: 剥离 jdk-{version}/ 外层目录
   // macOS 安装后结构为 Contents/Home/bin/java（.app bundle），get_exe_path 会适配
   // Linux/Windows 安装后结构为 bin/java
-  { url, headers: Map([]), root_path_depth: 1U }
+  { url, headers: Map([]), root_path_depth: 1U, }
 }
 
 ///|

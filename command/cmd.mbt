@@ -163,13 +163,13 @@ async test "run node -v" {
 pub async fn run(
   cmd : StringView,
   args : ArrayView[String],
-  extra_env? : Map[String, String] = Map([]),
-  inherit_env? : Bool = true,
+  extra_env~ : Map[String, String] = Map([]),
+  inherit_env~ : Bool = true,
   stdin? : &@process.ProcessInput,
   stdout? : &@process.ProcessOutput,
   stderr? : &@process.ProcessOutput,
   cwd? : StringView,
-) -> Int {
+) -> Int32 {
   let (cmd, args) = get_cmd_and_args(cmd, args)
   let arg_str = join_args(args)
   @log.debug(
@@ -192,7 +192,7 @@ pub async fn run(
 pub async fn collect_output_merged(
   cmd : StringView,
   args : ArrayView[String],
-) -> (Int, &@io.Data) {
+) -> (Int32, &@io.Data) {
   let (cmd, args) = get_cmd_and_args(cmd, args)
   let arg_str = join_args(args)
   @log.debug(
@@ -223,11 +223,11 @@ fn join_args(args : ArrayView[String]) -> String {
 pub async fn run_with_output(
   cmd : StringView,
   args : ArrayView[String],
-  extra_env? : Map[String, String] = Map([]),
-  inherit_env? : Bool = true,
+  extra_env~ : Map[String, String] = Map([]),
+  inherit_env~ : Bool = true,
   stdin? : &@process.ProcessInput,
   cwd? : StringView,
-) -> (Int, &@io.Data) {
+) -> (Int32, &@io.Data) {
   let cmd_str = join_args([cmd.to_owned(), ..args])
   @log.debug(
     @i18n.t("cmd.debug_running_cmd", args={ "cmd": @debug.to_string(cmd_str) }),

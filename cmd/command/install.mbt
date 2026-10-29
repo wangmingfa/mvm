@@ -172,7 +172,7 @@ async fn run_install(
   extract_file(archive_file, extract_dir)
 
   let mut src_dir = extract_dir
-  let mut find_sub_dir_count : UInt = 0
+  let mut find_sub_dir_count : UInt32 = 0
   let ignore_dirs = ["__MACOSX"]
 
   // 解压目录和目录深度
@@ -279,8 +279,8 @@ async fn run_install(
 async fn download_file(
   url : String,
   dest : String,
-  headers? : Map[String, String] = Map([]),
-  show_progress? : Bool = true,
+  headers~ : Map[String, String] = Map([]),
+  show_progress~ : Bool = true,
 ) -> Unit {
   // 正在下载
   @log.info(@i18n.t("install.downloading", args={ "url": @utils.blue(url) }))

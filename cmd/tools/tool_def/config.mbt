@@ -37,7 +37,7 @@ pub(all) struct GlobalConfig {
 
 ///|
 pub fn make_global_config(
-  existing_config? : GlobalConfig = {
+  existing_config~ : GlobalConfig = {
     github_proxy: None,
     node_mirror: None,
     go_mirror: None,
@@ -47,14 +47,14 @@ pub fn make_global_config(
     language: None,
     managed_tools: None,
   },
-  github_proxy? : String? = None,
-  node_mirror? : String? = None,
-  go_mirror? : String? = None,
-  python_mirror? : String? = None,
-  rust_mirror? : String? = None,
-  java_mirror? : String? = None,
-  language? : String? = None,
-  managed_tools? : String? = None,
+  github_proxy~ : String? = None,
+  node_mirror~ : String? = None,
+  go_mirror~ : String? = None,
+  python_mirror~ : String? = None,
+  rust_mirror~ : String? = None,
+  java_mirror~ : String? = None,
+  language~ : String? = None,
+  managed_tools~ : String? = None,
 ) -> GlobalConfig {
   let github_proxy = if github_proxy is Some(v) {
     Some(v)
@@ -109,7 +109,7 @@ pub fn make_global_config(
 }
 
 ///|
-pub fn GlobalConfig::to_string(s : Self, indent? : Int = 0) -> String {
+pub fn GlobalConfig::to_string(s : Self, indent~ : Int32 = 0) -> String {
   let indent_str = " ".repeat(indent)
   let github_proxy = s.github_proxy.unwrap_or("")
   let node_mirror = s.node_mirror.unwrap_or("")
@@ -316,8 +316,8 @@ pub fn Config::get_python_version(self : Self, program : String) -> String? {
 pub async fn get_config(
   tool? : Tool,
   dir? : String,
-  search_upwards? : Bool = true,
-  fallback_to_global_config? : Bool = true,
+  search_upwards~ : Bool = true,
+  fallback_to_global_config~ : Bool = true,
 ) -> (String, Config)? {
   let dir = if dir is Some(dir) {
     dir

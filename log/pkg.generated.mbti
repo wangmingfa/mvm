@@ -6,7 +6,7 @@ import {
 }
 
 // Values
-pub fn add_log_lines(lines? : Int) -> Unit
+pub fn add_log_lines(lines? : Int32) -> Unit
 
 pub fn clear_all_lines() -> Unit
 

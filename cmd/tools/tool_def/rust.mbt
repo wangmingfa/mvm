@@ -28,7 +28,7 @@ let rust_manifest_target_info : Ref[(String, String)?] = Ref(None)
 
 ///|
 test "Rust" {
-  let _ = Rust::{  }
+  let _ = Rust::{ }
 }
 
 ///|
@@ -73,7 +73,7 @@ fn _build_rust_target(os_info : @os.OsInfo) -> String raise {
 pub async fn Rust::get_target_version(
   os : @os.OsInfo,
   version : String,
-  version_count : Int,
+  version_count : Int32,
 ) -> String {
   match version {
     "" | "stable" | "lts" | "latest" =>
@@ -105,12 +105,12 @@ pub async fn Rust::get_target_version(
         RUST_INDEX_CACHE_FILE,
       )
       let resolved_ver = if resolved.has_prefix("v") {
-        resolved.sub(start=1).to_owned()
+        resolved.exact_view(start=1).to_owned()
       } else {
         resolved
       }
       let prefix = if version.has_prefix("v") {
-        version.sub(start=1).to_owned()
+        version.exact_view(start=1).to_owned()
       } else {
         version
       }
@@ -288,7 +288,7 @@ pub fn Rust::get_download_info(
 ) -> DownloadInfo raise {
   // Rust URL 中版本号不带 v 前缀
   let ver = if version.has_prefix("v") {
-    version.sub(start=1).to_owned()
+    version.exact_view(start=1).to_owned()
   } else {
     version
   }
@@ -299,12 +299,12 @@ pub fn Rust::get_download_info(
   let cached_info = rust_manifest_target_info.val
   match cached_info {
     Some((manifest_url, _)) =>
-      { url: manifest_url, headers: Map([]), root_path_depth: 1 }
+      { url: manifest_url, headers: Map([]), root_path_depth: 1, }
     None => {
       // 无缓存时手动构造 URL（适用于指定具体版本号的场景）
       let ext = if os_info.name is Windows { "zip" } else { "tar.gz" }
       let url = "\{RUST_RELEASE_URL}/rust-\{ver}-\{target}.\{ext}"
-      { url, headers: Map([]), root_path_depth: 1 }
+      { url, headers: Map([]), root_path_depth: 1, }
     }
   }
 }

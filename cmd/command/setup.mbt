@@ -131,7 +131,7 @@ async fn run_setup(use_prefix : Bool, tools : String?) -> CommandResult {
 async fn remove_names(
   bin_dir : String,
   delete_names : Array[String],
-  exts? : Array[String] = [""],
+  exts~ : Array[String] = [""],
 ) -> Unit {
   for name in delete_names {
     for prefix in ["", TOOL_PREFIX] {
@@ -166,7 +166,7 @@ async fn cleanup_old_shims(
     Windows => ["", ".ps1", ".cmd", ".exe"]
     _ => ["", ".ps1", ".cmd"]
   }
-  remove_names(bin_dir, delete_names, exts=exts)
+  remove_names(bin_dir, delete_names, exts~)
 }
 
 ///|

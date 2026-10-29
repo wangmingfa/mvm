@@ -1,6 +1,6 @@
 ///|
 pub fn merge_detault_headers(
-  headers? : Map[String, String] = Map([]),
+  headers~ : Map[String, String] = Map([]),
 ) -> Map[String, String] {
   // 显式声明 identity，避免服务器返回 gzip 压缩内容：
   // MoonBit 的 @http 客户端会自动发送 Accept-Encoding: gzip,identity 并尝试自动解压，
@@ -25,7 +25,7 @@ pub fn merge_detault_headers(
 /// GitHub API 对没有 User-Agent 的请求返回 403 Forbidden
 /// 设置 GITHUB_TOKEN 环境变量可提升速率限制（60 → 5000 次/小时）
 pub fn github_headers(
-  headers? : Map[String, String] = Map([]),
+  headers~ : Map[String, String] = Map([]),
 ) -> Map[String, String] {
   let merged = merge_detault_headers()
   // GitHub API 推荐 Accept 头，确保返回 JSON 格式
@@ -50,7 +50,7 @@ pub fn github_headers(
 /// 自动附带 GitHub API 专用 headers（含 User-Agent、Accept、可选 Authorization）
 pub async fn github_get(
   url : String,
-  headers? : Map[String, String] = Map([]),
+  headers~ : Map[String, String] = Map([]),
 ) -> (@http.Response, &@io.Data) {
   @http.get(url, headers=github_headers(headers~))
 }

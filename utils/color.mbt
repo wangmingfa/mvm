@@ -99,7 +99,7 @@ pub fn[T : ToStr] cyan(msg : T) -> String {
 /// 适合在一次打印中，拼接多个带颜色文本
 pub fn[T : ToStr] colored_spans(
   spans : Array[(Color, T)],
-  joiner? : String = "",
+  joiner~ : String = "",
 ) -> String {
   spans
   .map(span => {

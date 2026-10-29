@@ -14,14 +14,14 @@ pub struct Bun {}
 ///|
 test "Bun" {
   // 去除 Warning (struct_never_constructed) 警告
-  let _ = Bun::{  }
+  let _ = Bun::{ }
 }
 
 ///|
 pub async fn Bun::get_target_version(
   os : @os.OsInfo,
   version : String,
-  version_count : Int,
+  version_count : Int32,
 ) -> String {
   let _ = os
   // 尝试从缓存读取版本列表（仅当 version_count == 3 时使用缓存）
@@ -203,7 +203,7 @@ fn Bun::_strip_v_prefix(version : String) -> String {
 /// 从排序后的版本列表中查找目标版本
 fn Bun::_find_version(
   version : String,
-  version_count : Int,
+  version_count : Int32,
   versions : Array[String],
 ) -> String raise {
   guard versions.length() > 0 else {
@@ -213,7 +213,7 @@ fn Bun::_find_version(
     "" | "latest" => versions[0]
     _ =>
       match version_count {
-        1..=3 => {
+        1..<=3 => {
           let find_version = if version.has_prefix("v") {
             version
           } else {
@@ -283,7 +283,7 @@ pub fn Bun::get_download_info(
     "bun-v\{version}"
   }
   let url = "\{BUN_RELEASE_URL}/\{tag}/\{platform_name}.\{ext}"
-  { url, headers: Map([]), root_path_depth: 1 }
+  { url, headers: Map([]), root_path_depth: 1, }
 }
 
 ///|

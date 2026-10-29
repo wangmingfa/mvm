@@ -20,11 +20,11 @@ struct Python {}
 
 ///|
 test "Python" {
-  let _ = Python::{  }
+  let _ = Python::{ }
 }
 
 ///|
-struct PythonVersionInfo {
+priv struct PythonVersionInfo {
   // 版本周期，如 "3.12"
   cycle : String
   // 该周期下的最新版本，如 "3.12.4"
@@ -35,7 +35,7 @@ struct PythonVersionInfo {
 pub async fn Python::get_target_version(
   os : @os.OsInfo,
   version : String,
-  version_count : Int,
+  version_count : Int32,
 ) -> String {
   get_target_version_with_cache(
     PYTHON_INDEX_CACHE_FILE,
@@ -52,7 +52,7 @@ pub async fn Python::get_target_version(
 fn Python::_get_proper_version(
   _os : @os.OsInfo,
   version : String,
-  version_count : Int,
+  version_count : Int32,
   json : Json,
 ) -> String raise {
   guard json is Array(arr) else {
@@ -91,7 +91,7 @@ fn Python::_get_proper_version(
         // 仅主版本号，如 "2" 或 "3"
         1 => {
           let ver = if version.has_prefix("v") {
-            version.sub(start=1).to_owned()
+            version.exact_view(start=1).to_owned()
           } else {
             version
           }
@@ -115,7 +115,7 @@ fn Python::_get_proper_version(
             "v\{version}"
           }
           // 去掉 v 前缀用于匹配 cycle
-          let cycle = search_version.sub(start=1).to_owned()
+          let cycle = search_version.exact_view(start=1).to_owned()
           guard infos.search_by(fn(v) { v.cycle == cycle }) is Some(idx) else {
             raise fail(
               @i18n.t("error.version_not_found_detail", args={
@@ -128,7 +128,7 @@ fn Python::_get_proper_version(
         // 完整版本号，如 "3.12.4"
         3 => {
           let ver = if version.has_prefix("v") {
-            version.sub(start=1).to_owned()
+            version.exact_view(start=1).to_owned()
           } else {
             version
           }
@@ -190,13 +190,13 @@ pub async fn Python::get_download_info(
 ) -> DownloadInfo {
   // Python URL 中版本号不带 v 前缀
   let ver = if version.has_prefix("v") {
-    version.sub(start=1).to_owned()
+    version.exact_view(start=1).to_owned()
   } else {
     version
   }
   // Python 2.x 回退官方包
   let source_url = "\{PYTHON_RELEASE_URL}/\{ver}/Python-\{ver}.tgz"
-  let source_info = { url: source_url, headers: Map([]), root_path_depth: 1 }
+  let source_info = { url: source_url, headers: Map([]), root_path_depth: 1, }
   if ver.has_prefix("2.") {
     match os_info.name {
       Windows => {
@@ -208,7 +208,7 @@ pub async fn Python::get_download_info(
           "\{PYTHON_RELEASE_URL}/\{ver}/python-\{ver}.\{msi_arch}.msi"
         }
         // msiexec /a 提取到目标目录，无额外嵌套层级
-        return { url: msi_url, headers: Map([]), root_path_depth: 0 }
+        return { url: msi_url, headers: Map([]), root_path_depth: 0, }
       }
       _ => return source_info
     }
@@ -226,7 +226,7 @@ pub async fn Python::get_download_info(
   let tag = get_standalone_tag() catch { _ => return source_info }
   let url = "https://github.com/\{PYTHON_STANDALONE_REPO}/releases/download/\{tag}/cpython-\{ver}+\{tag}-\{triple}-install_only.tar.gz"
   // standalone 安装包解压后顶层为 python/ 目录
-  { url, headers: Map([]), root_path_depth: 1 }
+  { url, headers: Map([]), root_path_depth: 1, }
 }
 
 ///|
@@ -240,7 +240,7 @@ pub async fn Python::get_expected_checksum(
   version : String,
 ) -> String? {
   let ver = if version.has_prefix("v") {
-    version.sub(start=1).to_owned()
+    version.exact_view(start=1).to_owned()
   } else {
     version
   }

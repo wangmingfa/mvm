@@ -21,21 +21,12 @@ test "extract_pkgs_from_args skips non-package specs" {
   let uninstall : ReadOnlyArray[String] = ["uninstall", "un"]
   // 本地 tarball / 目录 / 远程 URL 不是包标识符，应被跳过（否则会拼成非法 node_modules 路径）
   let args : Array[String] = [
-    "install", "-g",
-    "D:\\code\\syncx\\wangmingfa-syncx-0.1.1.tgz",
-    "./local-pkg",
-    "../parent/pkg",
-    "/abs/path/pkg",
-    "https://registry.npmjs.org/x/-/x-1.0.0.tgz",
-    "git+https://github.com/a/b.git",
-    "git+ssh://git@github.com/a/b.git",
-    "git://github.com/a/b.git",
+    "install", "-g", "D:\\code\\syncx\\wangmingfa-syncx-0.1.1.tgz", "./local-pkg",
+    "../parent/pkg", "/abs/path/pkg", "https://registry.npmjs.org/x/-/x-1.0.0.tgz",
+    "git+https://github.com/a/b.git", "git+ssh://git@github.com/a/b.git", "git://github.com/a/b.git",
     "file:../some-pkg",
     // 含冒号的 shorthand（非 @npm: 别名），应跳过
-    "github:user/repo",
-    "gitlab:user/repo",
-    "bitbucket:user/repo",
-    "gist:xxxx",
+     "github:user/repo", "gitlab:user/repo", "bitbucket:user/repo", "gist:xxxx",
     "git@github.com:user/repo.git",
   ]
   assert_eq(extract_pkgs_from_args(args, cmds), [])
@@ -58,12 +49,13 @@ test "extract_pkgs_from_args skips non-package specs" {
 test "extract_pkgs_from_args npm install spec grammar" {
   let ic : ReadOnlyArray[String] = ["install", "i"]
   // 1. 普通包名（latest）
-  assert_eq(extract_pkgs_from_args(["i", "-g", "typescript"], ic), ["typescript"])
+  assert_eq(extract_pkgs_from_args(["i", "-g", "typescript"], ic), [
+    "typescript",
+  ])
   // 2. 精确版本
-  assert_eq(
-    extract_pkgs_from_args(["install", "-g", "typescript@5.0.0"], ic),
-    ["typescript"],
-  )
+  assert_eq(extract_pkgs_from_args(["install", "-g", "typescript@5.0.0"], ic), [
+    "typescript",
+  ])
   // 3. 版本范围（无空格）
   assert_eq(extract_pkgs_from_args(["i", "-g", "react@^18.2.0"], ic), ["react"])
   assert_eq(extract_pkgs_from_args(["i", "-g", "react@~18.2.0"], ic), ["react"])
@@ -71,22 +63,21 @@ test "extract_pkgs_from_args npm install spec grammar" {
   assert_eq(extract_pkgs_from_args(["i", "-g", "vue@beta"], ic), ["vue"])
   assert_eq(extract_pkgs_from_args(["i", "-g", "vue@next"], ic), ["vue"])
   // 5. scoped 包（latest）
-  assert_eq(extract_pkgs_from_args(["i", "-g", "@types/node"], ic), ["@types/node"])
+  assert_eq(extract_pkgs_from_args(["i", "-g", "@types/node"], ic), [
+    "@types/node",
+  ])
   // 6. scoped + 版本
-  assert_eq(
-    extract_pkgs_from_args(["i", "-g", "@types/node@20.0.0"], ic),
-    ["@types/node"],
-  )
+  assert_eq(extract_pkgs_from_args(["i", "-g", "@types/node@20.0.0"], ic), [
+    "@types/node",
+  ])
   // 7. scoped + dist-tag
-  assert_eq(
-    extract_pkgs_from_args(["i", "-g", "@scope/name@beta"], ic),
-    ["@scope/name"],
-  )
+  assert_eq(extract_pkgs_from_args(["i", "-g", "@scope/name@beta"], ic), [
+    "@scope/name",
+  ])
   // 8. @npm: 别名（latest）
-  assert_eq(
-    extract_pkgs_from_args(["i", "-g", "my-cli@npm:some-cli"], ic),
-    ["my-cli"],
-  )
+  assert_eq(extract_pkgs_from_args(["i", "-g", "my-cli@npm:some-cli"], ic), [
+    "my-cli",
+  ])
   // 9. @npm: 别名 + 版本
   assert_eq(
     extract_pkgs_from_args(["i", "-g", "my-cli@npm:some-cli@2.0.0"], ic),
@@ -130,7 +121,9 @@ test "extract_pkgs_from_args npm install spec grammar" {
   // 16. 混合：registry / 版本 / 别名 / tarball 同一条命令
   assert_eq(
     extract_pkgs_from_args(
-      ["i", "-g", "a@beta", "b", "c@npm:d@1.0.0", "./local.tgz", "@scope/e@latest"],
+      [
+        "i", "-g", "a@beta", "b", "c@npm:d@1.0.0", "./local.tgz", "@scope/e@latest",
+      ],
       ic,
     ),
     ["a", "b", "c", "@scope/e"],
@@ -151,7 +144,9 @@ test "extract_pkgs_from_args npm install spec grammar" {
     ["pkg"],
   )
   // 18. 非全局安装（无 -g）：仍按 spec 解析，路由层不会走 global 分支
-  assert_eq(extract_pkgs_from_args(["i", "typescript@5.0.0"], ic), ["typescript"])
+  assert_eq(extract_pkgs_from_args(["i", "typescript@5.0.0"], ic), [
+    "typescript",
+  ])
   // 19. 纯本地安装（无包名）
   assert_eq(extract_pkgs_from_args(["i"], ic), [])
 }

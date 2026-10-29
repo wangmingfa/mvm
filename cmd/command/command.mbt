@@ -70,8 +70,8 @@ fn Command::new_with_version(
   command_type : String,
   tool : String,
   version? : String,
-  skip_verify? : Bool = false,
-  no_cache? : Bool = false,
+  skip_verify~ : Bool = false,
+  no_cache~ : Bool = false,
 ) -> Command raise {
   let t = Tool::from_string(tool)
   match command_type {
@@ -99,8 +99,8 @@ fn Command::new_with_version(
 fn parse_with_version(
   command_type : String,
   options : String,
-  skip_verify? : Bool = false,
-  no_cache? : Bool = false,
+  skip_verify~ : Bool = false,
+  no_cache~ : Bool = false,
 ) -> Command raise {
   match options.split("@").to_array() {
     [before, after] =>

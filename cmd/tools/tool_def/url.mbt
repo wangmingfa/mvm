@@ -16,7 +16,7 @@ pub fn UrlReplaceContext::new(
   os : String,
   arch : String,
 ) -> UrlReplaceContext {
-  { url, tool, version, os, arch }
+  { url, tool, version, os, arch, }
 }
 
 ///|

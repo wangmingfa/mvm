@@ -1,7 +1,7 @@
 ///|
 #cfg(platform="windows")
 #borrow(bytes)
-extern "C" fn c_gbk_to_utf8(bytes : Bytes, len : Int) -> String = "gbk_to_utf8"
+extern "C" fn c_gbk_to_utf8(bytes : Bytes, len : Int32) -> String = "gbk_to_utf8"
 
 ///|
 #cfg(platform="windows")

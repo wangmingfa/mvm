@@ -58,7 +58,7 @@ pub struct DownloadInfo {
   headers : Map[String, String]
   // 压缩包解压出来之后，需要进入多少层级才能到达实际工具根目录
   // 一般的压缩包会有1层目录，某些压缩包没有包装一层根目录，返回0即可
-  root_path_depth : UInt
+  root_path_depth : UInt32
 } derive(Debug)
 
 ///|
@@ -333,11 +333,11 @@ pub fn ProgramExeInfo::ProgramExeInfo(
   path : String,
   version : String,
   tool_version : String,
-  envs? : Map[String, String] = Map([]),
+  envs~ : Map[String, String] = Map([]),
   program_exists : Bool,
   tool : Tool,
   tool_exists : Bool,
-  extra_args? : Array[String] = [],
+  extra_args~ : Array[String] = [],
 ) -> ProgramExeInfo {
   {
     name,
@@ -370,8 +370,8 @@ fn format_os_compat_error(
 pub async fn create_tool_cmd_unix(
   tool : Tool,
   cmd_name : String,
-  file_name? : String = cmd_name,
-  cmd_dir? : String = "",
+  file_name~ : String = cmd_name,
+  cmd_dir~ : String = "",
 ) -> Unit {
   // 创建一个shell文件（不需要.sh后缀），里面执行mvm run {tool} -- {cmd_name} "$@"
   let mvm_bin = mvm_bin_home()
@@ -393,9 +393,9 @@ pub async fn create_tool_cmd_unix(
 pub async fn create_tool_cmd_windows(
   tool : Tool,
   cmd_name : String,
-  file_name? : String = cmd_name,
-  cmd_dir? : String = "",
-  use_shim? : Bool = true,
+  file_name~ : String = cmd_name,
+  cmd_dir~ : String = "",
+  use_shim~ : Bool = true,
 ) -> Unit {
   let mvm_bin = mvm_bin_home()
   let tool_name = tool.to_string()

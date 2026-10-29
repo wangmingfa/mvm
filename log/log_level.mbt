@@ -7,7 +7,7 @@ pub(all) enum LogLevel {
 }
 
 ///|
-fn LogLevel::to_int(self : LogLevel) -> Int = "%identity"
+fn LogLevel::to_int(self : LogLevel) -> Int32 = "%identity"
 
 ///|
 impl Show for LogLevel with fn output(s, logger) {

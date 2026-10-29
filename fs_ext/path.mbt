@@ -320,7 +320,7 @@ test "canonicalize_path relative windows" {
 }
 
 ///|
-pub fn get_parent_dir(path : String, levels? : Int = 1) -> String? raise {
+pub fn get_parent_dir(path : String, levels~ : Int32 = 1) -> String? raise {
   guard levels > 0 else {
     raise fail("levels 必须大于 0，当前值：\{levels}")
   }

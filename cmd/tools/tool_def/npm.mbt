@@ -23,10 +23,11 @@ fn strip_npm_version(pkg : String) -> String {
   if pkg.has_prefix("@") {
     // scoped 包：@scope/name@version，版本分隔符在 "/" 之后
     match pkg.find("/") {
-      Some(slash) => match pkg[slash + 1:].find("@") {
-        Some(rel) => pkg[:(slash + 1 + rel)].to_owned()
-        None => pkg
-      }
+      Some(slash) =>
+        match pkg[slash + 1:].find("@") {
+          Some(rel) => pkg[:slash + 1 + rel].to_owned()
+          None => pkg
+        }
       None => pkg
     }
   } else {
@@ -115,7 +116,7 @@ struct Npm {}
 
 ///|
 test "npm" {
-  let _ = Npm::{  }
+  let _ = Npm::{ }
 }
 
 ///|
@@ -277,11 +278,7 @@ async fn walk_all_global_pkgs(
       for sub_name in @fs.readdir(lib_path) {
         let sub_path = @fs_ext.join_path(lib_path, sub_name)
         let pkg_json_path = @fs_ext.join_path(sub_path, "package.json")
-        walk_pkg_bins(
-          pkg_json_path,
-          lib_name + "/" + sub_name,
-          handle_pkg_cmd,
-        )
+        walk_pkg_bins(pkg_json_path, lib_name + "/" + sub_name, handle_pkg_cmd)
       }
     } else {
       let pkg_json_path = @fs_ext.join_path(lib_path, "package.json")
@@ -393,7 +390,8 @@ async fn handle_install_npm_global_package(
     // @fs.symlink(target=cmd_path, symlink_file_path)
     match os {
       MacOS | Linux => create_tool_cmd_unix(Node, cmd_name, cmd_dir=NPM_PKG)
-      Windows => create_tool_cmd_windows(Node, cmd_name, cmd_dir=NPM_PKG, use_shim=false)
+      Windows =>
+        create_tool_cmd_windows(Node, cmd_name, cmd_dir=NPM_PKG, use_shim=false)
       _ => ()
     }
     // 已安装全局命令
@@ -425,7 +423,8 @@ async fn handle_npm_link() -> Unit {
     // 在 mvm_bin/npm-pkg 下创建 shim 脚本
     match os {
       MacOS | Linux => create_tool_cmd_unix(Node, cmd_name, cmd_dir=NPM_PKG)
-      Windows => create_tool_cmd_windows(Node, cmd_name, cmd_dir=NPM_PKG, use_shim=false)
+      Windows =>
+        create_tool_cmd_windows(Node, cmd_name, cmd_dir=NPM_PKG, use_shim=false)
       _ => ()
     }
     @log.debug(

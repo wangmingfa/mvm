@@ -4,8 +4,6 @@ import {
   "username/mvm/log",
   "username/mvm/utils",
   "username/mvm/command" @mvm_cmd,
-  "moonbitlang/core/json",
-  "moonbitlang/core/env",
   "moonbitlang/core/string",
   "moonbitlang/core/lexbuf",
   "moonbitlang/async/fs",

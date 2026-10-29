@@ -163,7 +163,7 @@ fn _fallback_dir() -> String {
 /// 翻译函数：按键查找当前语言的文本，可选参数插值
 /// 查找顺序：1. 外部 JSON 字典  2. 内置字典  3. 英文 fallback  4. 返回键本身
 /// args 为 {变量名} 占位符提供替换值，缺失参数保留原样
-pub fn t(key : String, args? : Map[String, String] = Map([])) -> String {
+pub fn t(key : String, args~ : Map[String, String] = Map([])) -> String {
   let text = _lookup(key, _current_lang_code.val)
   if args.is_empty() {
     text

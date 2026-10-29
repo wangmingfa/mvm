@@ -1,3 +1,4 @@
+///|
 async fn main {
   // 执行示例：
   //   unix: /path/to/bun run dev

@@ -1,5 +1,5 @@
 ///|
-pub fn parse_version(version : String) -> FixedArray[Int] raise {
+pub fn parse_version(version : String) -> FixedArray[Int32] raise {
   if version =~ (re"[0-9]+\.[0-9]+(\.[0-9]+)*" as version) {
     let arr = version.split(".").to_array().map(v => @string.parse_int(v))
     return FixedArray::from_array(arr)
@@ -40,7 +40,7 @@ test "parse_version" {
 }
 
 ///|
-pub fn compare_version(version1 : String, version2 : String) -> Int raise {
+pub fn compare_version(version1 : String, version2 : String) -> Int32 raise {
   let version1s = parse_version(version1)
   let len1 = version1s.length()
   let version2s = parse_version(version2)

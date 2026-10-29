@@ -15,12 +15,12 @@ struct Kotlin {}
 
 ///|
 test "Kotlin" {
-  let _ = Kotlin::{  }
+  let _ = Kotlin::{ }
 }
 
 ///|
 /// Maven Central 搜索 API 版本条目（每个条目包含版本号 v）
-struct MavenCentralVersionDoc {
+priv struct MavenCentralVersionDoc {
   v : String // 版本号，如 "2.2.0"、"2.1.20-RC" 等
 } derive(@json.FromJson)
 
@@ -29,13 +29,13 @@ struct MavenCentralVersionDoc {
 
 ///|
 /// Maven Central 搜索 API 响应数据（仅解析 docs 字段，numFound 等额外字段会被忽略）
-struct MavenCentralResponseData {
+priv struct MavenCentralResponseData {
   docs : Array[MavenCentralVersionDoc]
 } derive(@json.FromJson)
 
 ///|
 /// Maven Central 搜索 API 响应（顶层包装）
-struct MavenCentralResponse {
+priv struct MavenCentralResponse {
   response : MavenCentralResponseData
 } derive(@json.FromJson)
 
@@ -43,7 +43,7 @@ struct MavenCentralResponse {
 pub async fn Kotlin::get_target_version(
   os : @os.OsInfo,
   version : String,
-  version_count : Int,
+  version_count : Int32,
 ) -> String {
   get_target_version_with_cache(
     KOTLIN_INDEX_CACHE_FILE,
@@ -68,7 +68,7 @@ fn is_stable_version(v : String) -> Bool {
 fn Kotlin::_get_proper_version(
   _os : @os.OsInfo,
   version : String,
-  version_count : Int,
+  version_count : Int32,
   json : Json,
 ) -> String raise {
   // 解析 Maven Central 搜索 API 响应
@@ -153,7 +153,7 @@ pub fn Kotlin::get_download_info(
   // Kotlin download tag 带 v 前缀
   let ver = if version.has_prefix("v") { version } else { "v\{version}" }
   let url = "\{KOTLIN_RELEASE_URL}/\{ver}/kotlin-compiler-\{version}.zip"
-  { url, headers: Map([]), root_path_depth: 1 }
+  { url, headers: Map([]), root_path_depth: 1, }
 }
 
 ///|

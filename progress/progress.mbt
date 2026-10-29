@@ -1,7 +1,7 @@
 ///|
 /// 将字节大小转换为可读格式（如 "20.5 MB"）
 /// show_unit: 是否显示单位（B/KB/MB/GB），默认为 true
-fn format_size(bytes : Int64, show_unit? : Bool = true) -> String {
+fn format_size(bytes : Int64, show_unit~ : Bool = true) -> String {
   if bytes < 1000 {
     if show_unit {
       "\{bytes} B"
@@ -37,7 +37,7 @@ fn format_size(bytes : Int64, show_unit? : Bool = true) -> String {
 
 ///|
 /// 构建进度条字符串（如 "[======>               ]"）
-fn build_bar(filled : Int, bar_width : Int) -> String {
+fn build_bar(filled : Int32, bar_width : Int32) -> String {
   let bar = "=".repeat(filled)
   if filled < bar_width {
     bar + ">" + " ".repeat(bar_width - filled - 1)
@@ -52,7 +52,7 @@ pub fn progress_bar(
   completed : Int64,
   total : Int64,
   suffix? : String,
-  show_unit? : Bool = true,
+  show_unit~ : Bool = true,
 ) -> Unit {
   // 限制 completed 不超过 total
   let completed = if completed > total { total } else { completed }
@@ -98,9 +98,9 @@ fn progress_bar_with_detailed_info(
   start_time~ : Int64,
   period~ : Int64,
   completed_in_period~ : Int64,
-  show_speed? : Bool = true,
-  show_time_info? : Bool = true,
-  show_unit? : Bool = true,
+  show_speed~ : Bool = true,
+  show_time_info~ : Bool = true,
+  show_unit~ : Bool = true,
 ) -> Unit {
   let (speed_str, current_speed) = @utils.get_readable_speed(
     completed_in_period,
@@ -175,11 +175,11 @@ pub struct ProgressBar {
 ///|
 pub fn ProgressBar::ProgressBar(
   total : Int64,
-  prefix? : String = "",
-  mode? : ProgressBarMode = Full,
-  show_speed? : Bool = true,
-  show_time_info? : Bool = true,
-  show_unit? : Bool = true,
+  prefix~ : String = "",
+  mode~ : ProgressBarMode = Full,
+  show_speed~ : Bool = true,
+  show_time_info~ : Bool = true,
+  show_unit~ : Bool = true,
 ) -> Self {
   let time = @env.now().reinterpret_as_int64()
   {
@@ -199,7 +199,7 @@ pub fn ProgressBar::ProgressBar(
 }
 
 ///|
-fn ProgressBar::percent(self : Self) -> Int {
+fn ProgressBar::percent(self : Self) -> Int32 {
   (self.competed * 100 / self.total).to_int()
 }
 
@@ -240,7 +240,7 @@ pub fn ProgressBar::set_completed(self : Self, completed : Int64) -> Unit {
 }
 
 ///|
-pub fn ProgressBar::set_completed_int(self : Self, completed : Int) -> Unit {
+pub fn ProgressBar::set_completed_int(self : Self, completed : Int32) -> Unit {
   self.set_completed(completed.to_int64())
 }
 
@@ -287,7 +287,7 @@ async test "ProgressBar" {
 /// 简单进度条
 ///   prefix 前缀信息
 ///   percent 进度百分比，0-100
-fn simple_progress_bar(prefix? : String = "", percent : Int) -> Unit {
+fn simple_progress_bar(prefix~ : String = "", percent : Int32) -> Unit {
   // 将百分比限制在 0-100 范围内
   let percent = if percent < 0 {
     0

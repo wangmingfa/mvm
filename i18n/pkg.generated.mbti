@@ -39,6 +39,7 @@ pub enum Lang {
   Zh
   En
 } derive(Eq)
+pub fn Lang::equal(Self, Self) -> Bool
 pub fn Lang::from_string(String) -> Self
 pub fn Lang::to_string(Self) -> String
 

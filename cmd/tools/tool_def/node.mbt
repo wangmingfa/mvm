@@ -21,11 +21,11 @@ struct Node {}
 ///|
 test "Node" {
   // 去除 Warning (struct_never_constructed) 警告
-  let _ = Node::{  }
+  let _ = Node::{ }
 }
 
 ///|
-struct NodeJsInfo {
+priv struct NodeJsInfo {
   version : String
   // date : String
   lts : Json
@@ -36,7 +36,7 @@ struct NodeJsInfo {
 pub async fn Node::get_target_version(
   os : @os.OsInfo,
   version : String,
-  version_count : Int,
+  version_count : Int32,
 ) -> String {
   get_target_version_with_cache(
     NODE_INDEX_CACHE_FILE,
@@ -53,7 +53,7 @@ pub async fn Node::get_target_version(
 fn Node::_get_proper_version(
   os : @os.OsInfo,
   version : String,
-  version_count : Int,
+  version_count : Int32,
   json : Json,
 ) -> String raise {
   guard json is Array(arr) else {
@@ -112,7 +112,7 @@ fn Node::_get_proper_version(
       Node::_check_os_compatiable(os, nodeJsInfos[0])
     _ =>
       match version_count {
-        1..=3 => {
+        1..<=3 => {
           guard nodeJsInfos.search_by(v => {
               let version = if version.has_prefix("v") {
                 version
@@ -146,7 +146,7 @@ fn Node::_get_proper_version(
 fn Node::_check_os_compatiable(
   os : @os.OsInfo,
   nodeJsInfo : NodeJsInfo,
-  error_msg_tpl? : String = @i18n.t("error.version_os_arch_unsupported"),
+  error_msg_tpl~ : String = @i18n.t("error.version_os_arch_unsupported"),
 ) -> String raise {
   // 判断当前操作系统、架构的文件是否支持
   let file_prefix = [
@@ -220,7 +220,7 @@ pub fn Node::get_download_info(
       )
   }
   let url = "\{NODE_RELEASE_URL}/\{version}/node-\{version}-\{os}-\{arch}.\{ext}"
-  { url, headers: Map([]), root_path_depth: 1 }
+  { url, headers: Map([]), root_path_depth: 1, }
 }
 
 ///|
@@ -593,7 +593,7 @@ fn NodePath::NodePath(version : String) -> NodePath raise {
   } else {
     @fs_ext.join_path(node_dir, "lib")
   }
-  { root: node_dir, lib: lib_dir, bin: node_bin_dir }
+  { root: node_dir, lib: lib_dir, bin: node_bin_dir, }
 }
 
 ///|

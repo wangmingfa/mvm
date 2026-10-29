@@ -3,7 +3,7 @@ using @time {type PlainDateTime, type ZoneOffset}
 
 ///|
 pub fn get_date(
-  milliseconds? : Int64 = @env.now().reinterpret_as_int64(),
+  milliseconds~ : Int64 = @env.now().reinterpret_as_int64(),
 ) -> PlainDateTime raise {
   PlainDateTime::from_unix_second(
     milliseconds / 1000,

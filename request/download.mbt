@@ -92,12 +92,12 @@ priv suberror DownloadError {
 pub async fn download(
   url : String,
   dest : String,
-  dest_is_file? : Bool = false,
-  headers? : Map[String, String] = Map([]),
-  show_progress? : Bool = true,
+  dest_is_file~ : Bool = false,
+  headers~ : Map[String, String] = Map([]),
+  show_progress~ : Bool = true,
 ) -> Unit {
   let max_retries = 3
-  let retry_intervals : Array[Int] = [1000, 3000, 5000]
+  let retry_intervals : Array[Int32] = [1000, 3000, 5000]
   for attempt in 0..<4 {
     try {
       // 每次重试重新检查已有文件大小，以支持断点续传
@@ -218,10 +218,10 @@ pub async fn download(
 ///|
 async fn get_client(
   url : String,
-  range_start? : Int64 = 0,
-  dest? : String = "",
-  dest_is_file? : Bool = false,
-  headers? : Map[String, String] = Map([]),
+  range_start~ : Int64 = 0,
+  dest~ : String = "",
+  dest_is_file~ : Bool = false,
+  headers~ : Map[String, String] = Map([]),
 ) -> (@http.Client, Int64, String, Int64) {
   // 合并默认 headers 和用户提供的 headers
   // 用户提供的 headers 会覆盖默认值
@@ -341,8 +341,8 @@ async test "download" {
 pub async fn download_by_native_command(
   url : String,
   dest : String,
-  headers? : Map[String, String] = Map([]),
-  show_progress? : Bool = true,
+  headers~ : Map[String, String] = Map([]),
+  show_progress~ : Bool = true,
 ) -> Unit {
   guard @command.get_best_downloader() is Some(downloader) else {
     // 没有找到合适的下载器

@@ -14,11 +14,11 @@ struct Deno {}
 
 ///|
 test "Deno" {
-  let _ = Deno::{  }
+  let _ = Deno::{ }
 }
 
 ///|
-struct DenoReleaseInfo {
+priv struct DenoReleaseInfo {
   name : String
 } derive(@json.FromJson)
 
@@ -26,7 +26,7 @@ struct DenoReleaseInfo {
 pub async fn Deno::get_target_version(
   os : @os.OsInfo,
   version : String,
-  version_count : Int,
+  version_count : Int32,
 ) -> String {
   get_target_version_with_cache(
     DENO_INDEX_CACHE_FILE,
@@ -44,7 +44,7 @@ pub async fn Deno::get_target_version(
 fn Deno::_get_proper_version(
   _os : @os.OsInfo,
   version : String,
-  version_count : Int,
+  version_count : Int32,
   json : Json,
 ) -> String raise {
   guard json is Array(arr) else {
@@ -171,7 +171,7 @@ pub fn Deno::get_download_info(
   }
   let url = "\{DENO_RELEASE_URL}/\{ver}/deno-\{target}.zip"
   // Deno 是单一二进制文件，压缩包内无子目录
-  { url, headers: Map([]), root_path_depth: 0 }
+  { url, headers: Map([]), root_path_depth: 0, }
 }
 
 ///|

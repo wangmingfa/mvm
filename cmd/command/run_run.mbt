@@ -36,7 +36,7 @@ async fn run_run(
     version: target_version,
     program_exists,
     tool_exists,
-    ..,
+    ..
   } = program_exe_info
   let mut exec_program_path = exec_program_path
   let mut program_exists = program_exists

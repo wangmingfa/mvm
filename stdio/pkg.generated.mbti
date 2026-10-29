@@ -2,7 +2,7 @@
 package "username/mvm/stdio"
 
 // Values
-pub fn clear_lines(Int) -> Unit
+pub fn clear_lines(Int32) -> Unit
 
 pub fn flush_stdout() -> Unit
 

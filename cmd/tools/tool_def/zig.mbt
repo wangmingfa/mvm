@@ -13,14 +13,14 @@ pub struct Zig {}
 ///|
 test "Zig" {
   // 去除 Warning (struct_never_constructed) 警告
-  let _ = Zig::{  }
+  let _ = Zig::{ }
 }
 
 ///|
 pub async fn Zig::get_target_version(
   os : @os.OsInfo,
   version : String,
-  version_count : Int,
+  version_count : Int32,
 ) -> String {
   get_target_version_with_cache(
     ZIG_INDEX_CACHE_FILE,
@@ -37,7 +37,7 @@ pub async fn Zig::get_target_version(
 fn Zig::_get_proper_version(
   os : @os.OsInfo,
   version : String,
-  version_count : Int,
+  version_count : Int32,
   json : Json,
 ) -> String raise {
   guard json is Object(map) else {
@@ -67,7 +67,7 @@ fn Zig::_get_proper_version(
       )
     _ =>
       match version_count {
-        1..=3 => {
+        1..<=3 => {
           guard versions.search_by(v => {
               if version_count == 3 {
                 v.0 == version
@@ -129,7 +129,7 @@ fn Zig::_check_os_compatiable(
   os : @os.OsInfo,
   version : String,
   version_json : Json,
-  error_msg_tpl? : String = @i18n.t("error.version_os_arch_unsupported"),
+  error_msg_tpl~ : String = @i18n.t("error.version_os_arch_unsupported"),
 ) -> String raise {
   let version_release_key = Zig::_get_version_release_key()
   guard version_json is Object(map) else {
@@ -165,7 +165,7 @@ pub fn Zig::get_download_info(
       )
   }
   let url = "\{ZIG_RELEASE_URL}/\{version}/zig-\{version_release_key}-\{version}.\{ext}"
-  { url, headers: Map([]), root_path_depth: 1 }
+  { url, headers: Map([]), root_path_depth: 1, }
 }
 
 ///|

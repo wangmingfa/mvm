@@ -1,11 +1,11 @@
 ///|
-extern "C" fn c_is_stdin_tty() -> Int = "is_stdin_tty"
+extern "C" fn c_is_stdin_tty() -> Int32 = "is_stdin_tty"
 
 ///|
-extern "C" fn c_is_stdout_tty() -> Int = "is_stdout_tty"
+extern "C" fn c_is_stdout_tty() -> Int32 = "is_stdout_tty"
 
 ///|
-extern "C" fn c_is_stderr_tty() -> Int = "is_stderr_tty"
+extern "C" fn c_is_stderr_tty() -> Int32 = "is_stderr_tty"
 
 ///|
 /// 检查标准输入是否为 TTY 终端

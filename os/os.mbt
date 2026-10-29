@@ -115,7 +115,7 @@ pub struct OsInfo {
 
 ///|
 pub fn get_os_info() -> OsInfo {
-  { name: get_os_name(), arch: get_os_arch() }
+  { name: get_os_name(), arch: get_os_arch(), }
 }
 
 ///|

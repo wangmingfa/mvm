@@ -10,6 +10,7 @@ import {
   "moonbitlang/async/http",
   "moonbitlang/async/fs",
   "moonbitlang/core/json",
+  "moonbitlang/core/debug",
   "moonbitlang/core/string",
   "moonbitlang/core/env",
   "moonbitlang/core/set",

@@ -10,13 +10,13 @@ pub fn[T : ToStr] blue(T) -> String
 
 pub fn[T : ToStr] colored_spans(Array[(Color, T)], joiner? : String) -> String
 
-pub fn compare_version(String, String) -> Int raise
+pub fn compare_version(String, String) -> Int32 raise
 
 pub fn[T : ToStr] cyan(T) -> String
 
 pub fn[T : ToStr] default(T) -> String
 
-pub fn display_width(String) -> Int
+pub fn display_width(String) -> Int32
 
 pub fn get_date(milliseconds? : Int64) -> @time.PlainDateTime raise
 
@@ -38,9 +38,9 @@ pub fn[T : ToStr] green(T) -> String
 
 pub fn[T : Show] option_to_string(T?) -> String
 
-pub fn pad_right(String, Int) -> String
+pub fn pad_right(String, Int32) -> String
 
-pub fn parse_version(String) -> FixedArray[Int] raise
+pub fn parse_version(String) -> FixedArray[Int32] raise
 
 pub fn print_logo() -> Unit
 

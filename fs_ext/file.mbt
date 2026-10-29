@@ -2,7 +2,7 @@
 pub async fn mv(
   src : String,
   dest : String,
-  remove_dest_if_exists? : Bool = false,
+  remove_dest_if_exists~ : Bool = false,
 ) -> Unit {
   guard @fs.exists(src) else { raise fail("路径不存在 \{src}") }
 
@@ -102,7 +102,7 @@ pub async fn copy(src : String, dest : String) -> Unit {
 ///|
 async fn get_all_sub_dir_or_file_path(
   path : String,
-  include_root? : Bool = false,
+  include_root~ : Bool = false,
 ) -> Array[String] {
   let max_files = 100_000
   let arr : Array[String] = []
@@ -137,7 +137,7 @@ async fn get_all_sub_dir_or_file_path(
 
 ///|
 async fn generate_tmp_dir_and_files(
-  tag? : String = "",
+  tag~ : String = "",
 ) -> (String, Array[String]) {
   let dir_or_files = []
   // 生成临时文件
@@ -263,7 +263,7 @@ async test "move dir" {
 
 ///|
 #borrow(path)
-extern "C" fn c_symlink_status(path : Bytes) -> Int = "symlink_status"
+extern "C" fn c_symlink_status(path : Bytes) -> Int32 = "symlink_status"
 
 ///|
 pub enum SymlinkStatus {

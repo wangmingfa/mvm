@@ -4,7 +4,7 @@ pub(all) struct CommandResult {
   /// 标准输出内容（多条输出合并，可变字段，可追加）
   mut output : String
   /// 退出码（0 表示成功，可变字段以支持子进程退出码设置）
-  mut exit_code : Int
+  mut exit_code : Int32
   /// 错误信息（成功时为 None）
   error : String?
 } derive(Debug)
@@ -12,22 +12,22 @@ pub(all) struct CommandResult {
 ///|
 /// 创建成功结果（exit_code=0, error=None, output=""）
 pub fn CommandResult::success() -> CommandResult {
-  CommandResult::{ output: "", exit_code: 0, error: None }
+  CommandResult::{ output: "", exit_code: 0, error: None, }
 }
 
 ///|
 /// 创建带输出的成功结果
 pub fn CommandResult::success_with_output(msg : String) -> CommandResult {
-  CommandResult::{ output: msg, exit_code: 0, error: None }
+  CommandResult::{ output: msg, exit_code: 0, error: None, }
 }
 
 ///|
 /// 创建失败结果，exit_code 默认为 1
 pub fn CommandResult::failure(
   msg : String,
-  exit_code? : Int = 1,
+  exit_code~ : Int32 = 1,
 ) -> CommandResult {
-  CommandResult::{ output: "", exit_code, error: Some(msg) }
+  CommandResult::{ output: "", exit_code, error: Some(msg), }
 }
 
 ///|

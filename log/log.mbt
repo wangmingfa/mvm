@@ -2,22 +2,22 @@
 using @utils {red, green, yellow, trait ToStr}
 
 ///|
-let log_line_count : Ref[Int] = Ref(0)
+let log_line_count : Ref[Int32] = Ref(0)
 
 ///|
-pub fn add_log_lines(lines? : Int = 1) -> Unit {
+pub fn add_log_lines(lines~ : Int32 = 1) -> Unit {
   log_line_count.val += lines
 }
 
 ///|
-fn add_log_lines_by_content(content : String) -> Int {
+fn add_log_lines_by_content(content : String) -> Int32 {
   let lines = content.split("\n").to_array().length()
   add_log_lines(lines~)
   lines
 }
 
 ///|
-fn[T : ToStr] log(prefix : String, loc? : String = "", msg : T) -> Unit {
+fn[T : ToStr] log(prefix : String, loc~ : String = "", msg : T) -> Unit {
   let time = @utils.get_date_str() catch { _ => "" }
   let prefix = if prefix.is_blank() { prefix } else { "[\{prefix}]" }
   // 右边补齐空格，确保日志内容左侧对齐

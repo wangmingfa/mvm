@@ -1,6 +1,5 @@
 import {
   "username/mvm/ffi",
-  "moonbitlang/core/encoding/utf8",
 }
 
 options(

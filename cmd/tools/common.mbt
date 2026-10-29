@@ -47,7 +47,7 @@ pub using @tool_def {
 using @os {type OsInfo}
 
 ///|
-fn parse_version(version : String) -> (String, Int) {
+fn parse_version(version : String) -> (String, Int32) {
   // version支持这些格式：
   // lts：下载lts版本
   // latest：下载最新版本
@@ -56,7 +56,7 @@ fn parse_version(version : String) -> (String, Int) {
   // 24.1.0：指定完整的版本
 
   let version_count = lexscan
-    @lexbuf.StringScanner::{ data: version, cursor: 0 } with longest {
+    @lexbuf.StringScanner::{ data: version, cursor: 0, } with longest {
     // x.y.z
     re"^v?[[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+$" => 3
     // x.y

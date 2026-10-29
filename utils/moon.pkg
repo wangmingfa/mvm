@@ -4,3 +4,8 @@ import {
   "moonbitlang/core/env",
   "moonbitlang/x/time",
 }
+
+// `to_result` 有意把可失败结果表示为 Result 数据（供 guard + to_result 使用），
+// 因此关闭 result_error_return(0078) 告警。
+
+warnings = "-78"

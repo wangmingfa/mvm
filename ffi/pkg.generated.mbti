@@ -2,8 +2,6 @@
 package "username/mvm/ffi"
 
 // Values
-pub fn gbk_to_utf8(Bytes) -> String
-
 pub fn string_to_c_bytes(String) -> Bytes
 
 // Errors

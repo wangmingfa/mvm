@@ -13,14 +13,14 @@ pub struct Go {}
 ///|
 test "Go" {
   // 去除 Warning (struct_never_constructed) 警告
-  let _ = Go::{  }
+  let _ = Go::{ }
 }
 
 ///|
 pub async fn Go::get_target_version(
   os : @os.OsInfo,
   version : String,
-  _version_count : Int,
+  _version_count : Int32,
 ) -> String {
   // 去除可能存在的 "go" 前缀（用户可能输入 go1.23 或 1.23）
   let version = if version.has_prefix("go") {
@@ -36,7 +36,7 @@ pub async fn Go::get_target_version(
   }
   // 重新计算版本号层级
   let version_count = lexscan
-    @lexbuf.StringScanner::{ data: version, cursor: 0 } with longest {
+    @lexbuf.StringScanner::{ data: version, cursor: 0, } with longest {
     re"^[[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+$" => 3
     re"^[[:digit:]]+\.[[:digit:]]+$" => 2
     re"^[[:digit:]]+$" => 1
@@ -58,7 +58,7 @@ pub async fn Go::get_target_version(
 fn Go::_get_proper_version(
   os : @os.OsInfo,
   version : String,
-  version_count : Int,
+  version_count : Int32,
   json : Json,
 ) -> String raise {
   guard json is Array(versions) else {
@@ -99,7 +99,7 @@ fn Go::_get_proper_version(
       )
     _ =>
       match version_count {
-        1..=3 => {
+        1..<=3 => {
           guard stable_versions.search_by(v => {
               if version_count == 3 {
                 v.0 == version
@@ -161,7 +161,7 @@ fn Go::_check_os_compatiable(
   os : @os.OsInfo,
   version : String,
   version_json : Json,
-  error_msg_tpl? : String = @i18n.t("error.version_os_arch_unsupported"),
+  error_msg_tpl~ : String = @i18n.t("error.version_os_arch_unsupported"),
 ) -> String raise {
   guard version_json is Object(map) else {
     raise fail(
@@ -228,7 +228,7 @@ pub fn Go::get_download_info(
       )
   }
   let url = "\{GO_RELEASE_URL}/go\{version}.\{version_release_key}.\{ext}"
-  { url, headers: Map([]), root_path_depth: 1 }
+  { url, headers: Map([]), root_path_depth: 1, }
 }
 
 ///|
