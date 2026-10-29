@@ -176,8 +176,8 @@ fn _extract_setup_flags(
         // --tools= 空值情况
         tools = Some("")
       _ if arg.has_prefix("--tools=") =>
-        // --tools=value 形式
-        tools = Some(arg[7:].to_owned())
+        // --tools=value 形式，"--tools=" 共 8 个字符
+        tools = Some(arg[8:].to_owned())
       "--tools" | "-t" =>
         // --tools value 形式，需要取下一个参数
         if i + 1 < args_arr.length() {

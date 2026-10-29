@@ -16,7 +16,22 @@ pub async fn ensure_dir(dir : String) -> Unit {
   //   }
   // }
   guard @fs.exists(dir) is false else { return }
-  @fs.mkdir(dir, recursive=true)
+  // 并发场景下可能有其他进程/测试同时创建该目录或其上级目录，
+  // 此时 mkdir 会因 "File exists" 失败；失败后复查再重试一次。
+  for attempt in 0..<3 {
+    let created = try {
+      @fs.mkdir(dir, recursive=true)
+      true
+    } catch {
+      _ => false
+    }
+    if created || @fs.exists(dir) {
+      return
+    }
+    if attempt == 2 {
+      raise fail("创建文件夹 \{dir} 失败")
+    }
+  }
 }
 
 ///|
