@@ -83,7 +83,13 @@ handle_openssl4() {
       return 1
     fi
   fi
-  echo "    正在创建兼容符号链接：libssl.so.3 -> $ssl4_path"
+  echo ""
+  echo "    即将创建兼容符号链接：libssl.so.3 -> $ssl4_path"
+  if [ -n "$sudo_cmd" ]; then
+    echo "    需要 root 权限，执行 sudo 时可能会提示输入密码。"
+  fi
+  echo ""
+  echo "    正在创建兼容符号链接并刷新链接器缓存 ..."
   $sudo_cmd ln -sf "$ssl4_path" /usr/lib64/libssl.so.3
   $sudo_cmd ldconfig
   if has_openssl; then
@@ -174,6 +180,12 @@ install_openssl() {
     fi
   fi
 
+  echo ""
+  echo "    即将安装系统包：${pkg}（通过 ${pkg_mgr}）"
+  if [ -n "$sudo_cmd" ]; then
+    echo "    需要 root 权限，执行 sudo 时可能会提示输入密码。"
+  fi
+  echo ""
   echo "    正在通过 ${pkg_mgr} 安装 ${pkg} ..."
   case "$pkg_mgr" in
     apt-get)
