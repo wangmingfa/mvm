@@ -416,9 +416,15 @@ async test "run bunx -v 返回 CommandResult" {
   if result.is_success() {
     // 从 mvm.json 读取 bun 版本号，验证输出包含版本号
     let expected_version = get_mvm_version(Tool::Bun)
-    guard result.plain_output().contains(expected_version) else {
+    // bunx -v 输出格式为 "X.Y.Z"，版本号可能不含 v 前缀
+    let version_core = if expected_version.has_prefix("v") {
+      expected_version[1:]
+    } else {
+      expected_version
+    }
+    guard result.plain_output().contains(version_core) else {
       fail(
-        "bunx -v 版本号不包含期望值：期望包含 \{expected_version}，实际 \{result.plain_output()}",
+        "bunx -v 版本号不包含期望值：期望包含 \{version_core}，实际 \{result.plain_output()}",
       )
     }
   }
