@@ -36,12 +36,80 @@ has_openssl() {
   openssl_file_present
 }
 
+# 是否"系统只有 OpenSSL 4.x"：libssl.so.4 可加载，但 MoonBit 识别的
+# libssl.so.3 / libssl.so.1.1 / libssl.so 都不可用。
+# 典型场景：Fedora 45+ 默认 OpenSSL 4.0（SONAME 变为 libssl.so.4）。
+openssl_4_only() {
+  command -v python3 >/dev/null 2>&1 || return 1
+  python3 - <<'PY'
+import ctypes
+def can(lib):
+    try:
+        ctypes.CDLL(lib)
+        return True
+    except Exception:
+        return False
+if can('libssl.so.4') and not (can('libssl.so.3') or can('libssl.so.1.1') or can('libssl.so')):
+    raise SystemExit(0)
+raise SystemExit(1)
+PY
+}
+
+# 针对 OpenSSL 4.x：创建 libssl.so.3 -> libssl.so.4 兼容符号链接（临时应急）。
+# 注意：OpenSSL 4 与 3 的 ABI 并不保证兼容，此为应急方案，建议升级支持 OpenSSL 4 的 mvm。
+handle_openssl4() {
+  echo ""
+  echo "⚠️  检测到系统使用 OpenSSL 4.x（libssl.so.4），而当前 mvm 二进制的 MoonBit TLS"
+  echo "    仅识别 libssl.so.3 / libssl.so.1.1 / libssl.so，因此运行时无法加载。"
+  echo "    （Fedora 45 起默认使用 OpenSSL 4.0，SONAME 已变为 libssl.so.4）"
+  echo ""
+  local ssl4_path=""
+  ssl4_path=$(ldconfig -p 2>/dev/null | grep -oE '/[^ ]*libssl\.so\.4' | head -1)
+  if [ -z "$ssl4_path" ] || [ ! -f "$ssl4_path" ]; then
+    ssl4_path=$(find /usr/lib /usr/lib64 /lib /lib64 -name 'libssl.so.4' 2>/dev/null | head -1)
+  fi
+  if [ -z "$ssl4_path" ] || [ ! -f "$ssl4_path" ]; then
+    echo "❌ 未找到 libssl.so.4 实际文件，无法自动创建兼容链接。"
+    echo "    请手动执行：sudo ln -sf \$(ldconfig -p | grep -oE '/[^ ]*libssl\.so\.4' | head -1) /usr/lib64/libssl.so.3 && sudo ldconfig"
+    return 1
+  fi
+  local sudo_cmd=""
+  if [ "$(id -u)" -ne 0 ]; then
+    if command -v sudo >/dev/null 2>&1; then
+      sudo_cmd="sudo"
+    else
+      echo "    需要 root 权限但未找到 sudo，无法自动创建兼容链接。"
+      echo "    请手动执行：sudo ln -sf $ssl4_path /usr/lib64/libssl.so.3 && sudo ldconfig"
+      return 1
+    fi
+  fi
+  echo "    正在创建兼容符号链接：libssl.so.3 -> $ssl4_path"
+  $sudo_cmd ln -sf "$ssl4_path" /usr/lib64/libssl.so.3
+  $sudo_cmd ldconfig
+  if has_openssl; then
+    echo "✅ 已创建兼容链接，mvm 现可正常加载 OpenSSL。"
+    echo ""
+    echo "⚠️  注意：OpenSSL 4 与 3 的 ABI 并不保证兼容，此链接为临时应急方案。"
+    echo "    建议关注 mvm / MoonBit 发布支持 OpenSSL 4 的版本，升级后移除："
+    echo "    sudo rm -f /usr/lib64/libssl.so.3 && sudo ldconfig"
+  else
+    echo "❌ 创建兼容链接后仍无法加载 libssl.so.3，请手动检查。"
+    echo "    sudo ln -sf $ssl4_path /usr/lib64/libssl.so.3 && sudo ldconfig"
+  fi
+}
+
 ensure_openssl() {
   # 仅 Linux 需要（macOS 用系统自带 dylib，Windows 走 schannel）
   [ "$(uname -s)" = "Linux" ] || return 0
   [ "${MVM_SKIP_OPENSSL_CHECK:-0}" = "1" ] && return 0
 
   has_openssl && return 0
+
+  # OpenSSL 4.x（Fedora 45+）：MoonBit 不识别 libssl.so.4，走兼容链接处理
+  if openssl_4_only; then
+    handle_openssl4
+    return
+  fi
 
   if openssl_file_present; then
     echo "⚠️  系统存在 libssl.so 但实际无法加载（可能是 libcrypto 依赖缺失、库损坏或 ldconfig 缓存过期）。"
