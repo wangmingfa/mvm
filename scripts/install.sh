@@ -2,6 +2,105 @@
 
 set -e
 
+# ---------------------------------------------------------------------------
+# OpenSSL 运行时依赖检查（仅 Linux）
+# mvm 通过 MoonBit @http 发起 HTTPS 请求时，会在运行时动态加载系统的
+# libssl.so（见 moonbitlang/async 的 openssl_loader，依次尝试
+#   libssl.so.3 -> libssl.so.1.1 -> libssl.so）。
+# 若系统缺少该共享库（例如 Fedora 上只装了 openssl CLI 而缺 openssl-libs），
+# 执行 mvm use / mvm install 会报错：TlsError("failed to load OpenSSL")。
+# 因此在安装前探测，缺失时尝试自动安装。
+# 可用环境变量 MVM_SKIP_OPENSSL_CHECK=1 跳过本检查。
+# ---------------------------------------------------------------------------
+# ldconfig 反映动态链接器能解析到的库，等价于 dlopen 能否找到
+has_openssl() {
+  if command -v ldconfig >/dev/null 2>&1; then
+    ldconfig -p 2>/dev/null | grep -qE 'libssl\.so(\.[0-9]+)?'
+  else
+    find /usr/lib /usr/lib64 /lib /lib64 -name 'libssl.so*' 2>/dev/null | grep -q .
+  fi
+}
+
+ensure_openssl() {
+  # 仅 Linux 需要（macOS 用系统自带 dylib，Windows 走 schannel）
+  [ "$(uname -s)" = "Linux" ] || return 0
+  [ "${MVM_SKIP_OPENSSL_CHECK:-0}" = "1" ] && return 0
+
+  has_openssl && return 0
+
+  echo "⚠️  检测到系统缺少 OpenSSL 共享库（libssl.so），mvm 运行时发起 HTTPS 请求需要它。"
+  echo "    缺失时执行 mvm use / mvm install 会报错：TlsError(\"failed to load OpenSSL\")"
+
+  if ! install_openssl; then
+    echo ""
+    echo "❌ 自动安装 OpenSSL 失败，请手动安装后重新运行本脚本。"
+    echo "    各发行版手动安装命令："
+    echo "      Fedora / RHEL / CentOS:  sudo dnf install -y openssl-libs"
+    echo "      Debian / Ubuntu:         sudo apt-get install -y libssl3"
+    echo "      Arch Linux:              sudo pacman -S --noconfirm openssl"
+    echo "      openSUSE:                sudo zypper install -y openssl"
+    echo "      Alpine:                  sudo apk add --no-cache openssl"
+    echo ""
+    echo "    如确认无需本检查，可用 MVM_SKIP_OPENSSL_CHECK=1 跳过。"
+    exit 1
+  fi
+
+  # 安装后复检
+  if has_openssl; then
+    echo "✅ OpenSSL 共享库已就绪。"
+  else
+    echo "⚠️  OpenSSL 已安装，但系统仍找不到 libssl.so，请执行 sudo ldconfig 后重试。"
+  fi
+}
+
+install_openssl() {
+  local pkg_mgr="" pkg="" sudo_cmd=""
+  if command -v dnf >/dev/null 2>&1; then
+    pkg_mgr="dnf"; pkg="openssl-libs"
+  elif command -v yum >/dev/null 2>&1; then
+    pkg_mgr="yum"; pkg="openssl-libs"
+  elif command -v apt-get >/dev/null 2>&1; then
+    pkg_mgr="apt-get"; pkg="libssl3"
+  elif command -v pacman >/dev/null 2>&1; then
+    pkg_mgr="pacman"; pkg="openssl"
+  elif command -v zypper >/dev/null 2>&1; then
+    pkg_mgr="zypper"; pkg="openssl"
+  elif command -v apk >/dev/null 2>&1; then
+    pkg_mgr="apk"; pkg="openssl"
+  else
+    echo "    未检测到受支持的包管理器（dnf / yum / apt-get / pacman / zypper / apk）。"
+    return 1
+  fi
+
+  if [ "$(id -u)" -ne 0 ]; then
+    if command -v sudo >/dev/null 2>&1; then
+      sudo_cmd="sudo"
+    else
+      echo "    需要 root 权限，但未找到 sudo。"
+      return 1
+    fi
+  fi
+
+  echo "    正在通过 ${pkg_mgr} 安装 ${pkg} ..."
+  case "$pkg_mgr" in
+    apt-get)
+      # Debian/Ubuntu 新版为 libssl3，旧版为 libssl1.1，逐个回退
+      if ! $sudo_cmd apt-get install -y "$pkg"; then
+        $sudo_cmd apt-get install -y libssl1.1
+      fi
+      ;;
+    pacman)
+      $sudo_cmd pacman -S --noconfirm "$pkg"
+      ;;
+    apk)
+      $sudo_cmd apk add --no-cache "$pkg"
+      ;;
+    *)
+      $sudo_cmd "$pkg_mgr" install -y "$pkg"
+      ;;
+  esac
+}
+
 # GitHub 仓库地址（请根据实际情况修改）
 GITHUB_REPO="wangmingfa/mvm"
 
@@ -16,6 +115,9 @@ while [[ $# -gt 0 ]]; do
     *) echo "未知参数：$1"; exit 1 ;;
   esac
 done
+
+# 安装前检查 mvm 运行所需的 OpenSSL 运行时依赖（仅 Linux，缺失时自动安装）
+ensure_openssl
 
 # 确定 MVM_HOME 目录（有环境变量则直接使用，否则使用 $HOME/.mvm）
 MVM_HOME="${MVM_HOME:-$HOME/.mvm}"
