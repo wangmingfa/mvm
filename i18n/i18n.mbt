@@ -1,9 +1,10 @@
 ///|
 /// 语言类型（仅内置语言）
+#derive(Eq)
 pub enum Lang {
   Zh // 中文简体 (zh-CN)
   En // 美式英文 (en-US)
-} derive(Eq)
+}
 
 ///|
 /// Lang 转字符串

@@ -20,6 +20,18 @@ pub fn merge_detault_headers(
 }
 
 ///|
+/// 将普通 headers 转换为 @http 所需的、键大小写不敏感的 headers
+pub fn to_http_headers(
+  headers : Map[String, String],
+) -> Map[@http.CaseInsensitiveString, String] {
+  let result = Map([])
+  for k, v in headers {
+    result.set(@http.CaseInsensitiveString(k), v)
+  }
+  result
+}
+
+///|
 /// 构建 GitHub API 请求所需的 headers
 /// 包含默认 headers + GitHub API 专用 Accept 头 + 可选的 Authorization（GITHUB_TOKEN/GH_TOKEN）
 /// GitHub API 对没有 User-Agent 的请求返回 403 Forbidden
@@ -52,5 +64,5 @@ pub async fn github_get(
   url : String,
   headers~ : Map[String, String] = Map([]),
 ) -> (@http.Response, &@io.Data) {
-  @http.get(url, headers=github_headers(headers~))
+  @http.get(url, headers=to_http_headers(github_headers(headers~)))
 }

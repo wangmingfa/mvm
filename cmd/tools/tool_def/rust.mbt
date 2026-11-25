@@ -157,7 +157,7 @@ async fn Rust::_get_channel_version(
 
       let (res, data) = @http.get(
         manifest_url,
-        headers=@request.merge_detault_headers(),
+        headers=@request.to_http_headers(@request.merge_detault_headers()),
       )
       if !(res.code is (200..<300)) {
         raise fail(

@@ -9,7 +9,7 @@ pub async fn try_urls(
 ) -> (String, String)? {
   let headers = merge_detault_headers(headers~)
   for url in urls {
-    let (res, data) = @http.get(url, headers~)
+    let (res, data) = @http.get(url, headers=to_http_headers(headers))
     if res.code is (200..<300) {
       return Some((url, data.text()))
     }

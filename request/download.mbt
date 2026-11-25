@@ -228,11 +228,11 @@ async fn get_client(
   let headers = merge_detault_headers(headers~)
   // 设置range以支持断点续传
   headers.set("Range", "bytes=\{range_start}-")
-  let (res, client) = @http.get_stream(url, headers~)
+  let (res, client) = @http.get_stream(url, headers=to_http_headers(headers))
   match res.code {
     301 | 302 => {
       client.close()
-      let location = @utils.get_from_map_ignore_case(res.headers, "Location")
+      let location = res.headers.get(@http.CaseInsensitiveString("Location"))
       guard location is Some(location) else {
         raise fail(@i18n.t("download.redirect_failed"))
       }
@@ -262,9 +262,8 @@ async fn get_client(
       get_client(url, range_start=0, headers~)
     }
     200..<300 as code => {
-      let size = if @utils.get_from_map_ignore_case(
-          res.headers,
-          "Content-Length",
+      let size = if res.headers.get(
+          @http.CaseInsensitiveString("Content-Length"),
         )
         is Some(length) {
         @string.parse_int64(length) catch {

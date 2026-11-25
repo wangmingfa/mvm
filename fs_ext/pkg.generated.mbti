@@ -43,11 +43,12 @@ pub fn symlink_status(String) -> SymlinkStatus
 // Errors
 
 // Types and methods
+#derive(@debug.Debug)
 pub enum SymlinkStatus {
   SymlinkNone
   SymlinkBroken
   SymlinkOk
-} derive(@debug.Debug)
+}
 
 // Type aliases
 

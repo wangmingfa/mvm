@@ -1,4 +1,5 @@
 ///|
+#derive(Debug)
 pub(all) enum Command {
   Help
   Version
@@ -22,7 +23,7 @@ pub(all) enum Command {
   LangList // 列出可用语言：mvm lang list
   LangRemove(String) // 移除语言包：mvm lang remove <lang_code>
   LangSet(String) // 设置当前语言：mvm lang set <lang_code>
-} derive(Debug)
+}
 
 ///|
 pub impl Show for Command with fn to_string(s) {

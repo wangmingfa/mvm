@@ -21,6 +21,7 @@ const GLOBAL_SETTINGS_FILE = "config.json"
 /// {
 ///   "github_proxy": "https://cdn.gh-proxy.org/$URL"
 /// }
+#derive(FromJson, ToJson)
 pub(all) struct GlobalConfig {
   github_proxy : String?
   node_mirror : String?
@@ -33,7 +34,7 @@ pub(all) struct GlobalConfig {
   // 被 mvm 管理的工具列表，逗号分隔，如 "node,bun,go"
   // None 或空字符串表示管理所有工具（向后兼容）
   managed_tools : String?
-} derive(FromJson, ToJson)
+}
 
 ///|
 pub fn make_global_config(
@@ -252,6 +253,7 @@ pub fn validate_managed_tools_value(value : String) -> Array[Tool] raise {
 }
 
 ///|
+#derive(FromJson, ToJson, Debug)
 pub struct Config {
   node : String?
   bun : String?
@@ -263,7 +265,7 @@ pub struct Config {
   deno : String?
   java : String?
   kotlin : String?
-} derive(FromJson, ToJson, Debug)
+}
 
 ///|
 impl Show for Config with fn output(s, logger) {

@@ -20,24 +20,27 @@ test "Kotlin" {
 
 ///|
 /// Maven Central 搜索 API 版本条目（每个条目包含版本号 v）
+#derive(@json.FromJson)
 priv struct MavenCentralVersionDoc {
   v : String // 版本号，如 "2.2.0"、"2.1.20-RC" 等
-} derive(@json.FromJson)
+}
 
 ///|
 /// Maven Central 搜索 API 响应数据（包含版本总数和版本列表）
 
 ///|
 /// Maven Central 搜索 API 响应数据（仅解析 docs 字段，numFound 等额外字段会被忽略）
+#derive(@json.FromJson)
 priv struct MavenCentralResponseData {
   docs : Array[MavenCentralVersionDoc]
-} derive(@json.FromJson)
+}
 
 ///|
 /// Maven Central 搜索 API 响应（顶层包装）
+#derive(@json.FromJson)
 priv struct MavenCentralResponse {
   response : MavenCentralResponseData
-} derive(@json.FromJson)
+}
 
 ///|
 pub async fn Kotlin::get_target_version(

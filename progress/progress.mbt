@@ -79,11 +79,7 @@ async test "progress_bar" {
   // 仅验证进度条渲染，减少迭代次数和 sleep 时间
   let total = 5
   for i in 0..<=total {
-    progress_bar(
-      Int64::from_int(i + 1),
-      total.to_int64(),
-      suffix="downloading...",
-    )
+    progress_bar((i + 1).to_int64(), total.to_int64(), suffix="downloading...")
     @async.sleep(50)
   }
   @stdio.clear_lines(1)

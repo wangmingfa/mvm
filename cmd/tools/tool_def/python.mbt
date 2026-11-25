@@ -24,12 +24,13 @@ test "Python" {
 }
 
 ///|
+#derive(@json.FromJson)
 priv struct PythonVersionInfo {
   // 版本周期，如 "3.12"
   cycle : String
   // 该周期下的最新版本，如 "3.12.4"
   latest : String
-} derive(@json.FromJson)
+}
 
 ///|
 pub async fn Python::get_target_version(
@@ -161,7 +162,10 @@ async fn get_standalone_tag() -> String {
     return tag.trim().to_owned()
   }
   let url = "https://api.github.com/repos/\{PYTHON_STANDALONE_REPO}/releases/latest"
-  let (res, data) = @http.get(url, headers=@request.merge_detault_headers())
+  let (res, data) = @http.get(
+    url,
+    headers=@request.to_http_headers(@request.merge_detault_headers()),
+  )
   guard res.code is (200..<300) else {
     raise fail(
       @i18n.t("python.cannot_fetch_standalone_tag", args={
@@ -268,7 +272,7 @@ pub async fn Python::get_expected_checksum(
     None => {
       let (res, data) = @http.get(
         sha256_url,
-        headers=@request.merge_detault_headers(),
+        headers=@request.to_http_headers(@request.merge_detault_headers()),
       )
       if !(res.code is (200..<300)) {
         @log.warn(

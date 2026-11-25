@@ -43,7 +43,7 @@ pub async fn Bun::get_target_version(
   // 从 mise-versions 获取版本列表 HTML
   let (res, data) = @http.get(
     BUN_VERSION_URL,
-    headers=@request.merge_detault_headers(),
+    headers=@request.to_http_headers(@request.merge_detault_headers()),
   )
   guard res.code is (200..<300) else {
     raise fail(

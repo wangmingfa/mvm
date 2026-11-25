@@ -27,7 +27,7 @@ pub async fn get_installed_versions(Tool) -> Array[String]
 
 pub fn get_managed_tools(GlobalConfig) -> Array[Tool]
 
-pub async fn get_target_version_with_cache(String, String, String, @os.OsInfo, String, Int32, (@os.OsInfo, String, Int32, Json) -> String raise, headers? : Map[String, String]) -> String
+pub async fn get_target_version_with_cache(String, String, String, @os.OsInfo, String, Int32, (@os.OsInfo, String, Int32, @json.Json) -> String raise, headers? : Map[String, String]) -> String
 
 pub async fn is_installed(Tool, String) -> Bool
 
@@ -76,6 +76,7 @@ pub async fn Bun::get_expected_checksum(@os.OsInfo, String) -> String?
 pub async fn Bun::get_program_exe_info(String, String) -> ProgramExeInfo
 pub async fn Bun::get_target_version(@os.OsInfo, String, Int32) -> String
 
+#derive(@debug.Debug, @json.FromJson, @json.ToJson)
 pub struct Config {
   node : String?
   bun : String?
@@ -87,8 +88,8 @@ pub struct Config {
   deno : String?
   java : String?
   kotlin : String?
-} derive(ToJson, @debug.Debug, @json.FromJson)
-pub fn Config::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+}
+pub fn Config::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn Config::get_python_version(Self, String) -> String?
 pub fn Config::get_value(Self, Tool) -> String?
 
@@ -99,13 +100,15 @@ pub fn Deno::get_expected_checksum(@os.OsInfo, String) -> String?
 pub async fn Deno::get_program_exe_info(String, String) -> ProgramExeInfo
 pub async fn Deno::get_target_version(@os.OsInfo, String, Int32) -> String
 
+#derive(@debug.Debug)
 pub struct DownloadInfo {
   url : String
   headers : Map[String, String]
   root_path_depth : UInt32
-} derive(@debug.Debug)
+}
 pub fn DownloadInfo::to_repr(Self) -> @debug.Repr
 
+#derive(@json.FromJson, @json.ToJson)
 pub(all) struct GlobalConfig {
   github_proxy : String?
   node_mirror : String?
@@ -115,8 +118,8 @@ pub(all) struct GlobalConfig {
   java_mirror : String?
   language : String?
   managed_tools : String?
-} derive(ToJson, @json.FromJson)
-pub fn GlobalConfig::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+}
+pub fn GlobalConfig::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn GlobalConfig::to_string(Self, indent? : Int32) -> String
 
 pub struct Go {
@@ -166,6 +169,7 @@ type Npm
 pub async fn Npm::after_npm_command(Map[String, String]?, String, ArrayView[String]) -> Unit
 pub async fn Npm::before_npm_command(String, ArrayView[String]) -> Map[String, String]?
 
+#derive(@debug.Debug)
 pub struct ProgramExeInfo {
   name : String
   path : String
@@ -176,7 +180,7 @@ pub struct ProgramExeInfo {
   tool : Tool
   tool_exists : Bool
   extra_args : Array[String]
-} derive(@debug.Debug)
+}
 pub fn ProgramExeInfo::ProgramExeInfo(String, String, String, String, envs? : Map[String, String], Bool, Tool, Bool, extra_args? : Array[String]) -> Self
 pub fn ProgramExeInfo::to_repr(Self) -> @debug.Repr
 
@@ -195,6 +199,7 @@ pub async fn Rust::get_program_exe_info(String, String) -> ProgramExeInfo
 pub fn Rust::get_rust_builtin_tool_path_and_version(Tool, ProgramExeInfo) -> ProgramExeInfo?
 pub async fn Rust::get_target_version(@os.OsInfo, String, Int32) -> String
 
+#derive(@debug.Debug)
 pub(all) enum Tool {
   Node
   Bun
@@ -206,7 +211,7 @@ pub(all) enum Tool {
   Deno
   Java
   Kotlin
-} derive(@debug.Debug)
+}
 pub fn Tool::all_tools() -> Array[Self]
 pub fn Tool::from_string(String) -> Self raise
 pub fn Tool::from_string_with_option_result(String) -> Self?

@@ -23,29 +23,33 @@ test "Java" {
 
 ///|
 /// 缓存版本信息（兼容旧缓存格式：{"tag_name":"jdk-22.0.2+9"}）
+#derive(@json.FromJson)
 priv struct GithubReleaseInfo {
   tag_name : String
-} derive(@json.FromJson)
+}
 
 ///|
 /// Adoptium API 版本信息（从 /v3/assets/latest/{major}/hotspot 获取）
 /// 注意：semver 字段对 LTS 版本会附加后缀（如 "25.0.3+9.0.LTS"），不能直接用于构造下载链接
 /// 使用 major/minor/security/build 字段构造干净版本号（如 "25.0.3+9"）
+#derive(@json.FromJson)
 priv struct AdoptiumVersion {
   major : Int32
   minor : Int32
   security : Int32
   build : Int32
-} derive(@json.FromJson)
+}
 
 ///|
 /// Adoptium API 资产信息
+#derive(@json.FromJson)
 priv struct AdoptiumAsset {
   version : AdoptiumVersion
-} derive(@json.FromJson)
+}
 
 ///|
 /// Adoptium 可用版本信息
+#derive(@json.FromJson)
 priv struct JavaAvailableReleases {
   // 所有可用版本列表
   available_releases : Array[Int32]
@@ -55,7 +59,7 @@ priv struct JavaAvailableReleases {
   most_recent_lts : Int32
   // 最新的可用版本（包括非 LTS）
   most_recent_feature_release : Int32
-} derive(@json.FromJson)
+}
 
 ///|
 pub async fn Java::get_target_version(
@@ -184,7 +188,10 @@ async fn Java::_fetch_available_releases() -> JavaAvailableReleases {
       )
       let url = apply_global_config(JAVA_AVAILABLE_URL, global_config, ctx)
 
-      let (res, data) = @http.get(url, headers=@request.merge_detault_headers())
+      let (res, data) = @http.get(
+        url,
+        headers=@request.to_http_headers(@request.merge_detault_headers()),
+      )
       if !(res.code is (200..<300)) {
         raise fail(
           @i18n.t("java.cannot_fetch_versions", args={
@@ -278,7 +285,10 @@ async fn Java::_resolve_latest_patch_version(major_version : String) -> String {
       let url = apply_global_config(adoptium_url, global_config, ctx)
 
       @log.info(@i18n.t("java.debug_fetch_url", args={ "url": url }))
-      let (res, data) = @http.get(url, headers=@request.merge_detault_headers())
+      let (res, data) = @http.get(
+        url,
+        headers=@request.to_http_headers(@request.merge_detault_headers()),
+      )
       if !(res.code is (200..<300)) {
         raise fail(
           @i18n.t("java.cannot_fetch_version_info", args={

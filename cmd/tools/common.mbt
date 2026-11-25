@@ -56,7 +56,7 @@ fn parse_version(version : String) -> (String, Int32) {
   // 24.1.0：指定完整的版本
 
   let version_count = lexscan
-    @lexbuf.StringScanner::{ data: version, cursor: 0, } with longest {
+    @lexbuf.StringScanner(version, cursor=0) with longest {
     // x.y.z
     re"^v?[[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+$" => 3
     // x.y

@@ -18,9 +18,10 @@ test "Deno" {
 }
 
 ///|
+#derive(@json.FromJson)
 priv struct DenoReleaseInfo {
   name : String
-} derive(@json.FromJson)
+}
 
 ///|
 pub async fn Deno::get_target_version(

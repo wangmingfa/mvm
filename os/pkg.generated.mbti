@@ -15,6 +15,7 @@ pub fn get_os_name() -> OS
 // Errors
 
 // Types and methods
+#derive(Eq, @debug.Debug)
 pub enum Arch {
   X86_64
   X86
@@ -29,11 +30,12 @@ pub enum Arch {
   Ppc
   S390x
   Unknown(String)
-} derive(Eq, @debug.Debug)
+}
 pub fn Arch::equal(Self, Self) -> Bool
 pub fn Arch::to_string(Self) -> String
 pub impl Show for Arch
 
+#derive(Eq, @debug.Debug)
 pub enum OS {
   MacOS
   Linux
@@ -45,7 +47,7 @@ pub enum OS {
   Solaris
   Haiku
   Unknown(String)
-} derive(Eq, @debug.Debug)
+}
 pub fn OS::equal(Self, Self) -> Bool
 pub fn OS::to_string(Self) -> String
 pub impl Show for OS

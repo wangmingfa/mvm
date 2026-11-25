@@ -14,6 +14,7 @@ pub async fn run(Command) -> CommandResult
 // Errors
 
 // Types and methods
+#derive(@debug.Debug)
 pub(all) enum Command {
   Help
   Version
@@ -37,15 +38,16 @@ pub(all) enum Command {
   LangList
   LangRemove(String)
   LangSet(String)
-} derive(@debug.Debug)
+}
 pub fn Command::to_string(Self) -> String
 pub impl Show for Command
 
+#derive(@debug.Debug)
 pub(all) struct CommandResult {
   mut output : String
   mut exit_code : Int32
   error : String?
-} derive(@debug.Debug)
+}
 pub fn CommandResult::failure(String, exit_code? : Int32) -> Self
 pub fn CommandResult::is_success(Self) -> Bool
 pub fn CommandResult::plain_output(Self) -> StringView

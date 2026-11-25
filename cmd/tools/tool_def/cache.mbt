@@ -86,7 +86,7 @@ pub async fn get_target_version_with_cache(
   }
   let (res, data) = @http.get(
     url,
-    headers=@request.merge_detault_headers(headers~),
+    headers=@request.to_http_headers(@request.merge_detault_headers(headers~)),
   )
   guard res.code is (200..<300) else {
     raise fail(

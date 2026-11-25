@@ -266,11 +266,12 @@ async test "move dir" {
 extern "C" fn c_symlink_status(path : Bytes) -> Int32 = "symlink_status"
 
 ///|
+#derive(Debug)
 pub enum SymlinkStatus {
   SymlinkNone = 0 // 不存在（路径都没有）
   SymlinkBroken = 1 // 软链接存在，但目标失效
   SymlinkOk = 2 // 软链接存在且目标有效
-} derive(Debug)
+}
 
 ///|
 pub fn symlink_status(symlink_file_path : String) -> SymlinkStatus {

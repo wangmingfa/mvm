@@ -17,6 +17,8 @@ pub fn github_headers(headers? : Map[String, String]) -> Map[String, String]
 
 pub fn merge_detault_headers(headers? : Map[String, String]) -> Map[String, String]
 
+pub fn to_http_headers(Map[String, String]) -> Map[@http.CaseInsensitiveString, String]
+
 pub async fn try_urls(Array[String], headers? : Map[String, String], String) -> (String, String)?
 
 // Errors

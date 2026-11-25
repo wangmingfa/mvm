@@ -5,6 +5,7 @@ extern "C" fn c_os_name() -> String = "os_name"
 extern "C" fn c_os_arch() -> String = "os_arch"
 
 ///|
+#derive(Debug, Eq)
 pub enum OS {
   MacOS
   Linux
@@ -16,7 +17,7 @@ pub enum OS {
   Solaris
   Haiku
   Unknown(String)
-} derive(Debug, Eq)
+}
 
 ///|
 pub impl Show for OS with fn output(self, logger) {
@@ -35,6 +36,7 @@ pub impl Show for OS with fn output(self, logger) {
 }
 
 ///|
+#derive(Debug, Eq)
 pub enum Arch {
   X86_64
   X86
@@ -49,7 +51,7 @@ pub enum Arch {
   Ppc
   S390x
   Unknown(String)
-} derive(Debug, Eq)
+}
 
 ///|
 pub impl Show for Arch with fn output(self, logger) {

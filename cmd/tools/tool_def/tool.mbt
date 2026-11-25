@@ -51,6 +51,7 @@ pub fn version_dir(tool : Tool, version : String) -> String raise {
 
 ///|
 /// 下载信息结构体，包含下载 URL、请求 headers 和压缩包目录深度
+#derive(Debug)
 pub struct DownloadInfo {
   // 下载地址
   url : String
@@ -59,7 +60,7 @@ pub struct DownloadInfo {
   // 压缩包解压出来之后，需要进入多少层级才能到达实际工具根目录
   // 一般的压缩包会有1层目录，某些压缩包没有包装一层根目录，返回0即可
   root_path_depth : UInt32
-} derive(Debug)
+}
 
 ///|
 /// 检查版本是否已安装
@@ -112,6 +113,7 @@ async fn is_exe_present(tool : Tool, version : String) -> Bool {
 }
 
 ///|
+#derive(Debug)
 pub(all) enum Tool {
   Node
   Bun
@@ -123,7 +125,7 @@ pub(all) enum Tool {
   Deno
   Java
   Kotlin
-} derive(Debug)
+}
 
 ///|
 pub impl @utils.ToStr for Tool with fn to_str(s) {
@@ -329,6 +331,7 @@ test "Tool::from_string_with_option_result" {
 
 ///|
 /// 程序的可执行文件信息结构体
+#derive(Debug)
 pub struct ProgramExeInfo {
   // 命令的名称，例如 node、npm、cargo 等
   name : String
@@ -346,7 +349,7 @@ pub struct ProgramExeInfo {
   tool_exists : Bool
   // 额外的参数（例如 .js 文件路径，需要在可执行文件之后、用户参数之前插入）
   extra_args : Array[String]
-} derive(Debug)
+}
 
 ///|
 pub fn ProgramExeInfo::ProgramExeInfo(

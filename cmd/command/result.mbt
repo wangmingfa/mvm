@@ -1,5 +1,6 @@
 ///|
 /// 命令执行结果：替代原 Unit 返回值，使白盒测试可断言
+#derive(Debug)
 pub(all) struct CommandResult {
   /// 标准输出内容（多条输出合并，可变字段，可追加）
   mut output : String
@@ -7,7 +8,7 @@ pub(all) struct CommandResult {
   mut exit_code : Int32
   /// 错误信息（成功时为 None）
   error : String?
-} derive(Debug)
+}
 
 ///|
 /// 创建成功结果（exit_code=0, error=None, output=""）
