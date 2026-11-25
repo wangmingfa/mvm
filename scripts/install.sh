@@ -12,13 +12,28 @@ set -e
 # 因此在安装前探测，缺失时尝试自动安装。
 # 可用环境变量 MVM_SKIP_OPENSSL_CHECK=1 跳过本检查。
 # ---------------------------------------------------------------------------
-# ldconfig 反映动态链接器能解析到的库，等价于 dlopen 能否找到
-has_openssl() {
+# 文件是否被动态链接器索引到（ldconfig -p；无 ldconfig 时 find 兜底）
+openssl_file_present() {
   if command -v ldconfig >/dev/null 2>&1; then
     ldconfig -p 2>/dev/null | grep -qE 'libssl\.so(\.[0-9]+)?'
   else
     find /usr/lib /usr/lib64 /lib /lib64 -name 'libssl.so*' 2>/dev/null | grep -q .
   fi
+}
+
+# 是否可真实加载：用 python3 ctypes 做 dlopen，与 mvm 运行时的加载行为等价。
+# 仅靠 ldconfig 索引不可靠——文件可能被索引到但实际加载失败
+# （如 libcrypto 依赖缺失、ldconfig 缓存过期、库损坏）。
+has_openssl() {
+  if command -v python3 >/dev/null 2>&1; then
+    for lib in libssl.so.3 libssl.so.1.1 libssl.so; do
+      if python3 -c "import ctypes; ctypes.CDLL('$lib')" 2>/dev/null; then
+        return 0
+      fi
+    done
+    return 1
+  fi
+  openssl_file_present
 }
 
 ensure_openssl() {
@@ -28,8 +43,14 @@ ensure_openssl() {
 
   has_openssl && return 0
 
-  echo "⚠️  检测到系统缺少 OpenSSL 共享库（libssl.so），mvm 运行时发起 HTTPS 请求需要它。"
-  echo "    缺失时执行 mvm use / mvm install 会报错：TlsError(\"failed to load OpenSSL\")"
+  if openssl_file_present; then
+    echo "⚠️  系统存在 libssl.so 但实际无法加载（可能是 libcrypto 依赖缺失、库损坏或 ldconfig 缓存过期）。"
+    echo "    执行 mvm use / mvm install 会报错：TlsError(\"failed to load OpenSSL\")"
+    echo "    建议先执行：sudo ldconfig"
+  else
+    echo "⚠️  检测到系统缺少 OpenSSL 共享库（libssl.so），mvm 运行时发起 HTTPS 请求需要它。"
+    echo "    缺失时执行 mvm use / mvm install 会报错：TlsError(\"failed to load OpenSSL\")"
+  fi
 
   if ! install_openssl; then
     echo ""
@@ -49,7 +70,11 @@ ensure_openssl() {
   if has_openssl; then
     echo "✅ OpenSSL 共享库已就绪。"
   else
-    echo "⚠️  OpenSSL 已安装，但系统仍找不到 libssl.so，请执行 sudo ldconfig 后重试。"
+    if openssl_file_present; then
+      echo "⚠️  libssl.so 仍无法加载，可能是依赖损坏或缓存过期，请执行 sudo dnf reinstall -y openssl-libs && sudo ldconfig 后重试。"
+    else
+      echo "⚠️  OpenSSL 已安装，但系统仍找不到 libssl.so，请执行 sudo ldconfig 后重试。"
+    fi
   fi
 }
 
